@@ -57,9 +57,6 @@ jobs:
     - name: Install dependencies
       run: lein deps
 
-    - name: Run migrations
-      run: lein run -- -mf $TIME_TRACKER_TEST_CONFIG
-
     - name: Run tests
       run: lein test
 
