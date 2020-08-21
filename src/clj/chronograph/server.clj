@@ -4,19 +4,26 @@
             [ring.middleware.resource :refer [wrap-resource]]
             [ring.middleware.content-type :refer [wrap-content-type]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]
+            [ring.middleware.params :refer [wrap-params]]
+            [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [taoensso.timbre :as log]
             [org.httpkit.server :as httpkit]
             [ring.util.response :as response]
-            [chronograph.config :as config]))
+            [chronograph.config :as config]
+            [chronograph.handlers.google-auth :as google-auth]))
 
 (def routes ["/" [["" (constantly (-> (response/resource-response "public/index.html")
                                       (response/content-type "text/html")))]
+                  ["google-login" google-auth/login-handler]
+                  ["google-oauth2-redirect" google-auth/oauth2-redirect-handler]
                   [true (constantly (-> (response/response "Not Found")
                                         (response/status 404)))]]])
 
 (def handler
   (-> routes
       bidi/make-handler
+      (wrap-keyword-params)
+      (wrap-params)
       (wrap-resource "public")
       (wrap-content-type)
       (wrap-not-modified)))

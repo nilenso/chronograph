@@ -7,7 +7,9 @@
                  [tolitius/mount-up "0.1.3"]
                  [http-kit "2.4.0"]
                  [bidi "2.1.6"]
-                 [ring "1.8.1"]]
+                 [ring "1.8.1"]
+                 [cheshire "5.10.0"]
+                 [com.google.api-client/google-api-client "1.30.4"]]
   :repl-options {:init-ns dev.repl-utils}
   :source-paths ["src/clj" "src/cljc"]
   :test-paths ["test/clj" "test/cljc"]

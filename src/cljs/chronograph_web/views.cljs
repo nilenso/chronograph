@@ -22,20 +22,8 @@
                             [:div {:id "google-signin-button"}])}))
 
 (defn signin-page []
-  (if @(rf/subscribe [::subs/google-client-initialized?])
-    [:div
-     [:h3 "Welcome to Chronograph! Please sign in"]
-     [signin-button]]
-    [:h2 "Loading..."]))
-
-(defn landing-page []
-  (let [{:keys [name email]} (google/get-local-profile)]
-    [:div
-     [:h3 "This is Chronograph"]
-     [:p name]
-     [:p email]]))
+  [:a {:href "/google-login"}
+   "Sign in with Google"])
 
 (defn root []
-  (if @(rf/subscribe [::subs/signed-in?])
-    [landing-page]
-    [signin-page]))
+  [signin-page])
