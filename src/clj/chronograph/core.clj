@@ -3,6 +3,7 @@
   (:require [taoensso.timbre :as log]
             [mount.core :as mount]
             [mount-up.core :as mu]
+            [chronograph.server :as server]
             [chronograph.cli :as cli]))
 
 (defn- log-mount-action [action-map]
