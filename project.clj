@@ -12,7 +12,9 @@
   :source-paths ["src/clj" "src/cljc"]
   :test-paths ["test/clj" "test/cljc"]
   :main ^:skip-aot chronograph.core
-  :profiles {:cljs {:source-paths ["src/cljs" "src/cljc" "test/cljs"]
+  :uberjar-exclusions [#"dev.*"]
+  :profiles {:uberjar {:aot [#"chronograph.*"]}
+             :cljs {:source-paths ["src/cljs" "src/cljc" "test/cljs"]
                     :dependencies ^:replace [[re-frame "1.0.0"]
                                              [day8.re-frame/http-fx "0.2.1"]
 
