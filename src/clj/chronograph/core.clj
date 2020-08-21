@@ -34,9 +34,9 @@
   (let [opts (cli/parse args)]
     (if-let [opts-error (cli/error-message opts)]
       (do
-        (print opts-error)
+        (println opts-error)
         (System/exit 1))
       (case (cli/operational-mode opts)
-        :help (print (cli/help-message opts))
+        :help (println (cli/help-message opts))
         :serve (mount/start-with-args opts)
-        (print (cli/help-message opts))))))
+        (println (cli/help-message opts))))))
