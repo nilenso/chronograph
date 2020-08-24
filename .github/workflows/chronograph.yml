@@ -13,7 +13,7 @@ on:
 env:
   PORT: 8000
   GOOGLE_TOKENINFO_URL: https://www.googleapis.com/oauth2/v3/tokeninfo
-  DB_CONNECTION_STRING: jdbc:postgresql://localhost/tt_ci?user=tt_ci_user&password=tt_ci_pwd
+  DB_CONNECTION_STRING: jdbc:postgresql://localhost/chronograph_ci?user=chronograph_ci_user&password=chronograph_ci_pwd
   CP_MAX_IDLE_TIME_EXCESS_CONNECTIONS: 1800
   CP_MAX_IDLE_TIME: 10800
   TEST_DB_USERNAME: ubuntu
@@ -30,9 +30,9 @@ jobs:
       postgres:
         image: postgres:12.3
         env:
-          POSTGRES_DB: tt_ci
-          POSTGRES_USER: tt_ci_user
-          POSTGRES_PASSWORD: tt_ci_pwd
+          POSTGRES_DB: chronograph_ci
+          POSTGRES_USER: chronograph_ci_user
+          POSTGRES_PASSWORD: chronograph_ci_pwd
         ports:
           - 5432:5432
 
