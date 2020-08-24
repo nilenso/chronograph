@@ -4,7 +4,9 @@
             [mount.core :as mount]
             [mount-up.core :as mu]
             [chronograph.server :as server]
-            [chronograph.cli :as cli]))
+            [chronograph.cli :as cli]
+            [chronograph.config :as config]
+            [chronograph.migrations :as migrations]))
 
 (defn- log-mount-action [action-map]
   (fn [{:keys [name action]}]
@@ -39,4 +41,8 @@
       (case (cli/operational-mode opts)
         :help (println (cli/help-message opts))
         :serve (mount/start-with-args opts)
+        :migrate (do (mount/start-with-args opts #'config/config)
+                     (migrations/migrate))
+        :rollback (do (mount/start-with-args opts #'config/config)
+                      (migrations/rollback))
         (println (cli/help-message opts))))))

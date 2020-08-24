@@ -6,9 +6,6 @@
   {:store :database
    :db    {:connection-uri (:db-connection-string config/config)}})
 
-(defn- touch [filename]
-  (spit filename ""))
-
 (defn create-migration [migration-name]
   (migratus/create (config) migration-name))
 
