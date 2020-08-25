@@ -1,6 +1,7 @@
 (ns chronograph.auth
   (:require [buddy.sign.jwt :as jwt]
-            [chronograph.config :as config])
+            [chronograph.config :as config]
+            [taoensso.timbre :as log])
   (:import (java.time Instant)
            (java.time.temporal ChronoUnit)))
 
@@ -19,4 +20,8 @@
             (secret-key)))
 
 (defn unsign-token [token]
-  (jwt/unsign token (secret-key)))
+  (try
+    (jwt/unsign token (secret-key))
+    (catch Exception e
+      (log/error e "Unsigning a token failed")
+      nil)))

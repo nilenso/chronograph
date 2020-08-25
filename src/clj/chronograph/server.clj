@@ -7,22 +7,27 @@
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.cookies :refer [wrap-cookies]]
+            [ring.middleware.json :refer [wrap-json-response wrap-json-body]]
             [taoensso.timbre :as log]
             [org.httpkit.server :as httpkit]
             [ring.util.response :as response]
             [chronograph.config :as config]
-            [chronograph.handlers.google-auth :as google-auth]))
+            [chronograph.handlers.google-auth :as google-auth]
+            [chronograph.handlers.users :as users]))
 
 (def routes ["/" [["" (constantly (-> (response/resource-response "public/index.html")
                                       (response/content-type "text/html")))]
                   ["google-login" google-auth/login-handler]
                   ["google-oauth2-redirect" google-auth/oauth2-redirect-handler]
+                  ["api/" [["users/me" {:get users/me}]]]
                   [true (constantly (-> (response/response "Not Found")
                                         (response/status 404)))]]])
 
 (def handler
   (-> routes
       bidi/make-handler
+      (wrap-json-response)
+      (wrap-json-body {:keywords? true :bigdecimals? true})
       (wrap-keyword-params)
       (wrap-params)
       (wrap-cookies)

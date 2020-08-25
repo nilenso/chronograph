@@ -8,6 +8,7 @@
                  [http-kit "2.4.0"]
                  [bidi "2.1.6"]
                  [ring "1.8.1"]
+                 [ring/ring-json "0.5.0"]
                  [cheshire "5.10.0"]
                  [com.google.api-client/google-api-client "1.30.4"]
                  [buddy/buddy-sign "3.1.0"]]
