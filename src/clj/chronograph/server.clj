@@ -6,6 +6,7 @@
             [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
+            [ring.middleware.cookies :refer [wrap-cookies]]
             [taoensso.timbre :as log]
             [org.httpkit.server :as httpkit]
             [ring.util.response :as response]
@@ -24,6 +25,7 @@
       bidi/make-handler
       (wrap-keyword-params)
       (wrap-params)
+      (wrap-cookies)
       (wrap-resource "public")
       (wrap-content-type)
       (wrap-not-modified)))

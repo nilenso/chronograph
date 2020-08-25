@@ -3,6 +3,7 @@
             [ring.util.response :as response]
             [chronograph.config :as config]
             [taoensso.timbre :as log]
+            [chronograph.auth :as auth]
             [org.httpkit.client :as http]
             [mount.core :refer [defstate]]
             [cheshire.core :as json])
@@ -42,6 +43,7 @@
                          redirect-uri)))
 
 (defn oauth2-redirect-handler [{:keys [params] :as request}]
+  ;; TODO: Handle an error response from Google
   (let [{:keys [token-endpoint
                 client-id
                 client-secret
@@ -55,8 +57,15 @@
         id-token       (some-> token-response
                                :body
                                json/parse-string
-                               (get "id_token"))]
-    (log/info (token->credentials id-token))
-    (-> (response/response "Redirected successfully!")
-        (response/content-type "text/plain"))))
+                               (get "id_token"))
+        {:strs [name sub email email_verified]} (token->credentials id-token)
+        ;; TODO: check if email is verified, if not return an error
+        ;; TODO: check if user is in the DB, if not create them
+        token          (auth/create-token sub email name "google")]
+    (-> (response/redirect "/")
+        (response/set-cookie "auth-token" token {:http-only true
+                                                 ;; TODO: Set Secure in staging/prod
+                                                 :same-site :strict
+                                                 :max-age   (- (get-in config/config [:auth :token-expiry-in-seconds])
+                                                               100)}))))
 

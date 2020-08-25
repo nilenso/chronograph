@@ -9,7 +9,8 @@
                  [bidi "2.1.6"]
                  [ring "1.8.1"]
                  [cheshire "5.10.0"]
-                 [com.google.api-client/google-api-client "1.30.4"]]
+                 [com.google.api-client/google-api-client "1.30.4"]
+                 [buddy/buddy-sign "3.1.0"]]
   :repl-options {:init-ns dev.repl-utils}
   :source-paths ["src/clj" "src/cljc"]
   :test-paths ["test/clj" "test/cljc"]
