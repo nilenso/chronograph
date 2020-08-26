@@ -1,7 +1,8 @@
 (ns chronograph.auth
   (:require [buddy.sign.jwt :as jwt]
             [chronograph.config :as config]
-            [taoensso.timbre :as log])
+            [taoensso.timbre :as log]
+            [ring.util.response :as response])
   (:import (java.time Instant)
            (java.time.temporal ChronoUnit)))
 
@@ -25,3 +26,14 @@
     (catch Exception e
       (log/error e "Unsigning a token failed")
       nil)))
+
+(defn set-auth-cookie
+  [response id email name provider]
+  (response/set-cookie response
+                       "auth-token"
+                       (create-token id email name provider)
+                       {:http-only true
+                        ;; TODO: Set Secure in staging/prod
+                        :same-site :strict
+                        :max-age   (- (get-in config/config [:auth :token-expiry-in-seconds])
+                                      100)}))

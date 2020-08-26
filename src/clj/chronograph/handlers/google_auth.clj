@@ -2,7 +2,6 @@
   (:require [ring.util.codec :as codec]
             [ring.util.response :as response]
             [chronograph.config :as config]
-            [taoensso.timbre :as log]
             [chronograph.auth :as auth]
             [org.httpkit.client :as http]
             [mount.core :refer [defstate]]
@@ -18,14 +17,14 @@
              (.build))
   :stop nil)
 
-(defn- token->credentials
+(defn token->credentials
   [^String token]
   (some->> token
            (.verify ^GoogleIdTokenVerifier google-id-token-verifier)
            (.getPayload)
            (into {})))
 
-(defn redirect-uri [{:keys [redirect-uri
+(defn- redirect-uri [{:keys [redirect-uri
                             client-id
                             response-type
                             scope
@@ -61,11 +60,6 @@
         {:strs [name sub email email_verified]} (token->credentials id-token)
         ;; TODO: check if email is verified, if not return an error
         ;; TODO: check if user is in the DB, if not create them
-        token          (auth/create-token sub email name "google")]
+        ]
     (-> (response/redirect "/")
-        (response/set-cookie "auth-token" token {:http-only true
-                                                 ;; TODO: Set Secure in staging/prod
-                                                 :same-site :strict
-                                                 :max-age   (- (get-in config/config [:auth :token-expiry-in-seconds])
-                                                               100)}))))
-
+        (auth/set-auth-cookie sub email name "google"))))
