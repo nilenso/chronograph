@@ -39,6 +39,15 @@ Although it's not necessary for hot reloading, you should connect to the REPL fr
     lein run -- -sf config/config.dev.edn
     ```
 
+- To run migrations from the REPL:
+    ```clojure
+    (chronograph.migrations/migrate)
+    ```
+  And from the command line:
+  ```bash
+  lein run -- -mf config/config.dev.edn
+  ```
+
 ## Testing
 
 To run tests, do:

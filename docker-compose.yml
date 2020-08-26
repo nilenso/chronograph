@@ -3,9 +3,9 @@ services:
   dev_db:
     image: postgres:12.3
     environment:
-      POSTGRES_USER: tt_dev
-      POSTGRES_DB: tt_dev
-      POSTGRES_PASSWORD: tt_devpwd
+      POSTGRES_USER: chronograph_dev
+      POSTGRES_DB: chronograph_dev
+      POSTGRES_PASSWORD: chronograph_devpwd
     ports:
       - 19401:5432
     volumes:
