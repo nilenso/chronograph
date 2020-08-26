@@ -1,29 +1,29 @@
 (ns chronograph-web.views
-  (:require [reagent.core :as reagent]
-            [re-frame.core :as rf]
-            [chronograph-web.subscriptions :as subs]
-            [chronograph-web.google :as google]))
+  (:require [re-frame.core :as rf]
+            [chronograph-web.subscriptions :as subs]))
 
 (defn- signin-button []
-  (reagent/create-class
-    {:display-name        "signin-button"
-     :component-did-mount (fn [_]
-                            (-> js/gapi
-                                .-signin2
-                                (.render "google-signin-button"
-                                         (clj->js {:onsuccess (fn [^js google-user]
-                                                                (-> google-user
-                                                                    .getAuthResponse
-                                                                    (google/process-auth-response)))
-                                                   :onfailure (fn []
-                                                                (println "Sign-in failed!"))}))))
-
-     :reagent-render      (fn []
-                            [:div {:id "google-signin-button"}])}))
+  [:div
+   [:h2 "Please sign in to continue"]
+   [:a {:href "/google-login"}
+    "Sign in with Google"]])
 
 (defn signin-page []
-  [:a {:href "/google-login"}
-   "Sign in with Google"])
+  [signin-button])
+
+(defn landing-page []
+  (let [{:keys [name email]} @(rf/subscribe [::subs/user-info])]
+    [:div
+     [:h2 "Welcome!"]
+     [:p name]
+     [:p email]]))
+
+(defn loading-page []
+  [:h2 "Loading..."])
 
 (defn root []
-  [signin-page])
+  (case @(rf/subscribe [::subs/signin-state])
+    :signed-in [landing-page]
+    :signed-out [signin-page]
+    :fetching-profile [loading-page]
+    [loading-page]))

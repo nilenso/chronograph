@@ -2,8 +2,7 @@
   (:require [reagent.dom]
             [re-frame.core :as rf]
             [chronograph-web.events :as events]
-            [chronograph-web.views :as views]
-            [chronograph-web.google :as google]))
+            [chronograph-web.views :as views]))
 
 (defn render
   []
@@ -20,5 +19,4 @@
 (defn ^:export run
   []
   (rf/dispatch-sync [::events/initialize])
-  (google/init-api!)
   (render))
