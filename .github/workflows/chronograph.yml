@@ -53,6 +53,15 @@ jobs:
     - name: Run tests
       run: lein test
 
+    - name: Build uberjar
+      run: lein uberjar
+
+    - name: Upload uberjar
+      uses: actions/upload-artifact@v2
+      with:
+        name: chronograph-uberjar
+        path: target/chronograph-0.1.0-SNAPSHOT-standalone.jar
+
   frontend-build:
     runs-on: ubuntu-latest
 
@@ -64,3 +73,60 @@ jobs:
 
     - name: Run frontend tests
       run: yarn test
+
+  staging-deploy:
+    runs-on: ubuntu-latest
+
+    needs: server-build
+
+    env:
+      CHRONOGRAPH_STAGING_INVENTORY: "staging.hosts"
+      CHRONOGRAPH_STAGING_PRIVATE_KEY: "staging.private_key"
+      CHRONOGRAPH_STAGING_USER: ${{secrets.CHRONOGRAPH_STAGING_USER}}
+      ANSIBLE_HOST_KEY_CHECKING: False
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        repository: 'nilenso/chronograph-playbook'
+
+    - name: Create private key
+      run: |
+        echo "$CHRONOGRAPH_STAGING_PRIVATE_KEY_DATA" > "$CHRONOGRAPH_STAGING_PRIVATE_KEY"
+        chmod 600 "$CHRONOGRAPH_STAGING_PRIVATE_KEY"
+      shell: bash
+      env:
+        CHRONOGRAPH_STAGING_PRIVATE_KEY_DATA: ${{secrets.CHRONOGRAPH_STAGING_PRIVATE_KEY_DATA}}
+
+    - name: Create inventory
+      run: |
+        echo "$CHRONOGRAPH_STAGING_INVENTORY_DATA" > "$CHRONOGRAPH_STAGING_INVENTORY"
+        chmod 600 "$CHRONOGRAPH_STAGING_INVENTORY"
+      shell: bash
+      env:
+        CHRONOGRAPH_STAGING_INVENTORY_DATA: ${{secrets.CHRONOGRAPH_STAGING_INVENTORY_DATA}}
+
+    - name: Download uberjar
+      id: uberjar
+      uses: actions/download-artifact@v2
+      with:
+        name: chronograph-uberjar
+
+    - name: Set up group vars
+      shell: bash
+      env:
+        WEBSERVERS_VARS: "group_vars/webservers"
+      run: |
+        mkdir group_vars
+        echo "---" >> $WEBSERVERS_VARS
+        echo "chronograph_jar: ${{ steps.uberjar.outputs.download-path }}" >> $WEBSERVERS_VARS
+
+    - name: Deploy to staging
+      run: |
+        ansible-playbook \
+        --inventory "$CHRONOGRAPH_STAGING_INVENTORY" \
+        --user "$CHRONOGRAPH_STAGING_USER" \
+        --private-key "$CHRONOGRAPH_STAGING_PRIVATE_KEY" \
+        --become \
+        -vvvv \
+        webserver.yml
