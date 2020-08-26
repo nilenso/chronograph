@@ -8,6 +8,8 @@
 (def ^:private cli-options
   [["-f" "--config-file FILE" "Path to configuration file"]
    ["-h" "--help" "Print this help message"]
+   ["-r" "--rollback" "Rollback the last migration. Must be run alone"]
+   ["-m" "--migrate" "Run migrations"]
    ["-s" "--serve" "Run the web server"]])
 
 (defn- operational-modes [options]
@@ -19,7 +21,7 @@
 (defn error-message [{:keys [options]}]
   (cond
     (not= 1 (count (operational-modes options)))
-    "Should be invoked with exactly one of -h -s"
+    "Should be invoked with exactly one of -h -r -m -s"
 
     (not (or (:config-file options) (:help options)))
     "Missing required option -f"
