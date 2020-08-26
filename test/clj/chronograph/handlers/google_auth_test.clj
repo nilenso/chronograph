@@ -5,9 +5,11 @@
             [org.httpkit.client :as http]
             [cheshire.core :as json]
             [chronograph.fixtures :as fixtures]
-            [chronograph.auth :as auth]))
+            [chronograph.auth :as auth]
+            [chronograph.db.users :as users-db]))
 
-(use-fixtures :once fixtures/config)
+(use-fixtures :once fixtures/config fixtures/datasource)
+(use-fixtures :each fixtures/clear-db)
 
 (deftest oauth2-redirect-handler-test
   (testing "when called with a code and no error"
@@ -16,13 +18,15 @@
                    google-auth/token->credentials {"name"           "foobar"
                                                    "sub"            "123456"
                                                    "email"          "foo@bar.com"
-                                                   "email_verified" true}]
-      (let [{:keys [status cookies]} (google-auth/oauth2-redirect-handler {:params {:code "123"}})]
+                                                   "email_verified" true
+                                                   "picture"        "https://foo/bar.png"}]
+      (let [{:keys [status cookies]} (google-auth/oauth2-redirect-handler {:params {:code "123"}})
+            {:keys [id]} (users-db/find-by-google-id "123456")]
         (is (= 302 status))
-        (is (= {:id       "123456"
-                :name     "foobar"
-                :email    "foo@bar.com"
-                :provider "google"}
+        (is (= {:id        id
+                :name      "foobar"
+                :email     "foo@bar.com"
+                :photo-url "https://foo/bar.png"}
                (-> cookies
                    (get "auth-token")
                    :value

@@ -3,6 +3,7 @@
             [ring.util.response :as response]
             [chronograph.config :as config]
             [chronograph.auth :as auth]
+            [chronograph.db.users :as users-db]
             [org.httpkit.client :as http]
             [mount.core :refer [defstate]]
             [cheshire.core :as json])
@@ -57,9 +58,8 @@
                                :body
                                json/parse-string
                                (get "id_token"))
-        {:strs [name sub email email_verified]} (token->credentials id-token)
+        {:strs [name sub email email_verified picture]} (token->credentials id-token)
         ;; TODO: check if email is verified, if not return an error
-        ;; TODO: check if user is in the DB, if not create them
-        ]
+        {:keys [id name email photo-url]} (users-db/find-or-create-google-user! sub name email picture)]
     (-> (response/redirect "/")
-        (auth/set-auth-cookie sub email name "google"))))
+        (auth/set-auth-cookie id email name photo-url))))

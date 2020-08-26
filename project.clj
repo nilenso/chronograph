@@ -15,7 +15,8 @@
                  [ring/ring-json "0.5.0"]
                  [cheshire "5.10.0"]
                  [com.google.api-client/google-api-client "1.30.4"]
-                 [buddy/buddy-sign "3.1.0"]]
+                 [buddy/buddy-sign "3.1.0"]
+                 [camel-snake-kebab "0.4.1"]]
   :repl-options {:init-ns dev.repl-utils}
   :source-paths ["src/clj" "src/cljc"]
   :test-paths ["test/clj" "test/cljc"]

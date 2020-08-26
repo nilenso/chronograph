@@ -12,9 +12,10 @@
   [signin-button])
 
 (defn landing-page []
-  (let [{:keys [name email]} @(rf/subscribe [::subs/user-info])]
+  (let [{:keys [name email photo-url]} @(rf/subscribe [::subs/user-info])]
     [:div
      [:h2 "Welcome!"]
+     [:img {:src photo-url}]
      [:p name]
      [:p email]]))
 
