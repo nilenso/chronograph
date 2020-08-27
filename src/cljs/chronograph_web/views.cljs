@@ -3,13 +3,13 @@
             [chronograph-web.subscriptions :as subs]))
 
 (defn- signin-button []
-  [:div
-   [:h2 "Please sign in to continue"]
-   [:a {:href "/google-login"}
-    "Sign in with Google"]])
+  [:a.google-signin-button-link {:href  "/google-login"}
+   [:span.google-signin-button]])
 
 (defn signin-page []
-  [signin-button])
+  [:div
+   [:h2 "Please sign in to continue"]
+   [signin-button]])
 
 (defn landing-page []
   (let [{:keys [name email photo-url]} @(rf/subscribe [::subs/user-info])]
