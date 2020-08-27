@@ -119,7 +119,11 @@ jobs:
       run: |
         mkdir group_vars
         echo "---" >> $WEBSERVERS_VARS
+        echo "Setting chronograph_jar: ${{ steps.uberjar.outputs.download-path }}"
         echo "chronograph_jar: ${{ steps.uberjar.outputs.download-path }}" >> $WEBSERVERS_VARS
+        echo "Printing groupvars"
+        cat $WEBSERVERS_VARS
+        echo "End groupvars"
 
     - name: Deploy to staging
       run: |
