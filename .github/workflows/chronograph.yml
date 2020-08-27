@@ -125,22 +125,13 @@ jobs:
         GCLOUD_CREDENTIALS: "gcloud.json"
         GCLOUD_CREDENTIALS_DATA: ${{ secrets.GCLOUD_CREDENTIALS_DATA }}
 
-    - name: Set up group vars
-      shell: bash
-      env:
-        WEBSERVERS_VARS: "group_vars/webservers"
-      run: |
-        mkdir group_vars
-        echo "---" >> $WEBSERVERS_VARS
-        echo "chronograph_jar: ${{ steps.uberjar.outputs.download-path }}/$CHRONOGRAPH_JAR" >> $WEBSERVERS_VARS
-        echo "chronograph_config: $CHRONOGRAPH_STAGING_CONFIG" >> $WEBSERVERS_VARS
-
     - name: Deploy to staging
       run: |
         ansible-playbook \
         --inventory "$CHRONOGRAPH_STAGING_INVENTORY" \
         --user "$CHRONOGRAPH_STAGING_USER" \
         --private-key "$CHRONOGRAPH_STAGING_PRIVATE_KEY" \
+        --extra-vars "chronograph_jar=${{ steps.uberjar.outputs.download-path }}/$CHRONOGRAPH_JAR" \
+        --extra-vars "chronograph_config=$CHRONOGRAPH_STAGING_CONFIG" \
         --become \
-        -vvvv \
         webserver.yml
