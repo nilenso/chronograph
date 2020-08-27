@@ -6,7 +6,9 @@
 
 (defn config [f]
   (mount/stop #'config/config)
-  (mount/start-with-args {:options {:config-file "config/config.test.edn"}} #'config/config)
+  (mount/start-with-args {:options {:config-file (or (System/getenv "TEST_CONFIG_FILE")
+                                                     "config/config.test.edn")}}
+                         #'config/config)
   (f)
   (mount/stop #'config/config))
 
