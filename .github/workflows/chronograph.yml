@@ -83,6 +83,7 @@ jobs:
     env:
       CHRONOGRAPH_STAGING_INVENTORY: "staging.hosts"
       CHRONOGRAPH_STAGING_PRIVATE_KEY: "staging.private_key"
+      CHRONOGRAPH_STAGING_CONFIG: "config.staging.edn"
       CHRONOGRAPH_STAGING_USER: ${{secrets.CHRONOGRAPH_STAGING_USER}}
       ANSIBLE_HOST_KEY_CHECKING: False
 
@@ -114,6 +115,17 @@ jobs:
       with:
         name: chronograph-uberjar
 
+    - name: Fetch config
+      run: |
+        echo "$GCLOUD_CREDENTIALS_DATA" > "$GCLOUD_CREDENTIALS"
+        gcloud auth activate-service-account "--key-file=$GCLOUD_CREDENTIALS"
+        gcloud config set project "$GCLOUD_PROJECT"
+        gcloud secrets versions access latest --secret=staging-config >> "$CHRONOGRAPH_STAGING_CONFIG"
+      env:
+        GCLOUD_PROJECT: chronograph
+        GCLOUD_CREDENTIALS: "gcloud.json"
+        GCLOUD_CREDENTIALS_DATA: ${{ secrets.GCLOUD_CREDENTIALS_DATA }}
+
     - name: Set up group vars
       shell: bash
       env:
@@ -121,11 +133,8 @@ jobs:
       run: |
         mkdir group_vars
         echo "---" >> $WEBSERVERS_VARS
-        echo "Setting chronograph_jar: ${{ steps.uberjar.outputs.download-path }}"
         echo "chronograph_jar: ${{ steps.uberjar.outputs.download-path }}/$CHRONOGRAPH_JAR" >> $WEBSERVERS_VARS
-        echo "Printing groupvars"
-        cat $WEBSERVERS_VARS
-        echo "End groupvars"
+        echo "chronograph_config: $CHRONOGRAPH_STAGING_CONFIG" >> $WEBSERVERS_VARS
 
     - name: Deploy to staging
       run: |
