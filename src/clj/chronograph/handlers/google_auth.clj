@@ -42,24 +42,31 @@
                          (get-in [:oauth :google])
                          redirect-uri)))
 
+(defn- redirect-with-error [error]
+  (response/redirect (format "/?%s=%s"
+                             (codec/url-encode "auth-error")
+                             (codec/url-encode error))))
+
 (defn oauth2-redirect-handler [{:keys [params] :as request}]
-  ;; TODO: Handle an error response from Google
-  (let [{:keys [token-endpoint
-                client-id
-                client-secret
-                redirect-uri]} (get-in config/config [:oauth :google])
-        token-response @(http/post token-endpoint
-                                   {:form-params {"client_id"     client-id
-                                                  "client_secret" client-secret
-                                                  "code"          (:code params)
-                                                  "grant_type"    "authorization_code"
-                                                  "redirect_uri"  redirect-uri}})
-        id-token       (some-> token-response
-                               :body
-                               json/parse-string
-                               (get "id_token"))
-        {:strs [name sub email email_verified picture]} (token->credentials id-token)
-        ;; TODO: check if email is verified, if not return an error
-        {:keys [id name email photo-url]} (users-db/find-or-create-google-user! sub name email picture)]
-    (-> (response/redirect "/")
-        (auth/set-auth-cookie id email name photo-url))))
+  (if (:error params)
+    (redirect-with-error (:error params))
+    (let [{:keys [token-endpoint
+                  client-id
+                  client-secret
+                  redirect-uri]} (get-in config/config [:oauth :google])
+          token-response @(http/post token-endpoint
+                                     {:form-params {"client_id"     client-id
+                                                    "client_secret" client-secret
+                                                    "code"          (:code params)
+                                                    "grant_type"    "authorization_code"
+                                                    "redirect_uri"  redirect-uri}})
+          id-token       (some-> token-response
+                                 :body
+                                 json/parse-string
+                                 (get "id_token"))
+          {:strs [name sub email email_verified picture]} (token->credentials id-token)]
+      (if-not email_verified
+        (redirect-with-error "email-not-verified")
+        (let [{:keys [id name email photo-url]} (users-db/find-or-create-google-user! sub name email picture)]
+          (-> (response/redirect "/")
+              (auth/set-auth-cookie id email name photo-url)))))))

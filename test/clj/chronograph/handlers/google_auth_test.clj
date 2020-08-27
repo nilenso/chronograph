@@ -31,4 +31,23 @@
                    (get "auth-token")
                    :value
                    auth/unsign-token
-                   (dissoc :exp))))))))
+                   (dissoc :exp)))))))
+
+  (testing "when called with an error"
+    (let [{:keys [status headers]} (google-auth/oauth2-redirect-handler {:params {:error "google-failed"}})]
+      (is (= 302 status))
+      (is (= "/?auth-error=google-failed"
+             (get headers "Location")))))
+
+  (testing "when the email from the id_token is not verified"
+    (mc/with-mock [http/post                      (delay {:body (-> {"id_token" "fake-token"}
+                                                                    (json/generate-string))})
+                   google-auth/token->credentials {"name"           "foobar"
+                                                   "sub"            "123456"
+                                                   "email"          "foo@bar.com"
+                                                   "email_verified" false
+                                                   "picture"        "https://foo/bar.png"}]
+      (let [{:keys [status headers]} (google-auth/oauth2-redirect-handler {:params {:code "123"}})]
+        (is (= 302 status))
+        (is (= "/?auth-error=email-not-verified"
+               (get headers "Location")))))))
