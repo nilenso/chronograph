@@ -13,6 +13,7 @@ on:
 env:
   PORT: 8000
   LOGO: https://nilenso.com/images/nilenso_logos/nilenso_logo.png
+  CHRONOGRAPH_JAR: chronograph.jar
 
 jobs:
   server-build:
@@ -60,7 +61,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: chronograph-uberjar
-        path: target/chronograph-0.1.0-SNAPSHOT-standalone.jar
+        path: target/${{env.CHRONOGRAPH_JAR}}
 
   frontend-build:
     runs-on: ubuntu-latest
@@ -88,6 +89,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
+        ref: debug
         repository: 'nilenso/chronograph-playbook'
 
     - name: Create private key
@@ -120,7 +122,7 @@ jobs:
         mkdir group_vars
         echo "---" >> $WEBSERVERS_VARS
         echo "Setting chronograph_jar: ${{ steps.uberjar.outputs.download-path }}"
-        echo "chronograph_jar: ${{ steps.uberjar.outputs.download-path }}" >> $WEBSERVERS_VARS
+        echo "chronograph_jar: ${{ steps.uberjar.outputs.download-path }}/$CHRONOGRAPH_JAR" >> $WEBSERVERS_VARS
         echo "Printing groupvars"
         cat $WEBSERVERS_VARS
         echo "End groupvars"

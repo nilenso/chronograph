@@ -22,6 +22,8 @@
   :test-paths ["test/clj" "test/cljc"]
   :main ^:skip-aot chronograph.core
   :uberjar-exclusions [#"dev.*"]
+  :uberjar-name "chronograph.jar"
+  :jar-name "chronograph-slim.jar"
   :profiles {:uberjar {:aot [#"chronograph.*"]}
              :cljs {:source-paths ["src/cljs" "src/cljc" "test/cljs"]
                     :dependencies ^:replace [[re-frame "1.0.0"]
