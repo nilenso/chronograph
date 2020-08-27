@@ -1,11 +1,13 @@
 {:cp-max-idle-time-excess-connections 1800
  :cp-max-idle-time                    10800
  :db-connection-string                "jdbc:postgresql://localhost:19401/chronograph_test?user=chronograph_test&password=chronograph_testpwd"
- :oauth                               {:google #merge [{:redirect-uri   "http://localhost:8000/google-oauth2-redirect"
-                                                        :response-type  "code"
-                                                        :login-endpoint "https://accounts.google.com/o/oauth2/v2/auth"
-                                                        :token-endpoint "https://oauth2.googleapis.com/token"}
-                                                       #include "google.secrets.edn"]}
+ :oauth                               {:google {:redirect-uri   "http://localhost:8000/google-oauth2-redirect"
+                                                :response-type  "code"
+                                                :login-endpoint "https://accounts.google.com/o/oauth2/v2/auth"
+                                                :token-endpoint "https://oauth2.googleapis.com/token"
+                                                :client-id      "test-client-id"
+                                                :client-secret  "test-client-secret"
+                                                :scope          "test scopes"}}
  :auth                                {:token-signing-key       "your-signing-key-here"
                                        :token-expiry-in-seconds 3600}
  :app-log-level                       "debug"
