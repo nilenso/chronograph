@@ -12,6 +12,7 @@
             [org.httpkit.server :as httpkit]
             [ring.util.response :as response]
             [chronograph.config :as config]
+            [chronograph.middleware :as middleware]
             [chronograph.handlers.google-auth :as google-auth]
             [chronograph.handlers.users :as users]))
 
@@ -26,6 +27,7 @@
 (def handler
   (-> routes
       bidi/make-handler
+      (middleware/wrap-exception-logging)
       (wrap-json-response)
       (wrap-json-body {:keywords? true :bigdecimals? true})
       (wrap-keyword-params)
