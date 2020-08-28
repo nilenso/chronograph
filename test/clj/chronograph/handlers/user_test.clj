@@ -1,20 +1,20 @@
-(ns chronograph.handlers.users-test
+(ns chronograph.handlers.user-test
   (:require [clojure.test :refer :all]
-            [chronograph.handlers.users :as hu]
+            [chronograph.handlers.user :as hu]
             [chronograph.fixtures :as fixtures]
             [mock-clj.core :as mc]
             [chronograph.auth :as auth]
-            [chronograph.db.users :as users-db]))
+            [chronograph.domain.user :as user]))
 
 (use-fixtures :once fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)
 
 (deftest me-when-user-exists-test
   (testing "Should retrieve the authenticated user's information from the DB if they exist"
-    (let [{:keys [id]} (users-db/find-or-create-google-user! "google-123"
-                                                             "Foo Bar"
-                                                             "foo@bar.baz"
-                                                             "https://foo.png")]
+    (let [{:keys [id]} (user/find-or-create-google-user! "google-123"
+                                                         "Foo Bar"
+                                                         "foo@bar.baz"
+                                                         "https://foo.png")]
       (mc/with-mock [auth/unsign-token {:id id}]
         (is (= {:id        id
                 :name      "Foo Bar"

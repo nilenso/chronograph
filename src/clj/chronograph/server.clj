@@ -14,13 +14,13 @@
             [chronograph.config :as config]
             [chronograph.middleware :as middleware]
             [chronograph.handlers.google-auth :as google-auth]
-            [chronograph.handlers.users :as users]))
+            [chronograph.handlers.user :as user]))
 
 (def routes ["/" [["" (constantly (-> (response/resource-response "public/index.html")
                                       (response/content-type "text/html")))]
                   ["google-login" google-auth/login-handler]
                   ["google-oauth2-redirect" google-auth/oauth2-redirect-handler]
-                  ["api/" [["users/me" {:get users/me}]]]
+                  ["api/" [["users/me" {:get user/me}]]]
                   [true (constantly (-> (response/response "Not Found")
                                         (response/status 404)))]]])
 

@@ -6,7 +6,7 @@
             [cheshire.core :as json]
             [chronograph.fixtures :as fixtures]
             [chronograph.auth :as auth]
-            [chronograph.db.users :as users-db]))
+            [chronograph.db.user :as users-db]))
 
 (use-fixtures :once fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)

@@ -3,7 +3,7 @@
             [ring.util.response :as response]
             [chronograph.config :as config]
             [chronograph.auth :as auth]
-            [chronograph.db.users :as users-db]
+            [chronograph.domain.user :as user]
             [org.httpkit.client :as http]
             [mount.core :refer [defstate]]
             [cheshire.core :as json]
@@ -75,7 +75,7 @@
             {:strs [name sub email email_verified picture]} (token->credentials id-token)]
         (if-not email_verified
           (redirect-with-error "email-not-verified")
-          (let [{:keys [id name email photo-url]} (users-db/find-or-create-google-user! sub name email picture)]
+          (let [{:keys [id name email photo-url]} (user/find-or-create-google-user! sub name email picture)]
             (-> (response/redirect "/")
                 (auth/set-auth-cookie id email name photo-url))))))
     (catch Exception e

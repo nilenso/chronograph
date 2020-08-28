@@ -1,7 +1,7 @@
-(ns chronograph.handlers.users
+(ns chronograph.handlers.user
   (:require [chronograph.auth :as auth]
             [ring.util.response :as response]
-            [chronograph.db.users :as users-db]))
+            [chronograph.db.user :as users-db]))
 
 (defn me [{:keys [cookies] :as request}]
   (if-let [user (some-> cookies
