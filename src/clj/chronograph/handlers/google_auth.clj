@@ -19,7 +19,7 @@
              (.build))
   :stop nil)
 
-(defn token->credentials
+(defn verify-id-token
   [^String token]
   (some->> token
            (.verify ^GoogleIdTokenVerifier google-id-token-verifier)
@@ -72,12 +72,12 @@
     (if (:error params)
       (redirect-with-error (:error params))
       (let [id-token (fetch-id-token (:code params))
-            {:strs [name sub email email_verified picture]} (token->credentials id-token)]
+            {:strs [name sub email email_verified picture]} (verify-id-token id-token)]
         (if-not email_verified
           (redirect-with-error "email-not-verified")
-          (let [{:keys [id name email photo-url]} (user/find-or-create-google-user! sub name email picture)]
+          (let [{:keys [id]} (user/find-or-create-google-user! sub name email picture)]
             (-> (response/redirect "/")
-                (auth/set-auth-cookie id email name photo-url))))))
+                (auth/set-auth-cookie id))))))
     (catch Exception e
       ;; We can't bubble up the exception and rely on our middleware here,
       ;; because we need to render the error appropriately to the user.

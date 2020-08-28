@@ -7,7 +7,7 @@
   (if-let [user (some-> cookies
                         (get "auth-token")
                         :value
-                        auth/unsign-token
+                        auth/verify-token
                         :id
                         users-db/find-by-id)]
     (response/response user)

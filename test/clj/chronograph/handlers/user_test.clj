@@ -15,7 +15,7 @@
                                                          "Foo Bar"
                                                          "foo@bar.baz"
                                                          "https://foo.png")]
-      (mc/with-mock [auth/unsign-token {:id id}]
+      (mc/with-mock [auth/verify-token {:id id}]
         (is (= {:id        id
                 :name      "Foo Bar"
                 :email     "foo@bar.baz"
@@ -24,7 +24,7 @@
 
 (deftest me-when-user-doesnt-exist-test
   (testing "Should return a 401 if the user doesn't exist"
-    (mc/with-mock [auth/unsign-token {:id 123}]
+    (mc/with-mock [auth/verify-token {:id 123}]
       (is (= {:status 401
               :body   {:error "Unauthorized"}}
              (-> (hu/me {:cookies {"auth-token" {:value "stub"}}})
