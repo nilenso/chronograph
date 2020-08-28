@@ -100,9 +100,20 @@ jobs:
       env:
         CHRONOGRAPH_STAGING_PRIVATE_KEY_DATA: ${{secrets.CHRONOGRAPH_STAGING_PRIVATE_KEY_DATA}}
 
+    - name: Set gcloud credentials
+      run: |
+        echo "$GCLOUD_CREDENTIALS_DATA" > "$GCLOUD_CREDENTIALS"
+        gcloud auth activate-service-account "--key-file=$GCLOUD_CREDENTIALS"
+        gcloud config set project "$GCLOUD_PROJECT"
+      env:
+        GCLOUD_PROJECT: chronograph
+        GCLOUD_CREDENTIALS: "gcloud.json"
+        GCLOUD_CREDENTIALS_DATA: ${{ secrets.GCLOUD_CREDENTIALS_DATA }}
+
     - name: Create inventory
       run: |
-        echo "$CHRONOGRAPH_STAGING_INVENTORY_DATA" > "$CHRONOGRAPH_STAGING_INVENTORY"
+        echo "[webservers]" > "$CHRONOGRAPH_STAGING_INVENTORY"
+        gcloud compute instances list --format='get(networkInterfaces[0].accessConfigs[0].natIP)' >> "$CHRONOGRAPH_STAGING_INVENTORY"
         chmod 600 "$CHRONOGRAPH_STAGING_INVENTORY"
       shell: bash
       env:
@@ -115,15 +126,7 @@ jobs:
         name: chronograph-uberjar
 
     - name: Fetch config
-      run: |
-        echo "$GCLOUD_CREDENTIALS_DATA" > "$GCLOUD_CREDENTIALS"
-        gcloud auth activate-service-account "--key-file=$GCLOUD_CREDENTIALS"
-        gcloud config set project "$GCLOUD_PROJECT"
-        gcloud secrets versions access latest --secret=staging-config >> "$CHRONOGRAPH_STAGING_CONFIG"
-      env:
-        GCLOUD_PROJECT: chronograph
-        GCLOUD_CREDENTIALS: "gcloud.json"
-        GCLOUD_CREDENTIALS_DATA: ${{ secrets.GCLOUD_CREDENTIALS_DATA }}
+      run: gcloud secrets versions access latest --secret=staging-config >> "$CHRONOGRAPH_STAGING_CONFIG"
 
     - name: Deploy to staging
       run: |
