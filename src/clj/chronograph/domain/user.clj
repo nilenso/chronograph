@@ -9,7 +9,7 @@
 
 (def find-by-id user-db/find-by-id)
 
-(defn link-google-profile!
+(defn- link-google-profile!
   [tx user-id google-id]
   (let [{google-profiles-id :id} (google-profile-db/create! tx google-id)]
     (linked-profile-db/create! tx user-id google-profiles-id "google")))
