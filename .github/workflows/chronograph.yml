@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      TEST_CONFIG: "config/config.ci.edn"
+      TEST_CONFIG_FILE: "config/config.ci.edn"
 
     steps:
     - uses: actions/checkout@v2
@@ -48,7 +48,7 @@ jobs:
       run: lein deps
 
     - name: Run migrations
-      run: lein run -- -mf $TEST_CONFIG
+      run: lein run -- -mf $TEST_CONFIG_FILE
 
     - name: Run tests
       run: lein test

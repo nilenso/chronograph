@@ -1,0 +1,11 @@
+ALTER TABLE google_profiles ALTER updated_at DROP NOT NULL;
+--;;
+ALTER TABLE google_profiles ALTER created_at DROP NOT NULL;
+--;;
+ALTER TABLE linked_profiles ALTER updated_at DROP NOT NULL;
+--;;
+ALTER TABLE linked_profiles ALTER created_at DROP NOT NULL;
+--;;
+ALTER TABLE users ALTER updated_at DROP NOT NULL;
+--;;
+ALTER TABLE users ALTER created_at DROP NOT NULL;

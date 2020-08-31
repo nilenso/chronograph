@@ -2,11 +2,11 @@
   (:require [re-frame.core :as rf]))
 
 (rf/reg-sub
-  ::google-client-initialized?
+  ::signin-state
   (fn [db _]
-    (:google-client-initialized? db)))
+    (get-in db [:user :signin-state])))
 
 (rf/reg-sub
-  ::signed-in?
+  ::user-info
   (fn [db _]
-    (:signed-in? db)))
+    (:user db)))

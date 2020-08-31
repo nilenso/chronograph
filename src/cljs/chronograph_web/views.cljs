@@ -1,41 +1,30 @@
 (ns chronograph-web.views
-  (:require [reagent.core :as reagent]
-            [re-frame.core :as rf]
-            [chronograph-web.subscriptions :as subs]
-            [chronograph-web.google :as google]))
+  (:require [re-frame.core :as rf]
+            [chronograph-web.subscriptions :as subs]))
 
 (defn- signin-button []
-  (reagent/create-class
-    {:display-name        "signin-button"
-     :component-did-mount (fn [_]
-                            (-> js/gapi
-                                .-signin2
-                                (.render "google-signin-button"
-                                         (clj->js {:onsuccess (fn [^js google-user]
-                                                                (-> google-user
-                                                                    .getAuthResponse
-                                                                    (google/process-auth-response)))
-                                                   :onfailure (fn []
-                                                                (println "Sign-in failed!"))}))))
-
-     :reagent-render      (fn []
-                            [:div {:id "google-signin-button"}])}))
+  [:a.google-signin-button-link {:href  "/google-login"}
+   [:span.google-signin-button]])
 
 (defn signin-page []
-  (if @(rf/subscribe [::subs/google-client-initialized?])
-    [:div
-     [:h3 "Welcome to Chronograph! Please sign in"]
-     [signin-button]]
-    [:h2 "Loading..."]))
+  [:div
+   [:h2 "Please sign in to continue"]
+   [signin-button]])
 
 (defn landing-page []
-  (let [{:keys [name email]} (google/get-local-profile)]
+  (let [{:keys [name email photo-url]} @(rf/subscribe [::subs/user-info])]
     [:div
-     [:h3 "This is Chronograph"]
+     [:h2 "Welcome!"]
+     [:img {:src photo-url}]
      [:p name]
      [:p email]]))
 
+(defn loading-page []
+  [:h2 "Loading..."])
+
 (defn root []
-  (if @(rf/subscribe [::subs/signed-in?])
-    [landing-page]
-    [signin-page]))
+  (case @(rf/subscribe [::subs/signin-state])
+    :signed-in [landing-page]
+    :signed-out [signin-page]
+    :fetching-profile [loading-page]
+    [loading-page]))

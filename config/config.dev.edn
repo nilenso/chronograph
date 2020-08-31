@@ -1,6 +1,10 @@
-{:cp-max-idle-time-excess-connections 1800
- :cp-max-idle-time 10800
- :db-connection-string "jdbc:postgresql://localhost:19401/chronograph_dev?user=chronograph_dev&password=chronograph_devpwd"
- :google-client-id "your_google_client_id"
- :app-log-level "debug"
- :port 8000}
+{:db-connection-string "jdbc:postgresql://localhost:19401/chronograph_dev?user=chronograph_dev&password=chronograph_devpwd"
+ :oauth                {:google #merge [{:redirect-uri   "http://localhost:8000/google-oauth2-redirect"
+                                         :response-type  "code"
+                                         :login-endpoint "https://accounts.google.com/o/oauth2/v2/auth"
+                                         :token-endpoint "https://oauth2.googleapis.com/token"}
+                                        #include "google.secrets.edn"]}
+ :auth                 {:token-signing-key       "your-signing-key-here"
+                        :token-expiry-in-seconds 3600}
+ :app-log-level        "debug"
+ :port                 8000}

@@ -1,0 +1,23 @@
+.google-signin-button-link {
+  .google-signin-button {
+    background: url("/images/btn_google_signin_dark_normal_web.png") no-repeat;
+    width: 191px;
+    height: 46px;
+    display: inline-block;
+  }
+
+  &:focus {
+    border: none;
+    outline: none;
+    .google-signin-button {
+      border: none;
+      background: url("/images/btn_google_signin_dark_focus_web.png") no-repeat;
+    }
+  }
+
+  &:active {
+    .google-signin-button {
+      background: url("/images/btn_google_signin_dark_pressed_web.png") no-repeat;
+    }
+  }
+}
