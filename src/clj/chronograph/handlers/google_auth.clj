@@ -53,19 +53,21 @@
                 client-id
                 client-secret
                 redirect-uri]} (get-in config/config [:oauth :google])
-        {:keys [status body]} @(http/post token-endpoint
-                                          {:form-params {"client_id"     client-id
-                                                         "client_secret" client-secret
-                                                         "code"          auth-code
-                                                         "grant_type"    "authorization_code"
-                                                         "redirect_uri"  redirect-uri}})]
-    (if-not (= 200 status)
-      (throw (ex-info "Received an unexpected status code from Google's token endpoint"
-                      {:status status
-                       :body   body}))
-      (-> body
-          json/parse-string
-          (get "id_token")))))
+        {:keys [status body error]} @(http/post token-endpoint
+                                                {:form-params {"client_id"     client-id
+                                                               "client_secret" client-secret
+                                                               "code"          auth-code
+                                                               "grant_type"    "authorization_code"
+                                                               "redirect_uri"  redirect-uri}})]
+
+    (cond
+      (some? error) (throw error)
+      (not= 200 status) (throw (ex-info "Received an unexpected status code from Google's token endpoint"
+                                        {:status status
+                                         :body   body}))
+      :else (-> body
+                json/parse-string
+                (get "id_token")))))
 
 (defn oauth2-redirect-handler [{:keys [params] :as request}]
   (try

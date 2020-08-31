@@ -14,13 +14,13 @@
 (deftest oauth2-redirect-handler-test
   (testing "when called with a code and no error"
     (mc/with-mock [http/post                   (delay {:status 200
-                                                          :body   (-> {"id_token" "fake-token"}
-                                                                      (json/generate-string))})
-                   google-auth/verify-id-token {"name"              "foobar"
-                                                   "sub"            "123456"
-                                                   "email"          "foo@bar.com"
-                                                   "email_verified" true
-                                                   "picture"        "https://foo/bar.png"}]
+                                                       :body   (-> {"id_token" "fake-token"}
+                                                                   (json/generate-string))})
+                   google-auth/verify-id-token {"name"           "foobar"
+                                                "sub"            "123456"
+                                                "email"          "foo@bar.com"
+                                                "email_verified" true
+                                                "picture"        "https://foo/bar.png"}]
       (let [{:keys [status cookies]} (google-auth/oauth2-redirect-handler {:params {:code "123"}})
             {:keys [id]} (users-db/find-by-google-id "123456")]
         (is (= 302 status))
@@ -39,13 +39,13 @@
 
   (testing "when the email from the id_token is not verified"
     (mc/with-mock [http/post                   (delay {:status 200
-                                                          :body   (-> {"id_token" "fake-token"}
-                                                                      (json/generate-string))})
-                   google-auth/verify-id-token {"name"              "foobar"
-                                                   "sub"            "123456"
-                                                   "email"          "foo@bar.com"
-                                                   "email_verified" false
-                                                   "picture"        "https://foo/bar.png"}]
+                                                       :body   (-> {"id_token" "fake-token"}
+                                                                   (json/generate-string))})
+                   google-auth/verify-id-token {"name"           "foobar"
+                                                "sub"            "123456"
+                                                "email"          "foo@bar.com"
+                                                "email_verified" false
+                                                "picture"        "https://foo/bar.png"}]
       (let [{:keys [status headers]} (google-auth/oauth2-redirect-handler {:params {:code "123"}})]
         (is (= 302 status))
         (is (= "/?auth-error=email-not-verified"
@@ -61,7 +61,7 @@
                (get headers "Location"))))))
 
   (testing "when the call to the token endpoint throws an exception"
-    (mc/with-mock [http/post (delay (throw (ex-info "Timeout!" {:time :out})))]
+    (mc/with-mock [http/post (delay {:error (ex-info "Timeout!" {:time :out})})]
       (let [{:keys [status headers]} (google-auth/oauth2-redirect-handler {:params {:code "123"}})]
         (is (= 302 status))
         (is (= "/?auth-error=unexpected-error"
