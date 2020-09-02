@@ -17,3 +17,6 @@ node_modules
 resources/public/css
 resources/public/js
 config/*.secrets.edn
+*~
+\#*\#
+.\#*
