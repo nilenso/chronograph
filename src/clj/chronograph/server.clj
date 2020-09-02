@@ -37,12 +37,23 @@
       (wrap-content-type)
       (wrap-not-modified)))
 
+(defn- error-logger [text ex]
+  (log/error ex text))
+
+(defn- warn-logger [text ex]
+  (log/warn ex text))
+
+(defn- event-logger [text]
+  (log/info text))
+
 (defn start-server!
   ([] (start-server! handler))
   ([app-handler]
    (log/info {:event ::server-start})
    (httpkit/run-server app-handler
-                       {:port (:port config/config)})))
+                       {:port         (:port config/config)
+                        :error-logger error-logger
+                        :warn-logger  warn-logger})))
 
 (defstate server
   :start (start-server!)
