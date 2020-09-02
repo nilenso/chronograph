@@ -12,6 +12,6 @@
   :start (jdbc/get-datasource {:jdbcUrl (:db-connection-string config/config)})
   :stop nil)
 
-(def sql-opts {:builder-fn jdbc-result-set/as-unqualified-kebab-maps
+(def sql-opts {:builder-fn jdbc-result-set/as-kebab-maps
                :column-fn  csk/->snake_case_string
                :table-fn   csk/->snake_case_string})

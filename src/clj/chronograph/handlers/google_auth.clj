@@ -77,7 +77,7 @@
             {:strs [name sub email email_verified picture]} (verify-id-token id-token)]
         (if-not email_verified
           (redirect-with-error "email-not-verified")
-          (let [{:keys [id]} (user/find-or-create-google-user! sub name email picture)]
+          (let [{:users/keys [id]} (user/find-or-create-google-user! sub name email picture)]
             (-> (response/redirect "/")
                 (auth/set-auth-cookie id))))))
     (catch Exception e

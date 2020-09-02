@@ -1,5 +1,6 @@
 (ns chronograph.fixtures
   (:require [chronograph.config :as config]
+            [chronograph.specs]
             [mount.core :as mount]
             [chronograph.db.core :as db]
             [next.jdbc :as jdbc]))

@@ -34,4 +34,5 @@
                                              [day8.re-frame/re-frame-10x "0.7.0"]
                                              [day8.re-frame/test "0.1.5"]
                                              [binaryage/devtools "1.0.2"]]}
-             :dev {:dependencies [[mock-clj "0.2.1"]]}})
+             :dev {:dependencies [[mock-clj "0.2.1"]
+                                  [org.clojure/test.check "0.9.0"]]}})

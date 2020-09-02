@@ -28,7 +28,7 @@
   (-> routes
       bidi/make-handler
       (middleware/wrap-exception-logging)
-      (wrap-json-response)
+      (wrap-json-response {:key-fn name})
       (wrap-json-body {:keywords? true :bigdecimals? true})
       (wrap-keyword-params)
       (wrap-params)

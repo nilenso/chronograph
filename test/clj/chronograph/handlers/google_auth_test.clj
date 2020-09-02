@@ -22,7 +22,7 @@
                                                 "email_verified" true
                                                 "picture"        "https://foo/bar.png"}]
       (let [{:keys [status cookies]} (google-auth/oauth2-redirect-handler {:params {:code "123"}})
-            {:keys [id]} (users-db/find-by-google-id "123456")]
+            {:users/keys [id]} (users-db/find-by-google-id "123456")]
         (is (= 302 status))
         (is (= id
                (-> cookies

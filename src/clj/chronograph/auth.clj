@@ -2,16 +2,16 @@
   (:require [buddy.sign.jwt :as jwt]
             [chronograph.config :as config]
             [taoensso.timbre :as log]
-            [ring.util.response :as response])
-  (:import (java.time Instant)
-           (java.time.temporal ChronoUnit)))
+            [ring.util.response :as response]
+            [chronograph.utils.time :as time])
+  (:import (java.time.temporal ChronoUnit)))
 
 (defn- secret-key []
   (get-in config/config [:auth :token-signing-key]))
 
 (defn create-token [id]
   (jwt/sign {:id  id
-             :exp (-> (Instant/now)
+             :exp (-> (time/now)
                       (.plus (get-in config/config [:auth :token-expiry-in-seconds])
                              ChronoUnit/SECONDS)
                       (.getEpochSecond))}
