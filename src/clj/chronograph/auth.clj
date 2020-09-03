@@ -9,13 +9,17 @@
 (defn- secret-key []
   (get-in config/config [:auth :token-signing-key]))
 
-(defn create-token [id]
-  (jwt/sign {:id  id
-             :exp (-> (time/now)
-                      (.plus (get-in config/config [:auth :token-expiry-in-seconds])
-                             ChronoUnit/SECONDS)
-                      (.getEpochSecond))}
-            (secret-key)))
+(defn create-token
+  ([id]
+   (create-token id
+                 (get-in config/config [:auth :token-expiry-in-seconds])))
+  ([id expiry-seconds]
+   (jwt/sign {:id  id
+              :exp (-> (time/now)
+                       (.plus expiry-seconds
+                              ChronoUnit/SECONDS)
+                       (.getEpochSecond))}
+             (secret-key))))
 
 (defn verify-token [token]
   (try

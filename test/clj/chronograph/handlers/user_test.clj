@@ -1,34 +1,32 @@
 (ns chronograph.handlers.user-test
-  (:require [clojure.test :refer :all]
-            [chronograph.handlers.user :as hu]
-            [chronograph.fixtures :as fixtures]
-            [mock-clj.core :as mc]
-            [chronograph.auth :as auth]
-            [chronograph.domain.user :as user]
+  (:require [chronograph.auth :as auth]
             [chronograph.factories :as factories]
-            [chronograph.utils.time :as time]))
+            [chronograph.fixtures :as fixtures]
+            [chronograph.handlers.user :as hu]
+            [chronograph.middleware :as middleware]
+            [clojure.test :refer :all]))
 
 (use-fixtures :once fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)
 
+
 (deftest me-when-user-exists-test
-  (testing "Should retrieve the authenticated user's information from the DB if they exist"
-    (with-redefs [time/now (constantly (time/now))]
-      (let [{:keys [users/id users/name users/email users/photo-url]} (factories/create-user)
-            now (time/now)]
-        (mc/with-mock [auth/verify-token {:id id}]
-          (is (= #:users{:id        id
-                         :name      name
-                         :email     email
-                         :photo-url photo-url
-                         :created-at now
-                         :updated-at now}
-                 (:body (hu/me {:cookies {"auth-token" {:value "stub"}}})))))))))
+  (testing "Should return response with :user information if the user exists."
+    (let [user (factories/create-user)
+          request ((middleware/wrap-authenticated-user identity)
+                   {:cookies {"auth-token" {:value (auth/create-token
+                                                    (:users/id user))}}})]
+      (is (= {:status 200
+              :headers {}
+              :body user}
+             (hu/me request))))))
 
 (deftest me-when-user-doesnt-exist-test
   (testing "Should return a 401 if the user doesn't exist"
-    (mc/with-mock [auth/verify-token {:id 123}]
+    (let [request ((middleware/wrap-authenticated-user identity)
+                   {:cookies {"auth-token" {:value (auth/create-token
+                                                    9876543210)}}})]
       (is (= {:status 401
-              :body   {:error "Unauthorized"}}
-             (-> (hu/me {:cookies {"auth-token" {:value "stub"}}})
-                 (select-keys [:status :body])))))))
+              :headers {}
+              :body {:error "Unauthorized"}}
+             (hu/me request))))))

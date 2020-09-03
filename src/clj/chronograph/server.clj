@@ -27,6 +27,7 @@
 (def handler
   (-> routes
       bidi/make-handler
+      (middleware/wrap-authenticated-user)
       (middleware/wrap-exception-logging)
       (wrap-json-response {:key-fn name})
       (wrap-json-body {:keywords? true :bigdecimals? true})

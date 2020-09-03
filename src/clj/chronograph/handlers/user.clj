@@ -1,15 +1,8 @@
 (ns chronograph.handlers.user
-  (:require [chronograph.auth :as auth]
-            [ring.util.response :as response]
-            [chronograph.db.user :as users-db]))
+  (:require [ring.util.response :as response]))
 
-(defn me [{:keys [cookies] :as request}]
-  (if-let [user (some-> cookies
-                        (get "auth-token")
-                        :value
-                        auth/verify-token
-                        :id
-                        users-db/find-by-id)]
-    (response/response user)
+(defn me [{:keys [user] :as request}]
+  (if-not user
     (-> (response/response {:error "Unauthorized"})
-        (response/status 401))))
+        (response/status 401))
+    (response/response user)))
