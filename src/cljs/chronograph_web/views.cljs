@@ -19,12 +19,19 @@
      [:p name]
      [:p email]]))
 
+(def authenticated-pages {:root landing-page})
+
+(defn authenticated-page []
+  (if-let [{:keys [handler]} @(rf/subscribe [::subs/current-page])]
+    [(authenticated-pages handler)]
+    [:div "Page not found"]))
+
 (defn loading-page []
   [:h2 "Loading..."])
 
 (defn root []
   (case @(rf/subscribe [::subs/signin-state])
-    :signed-in [landing-page]
+    :signed-in [authenticated-page]
     :signed-out [signin-page]
     :fetching-profile [loading-page]
     [loading-page]))

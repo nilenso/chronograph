@@ -28,6 +28,8 @@
              :cljs {:source-paths ["src/cljs" "src/cljc" "test/cljs"]
                     :dependencies ^:replace [[re-frame "1.0.0"]
                                              [day8.re-frame/http-fx "0.2.1"]
+                                             [kibu/pushy "0.3.8"]
+                                             [bidi "2.1.6"]
 
                                              ;; dev dependencies
                                              [org.clojure/clojure "1.10.1"]
