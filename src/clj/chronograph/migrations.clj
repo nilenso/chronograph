@@ -4,7 +4,7 @@
 
 (defn config []
   {:store :database
-   :db    {:connection-uri (:db-connection-string config/config)}})
+   :db    (:db-spec config/config)})
 
 (defn create-migration [migration-name]
   (migratus/create (config) migration-name))

@@ -9,7 +9,7 @@
 (jdbc-date-time/read-as-instant)
 
 (defstate datasource
-  :start (jdbc/get-datasource {:jdbcUrl (:db-connection-string config/config)})
+  :start (jdbc/get-datasource (:db-spec config/config))
   :stop nil)
 
 (def sql-opts {:builder-fn jdbc-result-set/as-unqualified-kebab-maps
