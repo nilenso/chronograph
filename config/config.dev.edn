@@ -4,7 +4,7 @@
                  :port     19401
                  :user     "chronograph_dev"
                  :password "chronograph_devpwd"}
- :oauth         {:google #merge [{:redirect-uri   "http://localhost:8000/google-oauth2-redirect"
+ :oauth         {:google #merge [{:web-redirect-uri   "http://localhost:8000/auth/google/web/redirect"
                                   :response-type  "code"
                                   :login-endpoint "https://accounts.google.com/o/oauth2/v2/auth"
                                   :token-endpoint "https://oauth2.googleapis.com/token"}

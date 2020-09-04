@@ -26,14 +26,14 @@
            (.getPayload)
            (into {})))
 
-(defn- redirect-uri [{:keys [redirect-uri
+(defn- redirect-uri [{:keys [web-redirect-uri
                              client-id
                              response-type
                              scope
                              login-endpoint] :as oauth-config}]
   (format "%s?redirect_uri=%s&client_id=%s&scope=%s&response_type=%s"
           login-endpoint
-          (codec/url-encode redirect-uri)
+          (codec/url-encode web-redirect-uri)
           (codec/url-encode client-id)
           (codec/url-encode scope)
           (codec/url-encode response-type)))
@@ -52,13 +52,13 @@
   (let [{:keys [token-endpoint
                 client-id
                 client-secret
-                redirect-uri]} (get-in config/config [:oauth :google])
+                web-redirect-uri]} (get-in config/config [:oauth :google])
         {:keys [status body error]} @(http/post token-endpoint
                                                 {:form-params {"client_id"     client-id
                                                                "client_secret" client-secret
                                                                "code"          auth-code
                                                                "grant_type"    "authorization_code"
-                                                               "redirect_uri"  redirect-uri}})]
+                                                               "redirect_uri"  web-redirect-uri}})]
 
     (cond
       (some? error) (throw error)
@@ -69,7 +69,7 @@
                 json/parse-string
                 (get "id_token")))))
 
-(defn oauth2-redirect-handler [{:keys [params] :as request}]
+(defn web-redirect-handler [{:keys [params] :as request}]
   (try
     (if (:error params)
       (redirect-with-error (:error params))

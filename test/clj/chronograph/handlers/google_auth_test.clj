@@ -21,8 +21,8 @@
                                                 "email"          "foo@bar.com"
                                                 "email_verified" true
                                                 "picture"        "https://foo/bar.png"}]
-      (let [{:keys [status cookies]} (google-auth/oauth2-redirect-handler {:params {:code "123"}})
-            {:users/keys [id]} (users-db/find-by-google-id "123456")]
+      (let [{:keys [status cookies]} (google-auth/web-redirect-handler {:params {:code "123"}})
+            {:user/keys [id]} (users-db/find-by-google-id "123456")]
         (is (= 302 status))
         (is (= id
                (-> cookies
@@ -32,7 +32,7 @@
                    :id))))))
 
   (testing "when called with an error"
-    (let [{:keys [status headers]} (google-auth/oauth2-redirect-handler {:params {:error "google-failed"}})]
+    (let [{:keys [status headers]} (google-auth/web-redirect-handler {:params {:error "google-failed"}})]
       (is (= 302 status))
       (is (= "/?auth-error=google-failed"
              (get headers "Location")))))
@@ -46,7 +46,7 @@
                                                 "email"          "foo@bar.com"
                                                 "email_verified" false
                                                 "picture"        "https://foo/bar.png"}]
-      (let [{:keys [status headers]} (google-auth/oauth2-redirect-handler {:params {:code "123"}})]
+      (let [{:keys [status headers]} (google-auth/web-redirect-handler {:params {:code "123"}})]
         (is (= 302 status))
         (is (= "/?auth-error=email-not-verified"
                (get headers "Location"))))))
@@ -55,14 +55,14 @@
     (mc/with-mock [http/post (delay {:status 500
                                      :body   (-> {"error" "big problem"}
                                                  (json/generate-string))})]
-      (let [{:keys [status headers]} (google-auth/oauth2-redirect-handler {:params {:code "123"}})]
+      (let [{:keys [status headers]} (google-auth/web-redirect-handler {:params {:code "123"}})]
         (is (= 302 status))
         (is (= "/?auth-error=unexpected-error"
                (get headers "Location"))))))
 
   (testing "when the call to the token endpoint throws an exception"
     (mc/with-mock [http/post (delay {:error (ex-info "Timeout!" {:time :out})})]
-      (let [{:keys [status headers]} (google-auth/oauth2-redirect-handler {:params {:code "123"}})]
+      (let [{:keys [status headers]} (google-auth/web-redirect-handler {:params {:code "123"}})]
         (is (= 302 status))
         (is (= "/?auth-error=unexpected-error"
                (get headers "Location")))))))

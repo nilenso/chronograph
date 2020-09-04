@@ -17,16 +17,20 @@
             [chronograph.handlers.user :as user]
             [chronograph.handlers.organization :as organization]))
 
-(def routes ["/" [["" (fn [_] (-> (response/resource-response "public/index.html")
-                                  (response/content-type "text/html")))]
-                  ["google-login" google-auth/login-handler]
-                  ["google-oauth2-redirect" google-auth/oauth2-redirect-handler]
-                  ["api/" [["users/me" {:get (middleware/wrap-authorized-user
-                                              user/me)}]
-                           ["organizations" {:post (middleware/wrap-authorized-user
-                                                    organization/create)}]]]
-                  [true (fn [_] (-> (response/resource-response "public/index.html")
-                                    (response/content-type "text/html")))]]])
+(def google-auth-routes
+ [["login" google-auth/login-handler]
+  ["web/redirect" google-auth/web-redirect-handler]])
+
+(def routes
+  ["/" [["" (fn [_] (-> (response/resource-response "public/index.html")
+                        (response/content-type "text/html")))]
+        ["auth/" [["google/" google-auth-routes]]]
+        ["api/" [["users/me" {:get (middleware/wrap-authorized-user
+                                     user/me)}]
+                 ["organizations" {:post (middleware/wrap-authorized-user
+                                           organization/create)}]]]
+        [true (fn [_] (-> (response/resource-response "public/index.html")
+                          (response/content-type "text/html")))]]])
 
 (def handler
   (-> routes
