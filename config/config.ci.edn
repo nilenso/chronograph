@@ -4,7 +4,7 @@
                  :port     5432
                  :user     "chronograph_ci_user"
                  :password "chronograph_ci_pwd"}
- :oauth         {:google {:redirect-uri   "http://localhost:8000/google-oauth2-redirect"
+ :oauth         {:google {:web-redirect-uri   "http://localhost:8000/google-oauth2-redirect"
                           :response-type  "code"
                           :login-endpoint "https://accounts.google.com/o/oauth2/v2/auth"
                           :token-endpoint "https://oauth2.googleapis.com/token"
@@ -13,5 +13,4 @@
                           :scope          "test scopes"}}
  :auth          {:token-signing-key       "your-signing-key-here"
                  :token-expiry-in-seconds 3600}
- :app-log-level "debug"
  :port          8000}
