@@ -4,8 +4,10 @@
             [chronograph-web.routes :as routes]
             [chronograph-web.subscriptions :as subs]))
 
+(def login-route "/auth/google/login")
+
 (defn- signin-button []
-  [:a.google-signin-button-link {:href  "/google-login"}
+  [:a.google-signin-button-link {:href login-route}
    [:span.google-signin-button]])
 
 (defn signin-page []
