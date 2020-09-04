@@ -10,3 +10,8 @@
   ::user-info
   (fn [db _]
     (:user db)))
+
+(rf/reg-sub
+  ::current-page
+  (fn [db _]
+    (:page db)))

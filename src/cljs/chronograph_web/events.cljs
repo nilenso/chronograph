@@ -15,6 +15,11 @@
                   :on-failure [::fetch-profile-failed]}}))
 
 (rf/reg-event-db
+  ::set-page
+  (fn [db [_ route]]
+    (assoc db :page route)))
+
+(rf/reg-event-db
   ::fetch-profile-succeeded
   (fn [db [_ response]]
     (assoc db :user (merge {:signin-state :signed-in} response))))
