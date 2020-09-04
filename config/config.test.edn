@@ -13,5 +13,4 @@
                           :scope          "test scopes"}}
  :auth          {:token-signing-key       "your-signing-key-here"
                  :token-expiry-in-seconds 3600}
- :app-log-level "debug"
  :port          8000}
