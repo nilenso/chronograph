@@ -50,3 +50,26 @@
             :body {:error "Unauthorized"}}
            (organization/create {:body {:name "foo" :slug "bar"}
                                  :user nil})))))
+
+
+(deftest create-organization-disallows-bad-request-params
+  (testing "Creating an organization with non-conforming name and/or slug fails with HTTP error."
+    (let [user (factories/create-user)]
+      (is (= {:status 400
+              :headers {}
+              :body {:error "Bad name or slug."}}
+             (organization/create {:body {:name "" :slug "foo"}
+                                   :user (:users/id user)}))
+          "Name cannot be empty.")
+      (is (= {:status 400
+              :headers {}
+              :body {:error "Bad name or slug."}}
+             (organization/create {:body {:name "foo bar" :slug ""}
+                                   :user (:users/id user)}))
+          "Slug cannot be empty.")
+      (is (= {:status 400
+              :headers {}
+              :body {:error "Bad name or slug."}}
+             (organization/create {:body {:name "foo bar" :slug "abc - 123 "}
+                                   :user (:users/id user)}))
+          "Slug must contain only lowercase letters, and optionally numbers or hypens. No whitespace allowed."))))

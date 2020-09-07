@@ -2,7 +2,6 @@
   (:require [chronograph.domain.organization :as organization]
             [clojure.test :refer :all]
             [chronograph.domain.acl :as acl]
-            [chronograph.domain.user :as user]
             [chronograph.fixtures :as fixtures]
             [chronograph.factories :as factories])
   (:import [org.postgresql.util PSQLException]))

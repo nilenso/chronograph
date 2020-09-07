@@ -1,6 +1,7 @@
 (ns chronograph.specs
   (:require [clojure.spec.alpha :as s]
-            [chronograph.domain.acl :as acl]))
+            [chronograph.domain.acl :as acl]
+            [clojure.spec.gen.alpha :as gen]))
 
 ;; Users
 
@@ -14,12 +15,27 @@
 
 (s/def :users/google-id string?)
 
+
 ;; Organizations
-(s/def :organizations/name string?)
-(s/def :organizations/slug string?)
+(defn matches-organization-slug-regex?
+  [s]
+  (re-matches (re-pattern #"^[\p{Lower}\p{Digit}-]+$")
+              s))
+
+(s/def :organizations/name (s/and string? #(not= % "")))
+
+(s/def :organizations/slug (s/with-gen
+                             (s/and string?
+                                    matches-organization-slug-regex?
+                                    #(<= 1 (count %) 256))
+                             ;; simplifying trick: a uuid will always match our desired slug pattern
+                             #(gen/fmap (fn [uid] (.toLowerCase (str uid)))
+                                        (gen/uuid))))
+
 (s/def :organizations/id int?)
 
 (s/def :organizations/create-params (s/keys :req [:organizations/name :organizations/slug]))
+(s/def :organizations/create-params-handler (s/keys :req-un [:organizations/name :organizations/slug]))
 (s/def :organizations/organization (s/keys :req [:organizations/id
                                                  :organizations/name
                                                  :organizations/slug]))
