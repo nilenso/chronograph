@@ -11,7 +11,7 @@
 (use-fixtures :once fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)
 
-(deftest oauth2-redirect-handler-test
+(deftest web-redirect-handler-test
   (testing "when called with a code and no error"
     (mc/with-mock [http/post                   (delay {:status 200
                                                        :body   (-> {"id_token" "fake-token"}

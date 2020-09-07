@@ -19,7 +19,8 @@
 
 (def google-auth-routes
  [["login" google-auth/login-handler]
-  ["web/redirect" google-auth/web-redirect-handler]])
+  ["web/redirect" google-auth/web-redirect-handler]
+  ["desktop/redirect" google-auth/desktop-redirect-handler]])
 
 (def routes
   ["/" [["" (fn [_] (-> (response/resource-response "public/index.html")
