@@ -26,40 +26,47 @@
            (.getPayload)
            (into {})))
 
-(defn- redirect-uri [{:keys [web-redirect-uri
+(defn- auth-code-uri [{:keys [redirect-uri
                              client-id
                              response-type
                              scope
-                             login-endpoint] :as oauth-config}]
+                             login-endpoint]}]
   (format "%s?redirect_uri=%s&client_id=%s&scope=%s&response_type=%s"
           login-endpoint
-          (codec/url-encode web-redirect-uri)
+          (codec/url-encode redirect-uri)
           (codec/url-encode client-id)
           (codec/url-encode scope)
           (codec/url-encode response-type)))
 
+(defn- redirect-uri [client-type]
+  (let [{:keys [web-redirect-uri desktop-redirect-uri]} (get-in config/config
+                                                                [:oauth :google])]
+    (if (= "desktop" client-type)
+      desktop-redirect-uri
+      web-redirect-uri)))
+
 (defn login-handler [request]
-  (response/redirect (-> config/config
-                         (get-in [:oauth :google])
-                         redirect-uri)))
+  (let [client-type (get-in request [:params :client-type])]
+    (response/redirect (-> config/config
+                           (get-in [:oauth :google])
+                           (assoc :redirect-uri (redirect-uri client-type))
+                           auth-code-uri))))
 
 (defn- redirect-with-error [error]
   (response/redirect (format "/?%s=%s"
                              (codec/url-encode "auth-error")
                              (codec/url-encode error))))
 
-(defn- fetch-id-token [auth-code]
+(defn- fetch-id-token [client-type auth-code]
   (let [{:keys [token-endpoint
                 client-id
-                client-secret
-                web-redirect-uri]} (get-in config/config [:oauth :google])
+                client-secret]} (get-in config/config [:oauth :google])
         {:keys [status body error]} @(http/post token-endpoint
                                                 {:form-params {"client_id"     client-id
                                                                "client_secret" client-secret
                                                                "code"          auth-code
                                                                "grant_type"    "authorization_code"
-                                                               "redirect_uri"  web-redirect-uri}})]
-
+                                                               "redirect_uri"  (redirect-uri client-type)}})]
     (cond
       (some? error) (throw error)
       (not= 200 status) (throw (ex-info "Received an unexpected status code from Google's token endpoint"
@@ -73,7 +80,7 @@
   (try
     (if (:error params)
       (redirect-with-error (:error params))
-      (let [id-token (fetch-id-token (:code params))
+      (let [id-token (fetch-id-token "web" (:code params))
             {:strs [name sub email email_verified picture]} (verify-id-token id-token)]
         (if-not email_verified
           (redirect-with-error "email-not-verified")
@@ -85,3 +92,6 @@
       ;; because we need to render the error appropriately to the user.
       (log/error e)
       (redirect-with-error "unexpected-error"))))
+
+(defn desktop-redirect-handler [_]
+  (response/redirect "chronograph://localhost:8000?token=foobar"))

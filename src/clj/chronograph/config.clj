@@ -20,6 +20,7 @@
            :db-spec/password]))
 
 (s/def :google/web-redirect-uri string?)
+(s/def :google/desktop-redirect-uri string?)
 (s/def :google/response-type #{"code"})
 (s/def :google/login-endpoint string?)
 (s/def :google/token-endpoint string?)
@@ -30,6 +31,7 @@
 (s/def :oauth/google
   (s/keys :req-un
           [:google/web-redirect-uri
+           :google/web-redirect-uri
            :google/response-type
            :google/login-endpoint
            :google/token-endpoint
