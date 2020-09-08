@@ -10,17 +10,9 @@
   [{{:keys [name slug] :as body} :body
     {:keys [users/id] :as user} :user
     :as request}]
-  (cond
-    (not user)
-    (-> (response/response {:error "Unauthorized"})
-        (response/status 401))
-
-    (not (s/valid? :organizations/create-params-handler
-                   body))
-    (response/bad-request {:error "Bad name or slug."})
-
-    :else
-    (response/response
-     (organization/create! {:organizations/name name
-                            :organizations/slug slug}
-                           id))))
+  (if-not (s/valid? :organizations/create-params-handler body)
+    (response/bad-request
+     {:error "Bad name or slug."})
+    (-> (organization/create! {:organizations/name name :organizations/slug slug}
+                              id)
+        response/response )))

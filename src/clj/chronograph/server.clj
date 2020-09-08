@@ -21,8 +21,10 @@
                                       (response/content-type "text/html")))]
                   ["google-login" google-auth/login-handler]
                   ["google-oauth2-redirect" google-auth/oauth2-redirect-handler]
-                  ["api/" [["users/me" {:get user/me}]
-                           ["organizations" {:post organization/create}]]]
+                  ["api/" [["users/me" {:get (middleware/wrap-authorized-user
+                                              user/me)}]
+                           ["organizations" {:post (middleware/wrap-authorized-user
+                                                    organization/create)}]]]
                   [true (constantly (-> (response/response "Not Found")
                                         (response/status 404)))]]])
 

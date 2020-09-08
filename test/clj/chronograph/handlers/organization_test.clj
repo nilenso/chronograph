@@ -14,8 +14,9 @@
   "Test handler to mimic the relevant exception logging behaviour of the actual
   handler.We do this because error handling is not standardised, so we can't yet
   define a sensible test-handler."
-  (middleware/wrap-exception-logging
-   organization/create))
+  (-> organization/create
+      middleware/wrap-exception-logging
+      middleware/wrap-authorized-user))
 
 
 (deftest create-new-organization-first-time

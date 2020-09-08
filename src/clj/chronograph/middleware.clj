@@ -26,3 +26,12 @@
       (-> request
           (assoc :user user)
           handler))))
+
+
+(defn wrap-authorized-user
+  [handler]
+  (fn [{:keys [user] :as request}]
+    (if-not user
+      (-> (response/response {:error "Unauthorized"})
+          (response/status 401))
+      (handler request))))
