@@ -6,7 +6,7 @@
             [cheshire.core :as json]
             [chronograph.fixtures :as fixtures]
             [chronograph.auth :as auth]
-            [chronograph.db.user :as users-db]))
+            [chronograph.domain.user :as user]))
 
 (use-fixtures :once fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)
@@ -22,7 +22,7 @@
                                                 "email_verified" true
                                                 "picture"        "https://foo/bar.png"}]
       (let [{:keys [status cookies]} (google-auth/web-redirect-handler {:params {:code "123"}})
-            {:user/keys [id]} (users-db/find-by-google-id "123456")]
+            {:users/keys [id]} (user/find-by-google-id "123456")]
         (is (= 302 status))
         (is (= id
                (-> cookies
