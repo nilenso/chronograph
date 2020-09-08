@@ -1,6 +1,6 @@
 (ns chronograph.middleware
   (:require [chronograph.auth :as auth]
-            [chronograph.db.user :as users-db]
+            [chronograph.domain.user :as users]
             [ring.util.response :as response]
             [taoensso.timbre :as log]))
 
@@ -22,7 +22,7 @@
                        :value
                        auth/verify-token
                        :id
-                       users-db/find-by-id)]
+                       users/find-by-id)]
       (-> request
           (assoc :user user)
           handler))))
