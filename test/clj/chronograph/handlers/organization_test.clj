@@ -59,17 +59,35 @@
               :headers {}
               :body {:error "Bad name or slug."}}
              (create-organization {:body {:name "" :slug "foo"}
-                                   :user (:users/id user)}))
+                                   :user user}))
           "Name cannot be empty.")
       (is (= {:status 400
               :headers {}
               :body {:error "Bad name or slug."}}
              (create-organization {:body {:name "foo bar" :slug ""}
-                                   :user (:users/id user)}))
+                                   :user user}))
           "Slug cannot be empty.")
       (is (= {:status 400
               :headers {}
               :body {:error "Bad name or slug."}}
              (create-organization {:body {:name "foo bar" :slug "abc - 123 "}
-                                   :user (:users/id user)}))
-          "Slug must contain only lowercase letters, and optionally numbers or hypens. No whitespace allowed."))))
+                                   :user user}))
+          "Slug must contain only lowercase letters, and optionally numbers or hypens. No whitespace allowed.")
+      (is (= {:status 400
+              :headers {}
+              :body {:error "Bad name or slug."}}
+             (create-organization
+              {:body {:name "foo bar"
+                      :slug (->> (repeat 257 "a")
+                                 (apply str))}
+               :user user}))
+          "Slug length must not exceed 256 characters.")
+      (let [response (create-organization
+                      {:body {:name "foo bar"
+                              :slug (->> (repeat (/ 256 4) "a-34")
+                                         (apply str))}
+                       :user user})]
+        (is (= 200 (:status response)))
+        (is (s/valid? :organizations/organization
+                      (:body response))
+            "Slug length can be exactly 256 characters at most.")))))
