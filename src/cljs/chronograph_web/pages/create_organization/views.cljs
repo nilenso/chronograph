@@ -6,15 +6,15 @@
 (defn- text-input [{:keys [on-change value] :as m}]
   [:input (merge {:type :text}
                  m
-                 {:value (or name "")
+                 {:value (or value "")
                   :on-change #(on-change (.-value (.-currentTarget %)))})])
 
-(defn create-organization-page []
-  (let [{:keys [form-params status]} @(rf/subscribe [::subs/create-organization-form])
+(defn create-organization-page [_]
+  (let [{:keys [form-params status] :as xyz} @(rf/subscribe [::subs/create-organization-form])
         {:keys [name slug]} form-params]
     [:form
      (if (= status :failed)
-       [:div "Error creating the organization"])
+      [:div "Error creating the organization"])
      (text-input {:type :text
                   :name "name"
                   :placeholder "Name"

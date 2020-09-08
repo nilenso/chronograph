@@ -1,11 +1,12 @@
 (ns chronograph-web.core
   (:require [reagent.dom]
             [re-frame.core :as rf]
-            [pushy.core :as pushy]
+            [chronograph.specs]
             [chronograph-web.events.user :as user-events]
             [chronograph-web.events.routing :as routing-events]
             [chronograph-web.routes :as routes]
-            [chronograph-web.views :as views]))
+            [chronograph-web.views :as views]
+            [chronograph-web.effects]))
 
 (defn render
   []
@@ -23,6 +24,5 @@
   []
   (rf/dispatch-sync [::user-events/initialize])
   (rf/dispatch-sync [::routing-events/set-page {:handler :root}])
-  (pushy/set-token! routes/history "/")
-
+  (rf/dispatch-sync [::routing-events/set-token "/"])
   (render))
