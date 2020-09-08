@@ -2,12 +2,13 @@
   (:require [re-frame.core :as rf]
             [chronograph-web.db :as db]
             [chronograph-web.http :as http]
+            [chronograph-web.events.routing :as routing-events]
             [ajax.core :as ajax]
             [day8.re-frame.http-fx]))
 
 (def ^:private create-organization-uri "/api/organizations")
 
-(def ^:private root-path [:create-organization])
+(def ^:private root-path :create-organization)
 (def ^:private status-path [root-path :status])
 (defn- form-params-path [k] [root-path :form-params k])
 
@@ -28,12 +29,18 @@
                              :on-success [::create-organization-succeeded]
                              :on-failure [::create-organization-failed]})}))
 
-(rf/reg-event-db
+(defn- organization-url [slug]
+  (str "/organization/" slug))
+
+(rf/reg-event-fx
   ::create-organization-succeeded
-  (fn [db [_ {:keys [id] :as response}]]
-    (-> db
-        (assoc-in status-path :created)
-        (assoc-in [:organizations id] response))))
+  (fn [{:keys [db]} [_ {:keys [id slug] :as response}]]
+    {:fx [[:dispatch [::routing-events/set-page {:route-params {:slug slug}
+                                                 :handler :organization-show}]]
+          [:dispatch [::routing-events/set-token (organization-url slug)]]]
+     :db (-> db
+             (assoc-in status-path :created)
+             (assoc-in [:organizations slug] response))}))
 
 (rf/reg-event-db
   ::create-organization-failed

@@ -20,3 +20,8 @@
   ::create-organization-form
   (fn [db _]
     (get-in db [:create-organization])))
+
+(rf/reg-sub
+  ::organization
+  (fn [db [_ slug]]
+    (get-in db [:organizations slug])))
