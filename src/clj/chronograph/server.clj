@@ -18,25 +18,28 @@
             [chronograph.handlers.organization :as organization]))
 
 (def google-auth-routes
- [["login" google-auth/login-handler]
-  ["web/redirect" google-auth/web-redirect-handler]
-  ["desktop/redirect" google-auth/desktop-redirect-handler]])
+  [["login" google-auth/login-handler]
+   ["web/redirect" google-auth/web-redirect-handler]
+   ["desktop/redirect" google-auth/desktop-redirect-handler]])
 
 (def routes
   ["/" [["" (fn [_] (-> (response/resource-response "public/index.html")
                         (response/content-type "text/html")))]
         ["auth/" [["google/" google-auth-routes]]]
-        ["api/" [["users/me" {:get (middleware/wrap-authorized-user
-                                     user/me)}]
-                 ["organizations" {:post (middleware/wrap-authorized-user
-                                           organization/create)}]]]
+        ["api/" [["users/me" {:get (-> user/me
+                                       middleware/wrap-authorized-user
+                                       middleware/wrap-cookie-auth
+                                       middleware/wrap-header-auth)}]
+                 ["organizations" {:post (-> organization/create
+                                             middleware/wrap-authorized-user
+                                             middleware/wrap-cookie-auth
+                                             middleware/wrap-header-auth)}]]]
         [true (fn [_] (-> (response/resource-response "public/index.html")
                           (response/content-type "text/html")))]]])
 
 (def handler
   (-> routes
       bidi/make-handler
-      (middleware/wrap-authenticated-user)
       (middleware/wrap-exception-logging)
       (wrap-json-response {:key-fn name})
       (wrap-json-body {:keywords? true :bigdecimals? true})

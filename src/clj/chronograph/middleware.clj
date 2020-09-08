@@ -1,8 +1,9 @@
 (ns chronograph.middleware
-  (:require [chronograph.auth :as auth]
-            [chronograph.domain.user :as users]
+  (:require [taoensso.timbre :as log]
             [ring.util.response :as response]
-            [taoensso.timbre :as log]))
+            [chronograph.auth :as auth]
+            [chronograph.domain.user :as user]
+            [clojure.string :as string]))
 
 (defn wrap-exception-logging [handler]
   (fn [request]
@@ -13,21 +14,6 @@
         (-> (response/response {:error "Internal Server Error"})
             (response/status 500))))))
 
-
-(defn wrap-authenticated-user
-  [handler]
-  (fn [{:keys [cookies] :as request}]
-    (let [user (some-> cookies
-                       (get "auth-token")
-                       :value
-                       auth/verify-token
-                       :id
-                       users/find-by-id)]
-      (-> request
-          (assoc :user user)
-          handler))))
-
-
 (defn wrap-authorized-user
   [handler]
   (fn [{:keys [user] :as request}]
@@ -35,3 +21,30 @@
       (-> (response/response {:error "Unauthorized"})
           (response/status 401))
       (handler request))))
+
+(defn- token-from-bearer-value [bearer-value]
+  (second (string/split bearer-value #" ")))
+
+(defn- add-user-details [token request]
+  (if-let [user (some-> token
+                        auth/verify-token
+                        :id
+                        user/find-by-id)]
+    (assoc request :user user)
+    request))
+
+(defn wrap-header-auth
+  [handler]
+  (fn [{:keys [headers] :as request}]
+    (let [token (some-> headers (get "authorization") token-from-bearer-value)]
+       (-> token
+           (add-user-details request)
+           handler))))
+
+(defn wrap-cookie-auth
+  [handler]
+  (fn [{:keys [cookies] :as request}]
+    (let [token (-> cookies (get "auth-token") :value)]
+      (-> token
+          (add-user-details request)
+          handler))))
