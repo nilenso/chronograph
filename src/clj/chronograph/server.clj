@@ -14,21 +14,26 @@
             [chronograph.config :as config]
             [chronograph.middleware :as middleware]
             [chronograph.handlers.google-auth :as google-auth]
-            [chronograph.handlers.user :as user]))
+            [chronograph.handlers.user :as user]
+            [chronograph.handlers.organization :as organization]))
 
 (def routes ["/" [["" (fn [_] (-> (response/resource-response "public/index.html")
                                   (response/content-type "text/html")))]
                   ["google-login" google-auth/login-handler]
                   ["google-oauth2-redirect" google-auth/oauth2-redirect-handler]
-                  ["api/" [["users/me" {:get user/me}]]]
+                  ["api/" [["users/me" {:get (middleware/wrap-authorized-user
+                                              user/me)}]
+                           ["organizations" {:post (middleware/wrap-authorized-user
+                                                    organization/create)}]]]
                   [true (constantly (-> (response/response "Not Found")
                                         (response/status 404)))]]])
 
 (def handler
   (-> routes
       bidi/make-handler
+      (middleware/wrap-authenticated-user)
       (middleware/wrap-exception-logging)
-      (wrap-json-response)
+      (wrap-json-response {:key-fn name})
       (wrap-json-body {:keywords? true :bigdecimals? true})
       (wrap-keyword-params)
       (wrap-params)

@@ -3,10 +3,12 @@
   (:require [taoensso.timbre :as log]
             [mount.core :as mount]
             [mount-up.core :as mu]
+            [chronograph.specs]
             [chronograph.server :as server]
             [chronograph.cli :as cli]
             [chronograph.config :as config]
-            [chronograph.migrations :as migrations]))
+            [chronograph.migrations :as migrations]
+            [chronograph.utils.json]))
 
 (defn- log-mount-action [action-map]
   (fn [{:keys [name action]}]

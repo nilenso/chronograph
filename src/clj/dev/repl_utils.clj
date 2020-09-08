@@ -2,7 +2,9 @@
   (:require [mount.core :as mount]
             [chronograph.server :as server]
             [chronograph.core :as core]
-            [chronograph.config :as config]))
+            [chronograph.config :as config]
+            [chronograph.migrations :as migrations]
+            [migratus.core :as migratus]))
 
 (defn start-app! []
   (core/mount-init!)
@@ -20,3 +22,6 @@
   ([config-file]
    (mount/stop #'config/config)
    (mount/start-with-args {:options {:config-file config-file}} #'config/config)))
+
+(defn create-migration [migration-name]
+  (migratus/create (migrations/config) migration-name))

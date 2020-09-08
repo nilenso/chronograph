@@ -1,31 +1,36 @@
 (ns chronograph.handlers.user-test
-  (:require [clojure.test :refer :all]
-            [chronograph.handlers.user :as hu]
+  (:require [chronograph.auth :as auth]
+            [chronograph.factories :as factories]
             [chronograph.fixtures :as fixtures]
-            [mock-clj.core :as mc]
-            [chronograph.auth :as auth]
-            [chronograph.domain.user :as user]))
+            [chronograph.handlers.user :as hu]
+            [chronograph.middleware :as middleware]
+            [clojure.test :refer :all]))
 
 (use-fixtures :once fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)
 
+(def me-handler
+  "Test handler to mimic authorized access to \"me\" routes. We do this because
+  authorization is not standard, so we can't yet define a sensible test-handler."
+  (-> hu/me
+      middleware/wrap-authorized-user
+      middleware/wrap-authenticated-user))
+
 (deftest me-when-user-exists-test
-  (testing "Should retrieve the authenticated user's information from the DB if they exist"
-    (let [{:keys [id]} (user/find-or-create-google-user! "google-123"
-                                                         "Foo Bar"
-                                                         "foo@bar.baz"
-                                                         "https://foo.png")]
-      (mc/with-mock [auth/verify-token {:id id}]
-        (is (= {:id        id
-                :name      "Foo Bar"
-                :email     "foo@bar.baz"
-                :photo-url "https://foo.png"}
-               (:body (hu/me {:cookies {"auth-token" {:value "stub"}}}))))))))
+  (testing "Should return response with :user information if the user exists."
+    (let [user (factories/create-user)
+          request {:cookies {"auth-token" {:value (auth/create-token
+                                                   (:users/id user))}}}]
+      (is (= {:status 200
+              :headers {}
+              :body user}
+             (me-handler request))))))
 
 (deftest me-when-user-doesnt-exist-test
   (testing "Should return a 401 if the user doesn't exist"
-    (mc/with-mock [auth/verify-token {:id 123}]
+    (let [request {:cookies {"auth-token" {:value (auth/create-token
+                                                   9876543210)}}}]
       (is (= {:status 401
-              :body   {:error "Unauthorized"}}
-             (-> (hu/me {:cookies {"auth-token" {:value "stub"}}})
-                 (select-keys [:status :body])))))))
+              :headers {}
+              :body {:error "Unauthorized"}}
+             (me-handler request))))))

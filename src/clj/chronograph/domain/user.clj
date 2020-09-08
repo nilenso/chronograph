@@ -3,7 +3,8 @@
             [next.jdbc :as jdbc]
             [chronograph.db.google-profile :as google-profile-db]
             [chronograph.db.linked-profile :as linked-profile-db]
-            [chronograph.db.user :as user-db]))
+            [chronograph.db.user :as user-db]
+            [clojure.spec.alpha :as s]))
 
 (def find-by-google-id user-db/find-by-google-id)
 
@@ -11,7 +12,7 @@
 
 (defn- link-google-profile!
   [tx user-id google-id]
-  (let [{google-profiles-id :id} (google-profile-db/create! tx google-id)]
+  (let [{google-profiles-id :google-profiles/id} (google-profile-db/create! tx google-id)]
     (linked-profile-db/create! tx user-id google-profiles-id "google")))
 
 (defn find-or-create-google-user!
@@ -19,9 +20,6 @@
   (jdbc/with-transaction [tx db/datasource]
     (if-let [google-user (find-by-google-id tx google-id)]
       google-user
-      (let [{user-id :id} (user-db/create! tx name email photo-url)]
-        (link-google-profile! tx user-id google-id)
-        {:id        user-id
-         :name      name
-         :email     email
-         :photo-url photo-url}))))
+      (let [{:keys [users/id] :as user} (user-db/create! tx name email photo-url)]
+        (link-google-profile! tx id google-id)
+        user))))

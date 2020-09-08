@@ -1,5 +1,6 @@
 (ns chronograph.fixtures
   (:require [chronograph.config :as config]
+            [chronograph.specs]
             [mount.core :as mount]
             [chronograph.db.core :as db]
             [next.jdbc :as jdbc]))
@@ -21,7 +22,9 @@
 (defn truncate-all-tables! []
   (jdbc/execute! db/datasource ["TRUNCATE TABLE google_profiles"])
   (jdbc/execute! db/datasource ["TRUNCATE TABLE linked_profiles"])
-  (jdbc/execute! db/datasource ["TRUNCATE TABLE users CASCADE"]))
+  (jdbc/execute! db/datasource ["TRUNCATE TABLE users CASCADE"])
+  (jdbc/execute! db/datasource ["TRUNCATE TABLE acls CASCADE"])
+  (jdbc/execute! db/datasource ["TRUNCATE TABLE organizations CASCADE"]))
 
 (defn clear-db [f]
   (truncate-all-tables!)
