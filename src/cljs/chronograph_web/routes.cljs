@@ -3,13 +3,18 @@
             [re-frame.core :as rf]
             [bidi.bidi :as bidi]
             [pushy.core :as pushy]
-            [chronograph-web.views :as views]
-            [chronograph-web.events :as events]))
+            [chronograph-web.pages.landing.views :refer [landing-page]]
+            [chronograph-web.pages.create-organization.views :refer [create-organization-page]]
+            [chronograph-web.events.routing :as routing-events]))
 
-(def routes ["/" :root])
+(def routes ["/" {"" :root
+                  "organization/new" :organization-new}])
+
+(def authenticated-view {:root landing-page
+                         :organization-new create-organization-page})
 
 (defn set-page! [match]
-  (rf/dispatch-sync [::events/set-page match]))
+  (rf/dispatch-sync [::routing-events/set-page match]))
 
 (def history
   (pushy/pushy set-page! #(bidi/match-route routes %)))

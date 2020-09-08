@@ -2,7 +2,8 @@
   (:require [reagent.dom]
             [re-frame.core :as rf]
             [pushy.core :as pushy]
-            [chronograph-web.events :as events]
+            [chronograph-web.events.user :as user-events]
+            [chronograph-web.events.routing :as routing-events]
             [chronograph-web.routes :as routes]
             [chronograph-web.views :as views]))
 
@@ -20,8 +21,8 @@
 ;; Entry point
 (defn ^:export run
   []
-  (rf/dispatch-sync [::events/initialize])
-  (rf/dispatch-sync [::events/set-page {:handler :root}])
+  (rf/dispatch-sync [::user-events/initialize])
+  (rf/dispatch-sync [::routing-events/set-page {:handler :root}])
   (pushy/set-token! routes/history "/")
 
   (render))

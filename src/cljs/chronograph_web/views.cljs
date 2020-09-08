@@ -1,5 +1,7 @@
 (ns chronograph-web.views
   (:require [re-frame.core :as rf]
+            [chronograph-web.events :as events]
+            [chronograph-web.routes :as routes]
             [chronograph-web.subscriptions :as subs]))
 
 (defn- signin-button []
@@ -11,19 +13,9 @@
    [:h2 "Please sign in to continue"]
    [signin-button]])
 
-(defn landing-page []
-  (let [{:keys [name email photo-url]} @(rf/subscribe [::subs/user-info])]
-    [:div
-     [:h2 "Welcome!"]
-     [:img {:src photo-url}]
-     [:p name]
-     [:p email]]))
-
-(def authenticated-pages {:root landing-page})
-
 (defn authenticated-page []
-  (if-let [{:keys [handler]} @(rf/subscribe [::subs/current-page])]
-    [(authenticated-pages handler)]
+  (if-let [{route-key :handler} @(rf/subscribe [::subs/current-page])]
+    [(routes/authenticated-view route-key)]
     [:div "Page not found"]))
 
 (defn loading-page []

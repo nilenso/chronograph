@@ -3,6 +3,7 @@
             [day8.re-frame.test :as rf-test]
             [re-frame.core :as rf]
             [chronograph-web.events :as events]
+            [chronograph-web.events.user :as user-events]
             [chronograph-web.subscriptions :as subs]))
 
 (deftest initialize-test
@@ -10,11 +11,11 @@
     (rf-test/run-test-sync
       (rf/reg-fx :http-xhrio
                  (fn [_]
-                   (rf/dispatch [::events/fetch-profile-succeeded {:id        123
+                   (rf/dispatch [::user-events/fetch-profile-succeeded {:id        123
                                                                    :name      "Foo Bar"
                                                                    :email     "foo@bar.baz"
                                                                    :photo-url "https://foo.png"}])))
-      (rf/dispatch [::events/initialize])
+      (rf/dispatch [::user-events/initialize])
       (is (= {:signin-state :signed-in
               :id           123
               :name         "Foo Bar"
@@ -27,8 +28,8 @@
     (rf-test/run-test-sync
       (rf/reg-fx :http-xhrio
                  (fn [_]
-                   (rf/dispatch [::events/fetch-profile-failed "dummy"])))
-      (rf/dispatch [::events/initialize])
+                   (rf/dispatch [::user-events/fetch-profile-failed "dummy"])))
+      (rf/dispatch [::user-events/initialize])
       (is (= :signed-out
              @(rf/subscribe [::subs/signin-state]))
           "the user should be considered signed out"))))
