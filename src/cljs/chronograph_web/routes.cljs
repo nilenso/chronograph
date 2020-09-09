@@ -22,4 +22,5 @@
 (def history
   (pushy/pushy set-page! #(bidi/match-route routes %)))
 
-(pushy/start! history)
+(defn init! []
+  (pushy/start! history))

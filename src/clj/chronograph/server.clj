@@ -25,8 +25,8 @@
                                               user/me)}]
                            ["organizations" {:post (middleware/wrap-authorized-user
                                                     organization/create)}]]]
-                  [true (constantly (-> (response/response "Not Found")
-                                        (response/status 404)))]]])
+                  [true (constantly (-> (response/resource-response "public/index.html")
+                                        (response/content-type "text/html")))]]])
 
 (def handler
   (-> routes
