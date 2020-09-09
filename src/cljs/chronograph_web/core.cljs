@@ -23,6 +23,5 @@
 (defn ^:export run
   []
   (rf/dispatch-sync [::user-events/initialize])
-  (rf/dispatch-sync [::routing-events/set-page {:handler :root}])
-  (rf/dispatch-sync [::routing-events/set-token "/"])
+  (routes/init!)
   (render))
