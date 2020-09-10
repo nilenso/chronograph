@@ -1,6 +1,5 @@
 (ns chronograph.specs
   (:require [clojure.spec.alpha :as s]
-            [chronograph.domain.acl :as acl]
             [clojure.spec.gen.alpha :as gen]))
 
 ;; Users
@@ -19,7 +18,7 @@
 ;; Organizations
 (defn matches-organization-slug-regex?
   [s]
-  (re-matches (re-pattern #"^[\p{Lower}\p{Digit}-]+$")
+  (re-matches (re-pattern #"^[a-z0-9-]+$")
               s))
 
 (s/def :organizations/name (s/and string? #(not= % "")))
@@ -41,7 +40,7 @@
                                                  :organizations/slug]))
 
 ;; ACLs
-(s/def :acls/role #{acl/admin acl/member})
+(s/def :acls/role #{"admin" "member"})
 (s/def :acls/user-id :users/id)
 (s/def :acls/organization-id :organizations/id)
 
