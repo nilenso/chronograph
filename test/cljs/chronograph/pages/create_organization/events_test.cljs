@@ -2,6 +2,7 @@
     (:require [cljs.test :refer-macros [deftest is testing run-tests]]
               [day8.re-frame.test :as rf-test]
               [re-frame.core :as rf]
+              [chronograph.specs]
               [chronograph-web.pages.create-organization.events :as create-organization-events]
               [chronograph-web.events.routing :as routing-events]
               [chronograph-web.subscriptions :as subs]))
@@ -21,7 +22,23 @@
        (rf/dispatch [::create-organization-events/create-organization-form-update :slug slug])
        (is (= @(rf/subscribe [::subs/create-organization-form])
               {:status :editing
-               :form-params {:slug "slug"}}))))))
+               :form-params {:slug "slug"}})))))
+
+  (testing "when the name is invalid"
+    (rf-test/run-test-sync
+     (let [name ""]
+       (rf/dispatch [::create-organization-events/create-organization-form-update :name name])
+       (is (= @(rf/subscribe [::subs/create-organization-form])
+              {:status :editing
+               :form-params {:name ""}})))))
+
+  (testing "when the slug is invalid"
+    (rf-test/run-test-sync
+     (let [slug "SLU UG"]
+       (rf/dispatch [::create-organization-events/create-organization-form-update :slug slug])
+       (is (= @(rf/subscribe [::subs/create-organization-form])
+              {:status :editing
+               :form-params {:slug "SLU UG"}}))))))
 
 (deftest create-organization-form-submit-test
   (testing "when the organization is created successfully"
