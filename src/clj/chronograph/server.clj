@@ -27,13 +27,9 @@
                         (response/content-type "text/html")))]
         ["auth/" [["google/" google-auth-routes]]]
         ["api/" [["users/me" {:get (-> user/me
-                                       middleware/wrap-authorized-user
-                                       middleware/wrap-cookie-auth
-                                       middleware/wrap-header-auth)}]
+                                       middleware/wrap-authenticated)}]
                  ["organizations" {:post (-> organization/create
-                                             middleware/wrap-authorized-user
-                                             middleware/wrap-cookie-auth
-                                             middleware/wrap-header-auth)}]]]
+                                             middleware/wrap-authenticated)}]]]
         [true (fn [_] (-> (response/resource-response "public/index.html")
                           (response/content-type "text/html")))]]])
 

@@ -43,11 +43,13 @@
 
 (s/def :auth/token-signing-key string?)
 (s/def :auth/token-expiry-in-seconds int?)
+(s/def :auth/desktop-redirect-url-scheme string?)
 
 (s/def ::auth
   (s/keys :req-un
           [:auth/token-signing-key
-           :auth/token-expiry-in-seconds]))
+           :auth/token-expiry-in-seconds
+           :auth/desktop-redirect-url-scheme]))
 
 (s/def ::port int?)
 

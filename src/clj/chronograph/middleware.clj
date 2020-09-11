@@ -14,7 +14,7 @@
         (-> (response/response {:error "Internal Server Error"})
             (response/status 500))))))
 
-(defn wrap-authorized-user
+(defn wrap-require-user-info
   [handler]
   (fn [{:keys [user] :as request}]
     (if-not user
@@ -48,3 +48,8 @@
       (-> token
           (add-user-details request)
           handler))))
+
+(def wrap-authenticated
+  (comp wrap-header-auth
+        wrap-cookie-auth
+        wrap-require-user-info))

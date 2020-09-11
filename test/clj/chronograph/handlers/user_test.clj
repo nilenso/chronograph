@@ -13,9 +13,7 @@
   "Test handler to mimic authorized access to \"me\" routes. We do this because
   authorization is not standard, so we can't yet define a sensible test-handler."
   (-> hu/me
-      middleware/wrap-authorized-user
-      middleware/wrap-cookie-auth
-      middleware/wrap-header-auth))
+      middleware/wrap-authenticated))
 
 (deftest me-when-user-exists-test
   (testing "Should return response with :user information if the user exists."

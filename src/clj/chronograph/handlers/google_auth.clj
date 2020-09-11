@@ -27,10 +27,10 @@
            (into {})))
 
 (defn- auth-code-uri [{:keys [redirect-uri
-                             client-id
-                             response-type
-                             scope
-                             login-endpoint]}]
+                              client-id
+                              response-type
+                              scope
+                              login-endpoint]}]
   (format "%s?redirect_uri=%s&client_id=%s&scope=%s&response_type=%s"
           login-endpoint
           (codec/url-encode redirect-uri)
@@ -52,10 +52,14 @@
                            (assoc :redirect-uri (redirect-uri client-type))
                            auth-code-uri))))
 
-(defn- redirect-with-error [error]
-  (response/redirect (format "/?%s=%s"
-                             (codec/url-encode "auth-error")
-                             (codec/url-encode error))))
+(defn- redirect-with-error
+  ([error]
+   (redirect-with-error "/" error))
+  ([url-prefix error]
+   (response/redirect (format "%s?%s=%s"
+                              url-prefix
+                              (codec/url-encode "auth-error")
+                              (codec/url-encode error)))))
 
 (defn- fetch-id-token [client-type auth-code]
   (let [{:keys [token-endpoint
@@ -94,18 +98,22 @@
       (redirect-with-error "unexpected-error"))))
 
 (defn desktop-redirect-handler [{:keys [params]}]
-  (try
-    (if (:error params)
-      (redirect-with-error (:error params))
-      (let [id-token (fetch-id-token "desktop" (:code params))
-            {:strs [name sub email email_verified picture]} (verify-id-token id-token)]
-        (if-not email_verified
-          (redirect-with-error "email-not-verified")
-          (let [{:users/keys [id]} (user/find-or-create-google-user! sub name email picture)
-                access-token (auth/create-token id)]
-            (response/redirect (str "chronograph://localhost:8000?access-token=" access-token))))))
-    (catch Exception e
-      ;; We can't bubble up the exception and rely on our middleware here,
-      ;; because we need to render the error appropriately to the user.
-      (log/error e)
-      (redirect-with-error "unexpected-error"))))
+  (let [url-prefix (str (get-in config/config [:auth :desktop-redirect-url-scheme])
+                        "://")]
+    (try
+      (if (:error params)
+        (redirect-with-error url-prefix (:error params))
+        (let [id-token (fetch-id-token "desktop" (:code params))
+              {:strs [name sub email email_verified picture]} (verify-id-token id-token)]
+          (if-not email_verified
+            (redirect-with-error url-prefix "email-not-verified")
+            (let [{:users/keys [id]} (user/find-or-create-google-user! sub name email picture)
+                  access-token (auth/create-token id)]
+              (response/redirect (format "%s?access-token=%s"
+                                         url-prefix
+                                         access-token))))))
+      (catch Exception e
+        ;; We can't bubble up the exception and rely on our middleware here,
+        ;; because we need to render the error appropriately to the user.
+        (log/error e)
+        (redirect-with-error url-prefix "unexpected-error")))))
