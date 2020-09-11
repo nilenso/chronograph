@@ -44,3 +44,27 @@
       (is (nil? (organization/find-if-authorized (:organizations/slug organization-one)
                                                  (Long/MAX_VALUE)))
           "find-one returns nil when the user does not exist"))))
+
+(deftest join-requests-disabled-by-default-test
+  (testing "Join requests are disabled on new organizations"
+    (let [{user-id :users/id} (factories/create-user)
+          {:organizations/keys [id]} (factories/create-organization user-id)]
+      (is (nil? (:organizations/join-secret (organization/by-id id)))))))
+
+(deftest enable-join-requests-sets-join-secret-test
+  (testing "Enabling join requests on organization sets the join secret"
+    (let [{user-id :users/id} (factories/create-user)
+          {:organizations/keys [id]} (factories/create-organization user-id)]
+      (organization/enable-join-requests! id)
+
+      (is (= 27 (count (:organizations/join-secret (organization/by-id id))))))))
+
+(deftest disable-join-requests-removes-the-join-secret-test
+  (testing "Disabling join requests on organization removes the join secret"
+    (let [{user-id :users/id} (factories/create-user)
+          {:organizations/keys [id]} (factories/create-organization user-id)]
+
+      (organization/enable-join-requests! id)
+      (is (= 27 (count (:organizations/join-secret (organization/by-id id)))))
+      (organization/disable-join-requests! id)
+      (is (nil? (:organizations/join-secret (organization/by-id id)))))))
