@@ -3,7 +3,8 @@
             [chronograph.specs]
             [mount.core :as mount]
             [chronograph.db.core :as db]
-            [next.jdbc :as jdbc]))
+            [next.jdbc :as jdbc]
+            [taoensso.timbre :as log]))
 
 (defn config [f]
   (mount/stop #'config/config)
@@ -29,3 +30,6 @@
 (defn clear-db [f]
   (truncate-all-tables!)
   (f))
+
+(defn report-logging-only [f]
+  (log/with-level :report (f)))

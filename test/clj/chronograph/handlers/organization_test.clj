@@ -5,7 +5,8 @@
             [chronograph.handlers.organization :as organization]
             [clojure.spec.alpha :as s]
             [clojure.test :refer :all]
-            [chronograph.middleware :as middleware]))
+            [chronograph.middleware :as middleware]
+            [taoensso.timbre :as log]))
 
 (use-fixtures :once fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)
@@ -33,14 +34,15 @@
 
 (deftest create-organization-when-slug-exists
   (testing "Creating an organization with pre-existing slug fails with an HTTP error."
-    (let [user (factories/create-user)]
-      (is (= {:status 500
-              :headers {}
-              :body {:error "Internal Server Error"}}
-             (do (create-organization {:body {:name "foo" :slug "bar"}
-                                       :user user})
-                 (create-organization {:body {:name "foo" :slug "bar"}
-                                       :user user})))))))
+    (log/with-level :report
+      (let [user (factories/create-user)]
+        (is (= {:status  500
+                :headers {}
+                :body    {:error "Internal Server Error"}}
+               (do (create-organization {:body {:name "foo" :slug "bar"}
+                                         :user user})
+                   (create-organization {:body {:name "foo" :slug "bar"}
+                                         :user user}))))))))
 
 
 (deftest create-organization-disallows-unauthorised-user
