@@ -29,7 +29,9 @@
         ["api/" [["users/me" {:get (-> user/me
                                        middleware/wrap-authenticated)}]
                  ["organizations" {:post (-> organization/create
-                                             middleware/wrap-authenticated)}]]]
+                                             middleware/wrap-authenticated)
+                                   ["/" :slug] {:get (-> organization/find-one
+                                                         middleware/wrap-authenticated)}}]]]
         [true (fn [_] (-> (response/resource-response "public/index.html")
                           (response/content-type "text/html")))]]])
 
