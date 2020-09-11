@@ -15,4 +15,19 @@
      {:error "Bad name or slug."})
     (-> (organization/create! {:organizations/name name :organizations/slug slug}
                               id)
-        response/response )))
+        response/response)))
+
+(defn find-one
+  "Any user may query details about the requested organization, as long as they
+  belong to the organization."
+  [{{:keys [slug]} :params
+    {:users/keys [id]} :user
+    :as request}]
+  (if-not (s/valid? :organizations/slug slug)
+    (response/bad-request
+     {:error "Bad slug"})
+    (if-let [organization (organization/find-one slug id)]
+      (-> organization
+          response/response)
+      (response/not-found
+       {:error "Not found"}))))
