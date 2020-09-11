@@ -9,9 +9,9 @@
             [chronograph.domain.user :as user]
             [chronograph.config :as config]
             [clojure.string :as string])
-  (:import (java.net URL URI)))
+  (:import (java.net URI)))
 
-(use-fixtures :once fixtures/config fixtures/datasource)
+(use-fixtures :once fixtures/config fixtures/datasource fixtures/report-logging-only)
 (use-fixtures :each fixtures/clear-db)
 
 (deftest web-redirect-handler-test

@@ -6,7 +6,7 @@
             [clojure.test :refer :all]
             [ring.util.response :as response]))
 
-(use-fixtures :once fixtures/config fixtures/datasource)
+(use-fixtures :once fixtures/config fixtures/datasource fixtures/report-logging-only)
 (use-fixtures :each fixtures/clear-db)
 
 (deftest wrap-cookie-auth-test
