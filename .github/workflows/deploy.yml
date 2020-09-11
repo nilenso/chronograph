@@ -1,0 +1,106 @@
+name: Build and deploy
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  LOGO: https://nilenso.com/images/nilenso_logos/nilenso_logo.png
+  CHRONOGRAPH_JAR: chronograph.jar
+
+jobs:
+  uberjar-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cache lein deps
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-lein-deps
+        with:
+          path: ~/.m2
+          key: ${{ env.cache-name }}-${{ hashFiles('**/project.clj') }}
+          restore-keys: |
+            ${{ env.cache-name }}-
+
+      - name: Install frontend deps
+        run: yarn install
+
+      - name: Build the frontend
+        run: yarn release
+
+      - name: Build uberjar
+        run: lein uberjar
+
+      - name: Upload uberjar
+        uses: actions/upload-artifact@v2
+        with:
+          name: chronograph-uberjar
+          path: target/${{env.CHRONOGRAPH_JAR}}
+
+  staging-deploy:
+    runs-on: ubuntu-latest
+
+    needs: uberjar-build
+
+    env:
+      CHRONOGRAPH_STAGING_INVENTORY: "staging.hosts"
+      CHRONOGRAPH_STAGING_PRIVATE_KEY: "staging.private_key"
+      CHRONOGRAPH_STAGING_CONFIG: "config.staging.edn"
+      CHRONOGRAPH_STAGING_USER: ${{secrets.CHRONOGRAPH_STAGING_USER}}
+      ANSIBLE_HOST_KEY_CHECKING: False
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: 'nilenso/chronograph-playbook'
+
+      - name: Create private key
+        run: |
+          echo "$CHRONOGRAPH_STAGING_PRIVATE_KEY_DATA" > "$CHRONOGRAPH_STAGING_PRIVATE_KEY"
+          chmod 600 "$CHRONOGRAPH_STAGING_PRIVATE_KEY"
+        shell: bash
+        env:
+          CHRONOGRAPH_STAGING_PRIVATE_KEY_DATA: ${{secrets.CHRONOGRAPH_STAGING_PRIVATE_KEY_DATA}}
+
+      - name: Set gcloud credentials
+        run: |
+          echo "$GCLOUD_CREDENTIALS_DATA" > "$GCLOUD_CREDENTIALS"
+          gcloud auth activate-service-account "--key-file=$GCLOUD_CREDENTIALS"
+          gcloud config set project "$GCLOUD_PROJECT"
+        env:
+          GCLOUD_PROJECT: chronograph
+          GCLOUD_CREDENTIALS: "gcloud.json"
+          GCLOUD_CREDENTIALS_DATA: ${{ secrets.GCLOUD_CREDENTIALS_DATA }}
+
+      - name: Create inventory
+        run: |
+          echo "[webservers]" > "$CHRONOGRAPH_STAGING_INVENTORY"
+          gcloud compute instances list --format='get(networkInterfaces[0].accessConfigs[0].natIP)' >> "$CHRONOGRAPH_STAGING_INVENTORY"
+          chmod 600 "$CHRONOGRAPH_STAGING_INVENTORY"
+        shell: bash
+        env:
+          CHRONOGRAPH_STAGING_INVENTORY_DATA: ${{secrets.CHRONOGRAPH_STAGING_INVENTORY_DATA}}
+
+      - name: Download uberjar
+        id: uberjar
+        uses: actions/download-artifact@v2
+        with:
+          name: chronograph-uberjar
+
+      - name: Fetch config
+        run: gcloud secrets versions access latest --secret=staging-config >> "$CHRONOGRAPH_STAGING_CONFIG"
+
+      - name: Deploy to staging
+        run: |
+          ansible-playbook \
+          --inventory "$CHRONOGRAPH_STAGING_INVENTORY" \
+          --user "$CHRONOGRAPH_STAGING_USER" \
+          --private-key "$CHRONOGRAPH_STAGING_PRIVATE_KEY" \
+          --extra-vars "chronograph_jar=${{ steps.uberjar.outputs.download-path }}/$CHRONOGRAPH_JAR" \
+          --extra-vars "chronograph_config=$CHRONOGRAPH_STAGING_CONFIG" \
+          --become \
+          webserver.yml
