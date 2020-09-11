@@ -12,3 +12,5 @@
                        :organization-id id
                        :role acl/admin})
       organization)))
+
+(def find-one db-organization/find-one)
