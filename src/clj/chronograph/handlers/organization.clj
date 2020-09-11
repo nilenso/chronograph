@@ -10,7 +10,7 @@
   [{{:keys [name slug] :as body} :body
     {:keys [users/id] :as user} :user
     :as request}]
-  (if-not (s/valid? :organizations/create-params-handler body)
+  (if-not (s/valid? :organizations/create-params-un body)
     (response/bad-request
      {:error "Bad name or slug."})
     (-> (organization/create! {:organizations/name name :organizations/slug slug}

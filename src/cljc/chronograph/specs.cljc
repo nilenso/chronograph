@@ -34,7 +34,7 @@
 (s/def :organizations/id int?)
 
 (s/def :organizations/create-params (s/keys :req [:organizations/name :organizations/slug]))
-(s/def :organizations/create-params-handler (s/keys :req-un [:organizations/name :organizations/slug]))
+(s/def :organizations/create-params-un (s/keys :req-un [:organizations/name :organizations/slug]))
 (s/def :organizations/organization (s/keys :req [:organizations/id
                                                  :organizations/name
                                                  :organizations/slug]))
