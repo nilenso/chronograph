@@ -39,4 +39,5 @@
                                              [day8.re-frame/test "0.1.5"]
                                              [binaryage/devtools "1.0.2"]]}
              :dev {:dependencies [[mock-clj "0.2.1"]
-                                  [org.clojure/test.check "0.9.0"]]}})
+                                  [org.clojure/test.check "0.9.0"]
+                                  [vvvvalvalval/scope-capture "0.3.2"]]}})
