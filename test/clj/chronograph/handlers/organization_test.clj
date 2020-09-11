@@ -16,7 +16,7 @@
   define a sensible test-handler."
   (-> organization/create
       middleware/wrap-exception-logging
-      middleware/wrap-authorized-user))
+      middleware/wrap-require-user-info))
 
 
 (deftest create-new-organization-first-time

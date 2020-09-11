@@ -1,15 +1,16 @@
-{:db-spec       {:dbtype   "postgresql"
-                 :dbname   "chronograph_dev"
-                 :host     "localhost"
-                 :port     19401
-                 :user     "chronograph_dev"
-                 :password "chronograph_devpwd"}
- :oauth         {:google #merge [{:web-redirect-uri     "http://localhost:8000/auth/google/web/redirect"
-                                  :desktop-redirect-uri "http://localhost:8000/auth/google/desktop/redirect"
-                                  :response-type        "code"
-                                  :login-endpoint       "https://accounts.google.com/o/oauth2/v2/auth"
-                                  :token-endpoint       "https://oauth2.googleapis.com/token"}
-                                 #include "google.secrets.edn"]}
- :auth          {:token-signing-key       "your-signing-key-here"
-                 :token-expiry-in-seconds 3600}
- :port          8000}
+{:db-spec {:dbtype   "postgresql"
+           :dbname   "chronograph_dev"
+           :host     "localhost"
+           :port     19401
+           :user     "chronograph_dev"
+           :password "chronograph_devpwd"}
+ :oauth   {:google #merge [{:web-redirect-uri     "http://localhost:8000/auth/google/web/redirect"
+                            :desktop-redirect-uri "http://localhost:8000/auth/google/desktop/redirect"
+                            :response-type        "code"
+                            :login-endpoint       "https://accounts.google.com/o/oauth2/v2/auth"
+                            :token-endpoint       "https://oauth2.googleapis.com/token"}
+                           #include "google.secrets.edn"]}
+ :auth    {:token-signing-key           "your-signing-key-here"
+           :token-expiry-in-seconds     3600
+           :desktop-redirect-url-scheme "chronograph"}
+ :port    8000}
