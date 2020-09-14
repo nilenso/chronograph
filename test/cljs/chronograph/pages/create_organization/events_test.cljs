@@ -61,11 +61,8 @@
        (is (= (:status @(rf/subscribe [::subs/create-organization-form]))
               :created)
            "the create-organization-form state should be :created")
-       (is (= @(rf/subscribe [::subs/current-page])
-              {:handler :organization-show
-               :route-params {:slug slug}})
-           "the user should be shown the organization page")
-       (is (= @token "/organization/slug") "the user's browser path should be set to the organization show page")
+       (is (= @token "/organization/slug")
+           "the user's browser path should be set to the organization show page")
        (is (= @(rf/subscribe [::subs/organization slug])
               {:name "Name"
                :slug "slug"

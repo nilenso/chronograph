@@ -36,9 +36,7 @@
 (rf/reg-event-fx
   ::create-organization-succeeded
   (fn [{:keys [db]} [_ {:keys [id slug] :as response}]]
-    {:fx [[:dispatch [::routing-events/set-page {:route-params {:slug slug}
-                                                 :handler :organization-show}]]
-          [:dispatch [::routing-events/set-token (organization-url slug)]]]
+    {:dispatch [::routing-events/set-token (organization-url slug)]
      :db (-> db
              (assoc-in status-path :created)
              (assoc-in [:organizations slug] response))}))

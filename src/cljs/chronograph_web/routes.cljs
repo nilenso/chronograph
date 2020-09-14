@@ -17,7 +17,7 @@
                          :organization-show organization-page})
 
 (defn set-page! [match]
-  (rf/dispatch-sync [::routing-events/set-page match]))
+  (rf/dispatch [::routing-events/set-page match]))
 
 (def history
   (pushy/pushy set-page! #(bidi/match-route routes %)))
