@@ -1,11 +1,23 @@
 (ns chronograph-web.events.routing
   (:require [re-frame.core :as rf]
-            [chronograph-web.db :as db]))
+            [chronograph-web.pages.organization.events :as org-events]))
 
-(rf/reg-event-db
-  ::set-page
-  (fn [db [_ route]]
-    (assoc db :page route)))
+
+(defn- on-navigate
+  [{:keys [handler]
+    :as route}]
+  (case handler
+    :organization-show {:http-xhrio (org-events/get-organization route)}
+    nil))
+
+
+(rf/reg-event-fx
+ ::set-page
+ (fn [db [_ route]]
+   (merge
+    (on-navigate route)
+    {:db (assoc db :page route)})))
+
 
 (rf/reg-event-fx
   ::set-token
