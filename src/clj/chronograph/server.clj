@@ -14,6 +14,7 @@
             [chronograph.config :as config]
             [chronograph.middleware :as middleware]
             [chronograph.handlers.google-auth :as google-auth]
+            [chronograph.handlers.task :as task]
             [chronograph.handlers.user :as user]
             [chronograph.handlers.organization :as organization]))
 
@@ -28,6 +29,7 @@
         ["auth/" [["google/" google-auth-routes]]]
         ["api/" [["users/me" {:get (-> user/me
                                        middleware/wrap-authenticated)}]
+                 ["tasks" {:post (middleware/wrap-authorized-user task/create)}]
                  ["organizations" {:post (-> organization/create
                                              middleware/wrap-authenticated)
                                    ["/" :slug] {:get (-> organization/find-one

@@ -2,6 +2,9 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]))
 
+(def non-empty-string?
+  (s/and string? #(not= % "")))
+
 ;; Users
 
 (s/def :users/id int?)
@@ -47,3 +50,10 @@
 (s/def :acls/organization-id :organizations/id)
 
 (s/def :acls/acl (s/keys :req [:acls/user-id :acls/organization-id :acls/role]))
+
+;; Tasks
+(s/def :tasks/id int?)
+(s/def :tasks/name non-empty-string?)
+(s/def :tasks/description string?)
+(s/def :tasks/create-params-handler (s/keys :req-un [:tasks/name]
+                                            :opt-un [:tasks/description]))
