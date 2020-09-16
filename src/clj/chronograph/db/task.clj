@@ -4,14 +4,15 @@
             [chronograph.utils.time :as time]))
 
 (defn create!
-  ([name description]
-   (create! db/datasource name description))
-  ([tx name description]
+  ([task]
+   (create! db/datasource task))
+  ([tx {:keys [name description organization-id]}]
    (let [now (time/now)]
      (sql/insert! tx
                   :tasks
                   {:name name
                    :description description
+                   :organization-id organization-id
                    :created-at now
                    :updated-at now}
                   db/sql-opts))))

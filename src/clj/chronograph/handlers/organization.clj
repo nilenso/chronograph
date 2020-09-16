@@ -22,20 +22,12 @@
   belong to the organization."
   [{{:keys [slug]} :params
     {:users/keys [id]} :user
-<<<<<<< HEAD
     :as _request}]
   (if-not (s/valid? :organizations/slug slug)
     (response/bad-request
      {:error "Bad slug"})
     (if-let [organization (organization/find-if-authorized slug id)]
-=======
-    :as request}]
-  (if-not (s/valid? :organizations/slug slug)
-    (response/bad-request
-     {:error "Bad slug"})
-    (if-let [organization (organization/find-one slug id)]
->>>>>>> Add handler to find organization for an authorized
       (-> organization
           response/response)
       (response/not-found
-       {:error "Not found"}))))
+        {:error "Not found"}))))

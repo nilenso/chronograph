@@ -69,7 +69,6 @@
                       (:body response))
             "Slug length can be exactly 256 characters at most.")))))
 
-<<<<<<< HEAD
 (deftest find-one-organization
   (testing "when fetching an organization"
     (let [user (factories/create-user)
@@ -77,18 +76,6 @@
            :as organization} (factories/create-organization (:users/id user))
           other-user (factories/create-user)
           slug-that-doesnt-exist (str (java.util.UUID/randomUUID))]
-=======
-
-(deftest find-one-organization
-  (testing "when fetching an organization"
-    (let [user (factories/create-user)
-          other-user (factories/create-user)
-          slug "bar"
-          slug-that-doesnt-exist (str (java.util.UUID/randomUUID))
-          organization (:body (create-organization
-                               {:body {:name "foo" :slug slug}
-                                :user user}))]
->>>>>>> Add handler to find organization for an authorized
       (is (= {:status 200
               :headers {}
               :body organization}
@@ -117,14 +104,10 @@
               :headers {}
               :body {:error "Not found"}}
              (do ;; create org so the "other-user" gets registered in the ACL
-<<<<<<< HEAD
                (factories/create-organization (:users/id other-user))
-=======
-               (create-organization
                 {:body {:name "other foo" :slug (str "other-" slug)}
                  :user other-user})
->>>>>>> Add handler to find organization for an authorized
                ;; now try to find an org to which "other-user" does not belong
                (organization/find-one {:params {:slug slug}
                                        :user other-user})))
-          "Fetching org details by a user that does not belong to the org fails with HTTP error."))))
+          "Fetching org details by a user that does not belong to the org fails with HTTP error.")))

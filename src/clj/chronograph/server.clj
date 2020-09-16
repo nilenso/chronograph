@@ -29,7 +29,8 @@
         ["auth/" [["google/" google-auth-routes]]]
         ["api/" [["users/me" {:get (-> user/me
                                        middleware/wrap-authenticated)}]
-                 ["tasks" {:post (middleware/wrap-authorized-user task/create)}]
+                 ["tasks" {:post (-> task/create
+                                     middleware/wrap-authenticated)}]
                  ["organizations" {:post (-> organization/create
                                              middleware/wrap-authenticated)
                                    ["/" :slug] {:get (-> organization/find-one
