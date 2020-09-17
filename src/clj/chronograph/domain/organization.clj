@@ -2,8 +2,7 @@
   (:require [chronograph.db.core :as db]
             [chronograph.db.organization :as db-organization]
             [chronograph.domain.acl :as acl]
-            [next.jdbc :as jdbc]
-            [clojure.spec.alpha :as s]))
+            [next.jdbc :as jdbc]))
 
 (defn create! [organization owner-id]
   (jdbc/with-transaction [tx db/datasource]

@@ -1,0 +1,6 @@
+{:lint-as {mount.core/defstate clj-kondo.lint-as/def-catch-all}
+ :linters {:unused-namespace    {:exclude [chronograph.server
+                                           "chronograph-web.*\\.events(\\..*)?$"]}
+           :unused-binding      {:exclude-destructured-keys-in-fn-args true}
+           :refer-all           {:exclude #{clojure.test}}
+           :unused-referred-var {:exclude {cljs.test [run-tests]}}}}

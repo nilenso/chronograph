@@ -72,10 +72,7 @@
   (testing "when organization creation fails"
     (rf-test/run-test-sync
      (let [name "Name"
-           slug "slug"
-           id 83
-           organization {:id id :name name :slug slug}
-           token (atom nil)]
+           slug "slug"]
        (rf/reg-fx :http-xhrio
                   (fn [_]
                     (rf/dispatch [::create-organization-events/create-organization-failed])))
@@ -92,10 +89,7 @@
   (testing "when organization creation is ongoing"
     (rf-test/run-test-sync
      (let [name "Name"
-           slug "slug"
-           id 83
-           organization {:id id :name name :slug slug}
-           token (atom nil)]
+           slug "slug"]
        (rf/reg-fx :http-xhrio
                   (fn [_]
                     (js/setTimeout #(rf/dispatch

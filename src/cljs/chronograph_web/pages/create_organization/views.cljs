@@ -21,13 +21,13 @@
                    :name (name k)})]])
 
 (defn create-organization-page [_]
-  (let [{:keys [form-params status] :as form-data} @(rf/subscribe [::subs/create-organization-form])
+  (let [{:keys [form-params status] :as _form-data} @(rf/subscribe [::subs/create-organization-form])
         form-invalid? (not (form-valid? form-params))
         {:keys [name slug]} form-params]
     [:form
-     (if (= status :failed)
+     (when (= status :failed)
        [:div "Error creating the organization"])
-     (if (and status form-invalid?)
+     (when (and status form-invalid?)
        [:div "Please fix form errors"])
      (text-input :name
                  :organizations/name

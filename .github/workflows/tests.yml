@@ -63,3 +63,21 @@ jobs:
 
     - name: Run frontend tests
       run: yarn test
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install clj-kondo
+        run: |
+          curl -sLO https://raw.githubusercontent.com/borkdude/clj-kondo/master/script/install-clj-kondo
+          chmod +x install-clj-kondo
+          sudo ./install-clj-kondo
+
+      - name: Lint the source directory
+        run: clj-kondo --lint src/
+
+      - name: Lint the test directory
+        run: clj-kondo --lint test/

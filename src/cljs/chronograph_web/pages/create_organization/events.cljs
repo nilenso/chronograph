@@ -1,11 +1,8 @@
 (ns chronograph-web.pages.create-organization.events
   (:require [re-frame.core :as rf]
-            [chronograph-web.db :as db]
             [chronograph-web.http :as http]
             [chronograph-web.events.routing :as routing-events]
-            [ajax.core :as ajax]
-            [day8.re-frame.http-fx]
-            [clojure.spec.alpha :as s]))
+            [day8.re-frame.http-fx]))
 
 (def ^:private create-organization-uri "/api/organizations")
 
@@ -43,5 +40,5 @@
 
 (rf/reg-event-db
   ::create-organization-failed
-  (fn [db [_ {:keys [id] :as response}]]
+  (fn [db _]
     (assoc-in db status-path :failed)))

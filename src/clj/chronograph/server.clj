@@ -54,9 +54,6 @@
 (defn- warn-logger [text ex]
   (log/warn ex text))
 
-(defn- event-logger [text]
-  (log/info text))
-
 (defn start-server!
   ([] (start-server! handler))
   ([app-handler]

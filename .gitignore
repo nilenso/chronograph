@@ -20,4 +20,4 @@ config/*.secrets.edn
 *~
 \#*\#
 .\#*
-.clj-kondo
+.clj-kondo/.cache

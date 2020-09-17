@@ -1,6 +1,5 @@
 (ns chronograph.utils.json
-  (:require [cheshire.generate :as json-gen]
-            [chronograph.utils.time :as tt])
+  (:require [cheshire.generate :as json-gen])
   (:import [java.time Instant]))
 
 (json-gen/add-encoder Instant

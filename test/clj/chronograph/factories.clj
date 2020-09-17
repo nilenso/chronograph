@@ -5,7 +5,7 @@
             [chronograph.domain.organization :as organization]))
 
 (defn create-user []
-  (let [{:keys [users/id users/name users/email users/photo-url]} (gen/generate (s/gen :users/user))]
+  (let [{:keys [users/name users/email users/photo-url]} (gen/generate (s/gen :users/user))]
     (user/find-or-create-google-user! (gen/generate (s/gen :users/google-id))
                                       name
                                       email
