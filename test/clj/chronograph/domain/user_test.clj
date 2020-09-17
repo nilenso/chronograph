@@ -16,14 +16,14 @@
                                                              "Foo Bar"
                                                              "foo@bar.baz"
                                                              "https://foo.bar/baz.jpg")
-            retrieved-user (user/find-by-google-id "google-123")
-            now (time/now)]
-        (is (= #:users{:id (:users/id created-user)
-                       :name      "Foo Bar"
-                       :email     "foo@bar.baz"
-                       :photo-url "https://foo.bar/baz.jpg"
-                       :created-at now
-                       :updated-at now}
+            retrieved-user (user/find-by-google-id "google-123")]
+        (is (= #:users{:id                 (:users/id created-user)
+                       :google-profiles-id (:users/google-profiles-id created-user)
+                       :name               "Foo Bar"
+                       :email              "foo@bar.baz"
+                       :photo-url          "https://foo.bar/baz.jpg"
+                       :created-at         (time/now)
+                       :updated-at         (time/now)}
                retrieved-user))))))
 
 (deftest find-or-create-when-user-already-exists-test
@@ -51,13 +51,13 @@
                                                                                   "Foo Bar"
                                                                                   "foo@bar.baz"
                                                                                   "https://foo.bar/baz.jpg")
-            retrieved-user (user/find-by-id id)
-            now (time/now)]
+            retrieved-user (user/find-by-id id)]
         (is (= created-user retrieved-user))
-        (is (= #:users{:id id
-                       :name      "Foo Bar"
-                       :email     "foo@bar.baz"
-                       :photo-url "https://foo.bar/baz.jpg"
-                       :created-at now
-                       :updated-at now}
+        (is (= #:users{:id                 id
+                       :google-profiles-id (:users/google-profiles-id created-user)
+                       :name               "Foo Bar"
+                       :email              "foo@bar.baz"
+                       :photo-url          "https://foo.bar/baz.jpg"
+                       :created-at         (time/now)
+                       :updated-at         (time/now)}
                retrieved-user))))))
