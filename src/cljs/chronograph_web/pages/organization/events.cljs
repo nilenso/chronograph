@@ -4,15 +4,15 @@
 
 
 (def ^:private get-organization-uri
-  "/api/organizations")
+  "/api/organizations/")
 
 
-(defn get-organization
-  [route]
-  (http/get (str get-organization-uri
-                 (get-in route [:route-params :slug]))
-            {:on-success [::fetch-organization-success]
-             :on-failure [::fetch-organization-fail]}))
+(rf/reg-event-fx
+ ::fetch-organization
+ (fn [_ [_ slug]]
+   {:http-xhrio (http/get (str get-organization-uri slug)
+                          {:on-success [::fetch-organization-success]
+                           :on-failure [::fetch-organization-fail]})}))
 
 
 (rf/reg-event-db

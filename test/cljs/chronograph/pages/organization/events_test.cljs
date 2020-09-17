@@ -21,6 +21,7 @@
                     (rf/dispatch [::org-events/fetch-organization-success
                                   organization])))
        (rf/dispatch [::routing-events/set-page {:slug slug :handler :organization-show}])
+       (rf/dispatch [::org-events/fetch-organization slug])
        (is (= {:id 42
                :name "A Test Org"
                :slug "a-test-org"
