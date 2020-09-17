@@ -34,6 +34,7 @@
                        "auth-token"
                        (create-token id)
                        {:http-only true
+                        :path      "/"
                         ;; TODO: Set Secure in staging/prod
                         :same-site :strict
                         :max-age   (- (get-in config/config [:auth :token-expiry-in-seconds])
