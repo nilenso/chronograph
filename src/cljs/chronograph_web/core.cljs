@@ -3,7 +3,9 @@
             [re-frame.core :as rf]
             [chronograph.specs]
             [chronograph-web.events.user :as user-events]
-            [chronograph-web.events.routing :as routing-events]
+            [chronograph-web.events.routing]
+            [chronograph-web.pages.create-organization.events]
+            [chronograph-web.pages.organization.events]
             [chronograph-web.routes :as routes]
             [chronograph-web.views :as views]
             [chronograph-web.effects]))

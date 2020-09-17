@@ -1,6 +1,5 @@
 (ns chronograph-web.views
   (:require [re-frame.core :as rf]
-            [chronograph-web.events :as events]
             [chronograph-web.routes :as routes]
             [chronograph-web.subscriptions :as subs]))
 
