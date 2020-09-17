@@ -10,9 +10,11 @@
 (rf/reg-event-fx
  ::fetch-organization
  (fn [_ [_ slug]]
+   ;; TODO: optimize fetch and rendering in case we already have
+   ;; data for the organization, in our db.
    {:http-xhrio (http/get (str get-organization-uri slug)
                           {:on-success [::fetch-organization-success]
-                           :on-failure [::fetch-organization-fail]})}))
+                           :on-failure [::fetch-organization-fail slug]})}))
 
 
 (rf/reg-event-db
@@ -25,5 +27,7 @@
 
 (rf/reg-event-db
  ::fetch-organization-fail
- (fn [db _]
-   db))
+ (fn [db [_ slug]]
+   (assoc-in db
+             [:organizations slug]
+             ::not-found)))
