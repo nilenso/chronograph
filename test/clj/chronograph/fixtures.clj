@@ -21,8 +21,7 @@
   (mount/stop #'db/datasource))
 
 (defn truncate-all-tables! []
-  (jdbc/execute! db/datasource ["TRUNCATE TABLE google_profiles"])
-  (jdbc/execute! db/datasource ["TRUNCATE TABLE linked_profiles"])
+  (jdbc/execute! db/datasource ["TRUNCATE TABLE google_profiles CASCADE"])
   (jdbc/execute! db/datasource ["TRUNCATE TABLE users CASCADE"])
   (jdbc/execute! db/datasource ["TRUNCATE TABLE acls CASCADE"])
   (jdbc/execute! db/datasource ["TRUNCATE TABLE organizations CASCADE"]))
