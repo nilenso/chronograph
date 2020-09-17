@@ -24,11 +24,10 @@
   ([user-id organization-id]
    (find-acl db/datasource user-id organization-id))
   ([tx user-id organization-id]
-   (let [now (time/now)]
-     (first
-      (sql/query tx
-                 ["SELECT user_id, organization_id, role
+   (first
+     (sql/query tx
+                ["SELECT user_id, organization_id, role
                    FROM acls
                    WHERE user_id = ?
                    AND organization_id = ?" user-id organization-id]
-                 db/sql-opts)))))
+                db/sql-opts))))

@@ -1,8 +1,7 @@
 (ns chronograph.db.organization
   (:require [chronograph.db.core :as db]
             [next.jdbc.sql :as sql]
-            [chronograph.utils.time :as time]
-            [next.jdbc :as jdbc]))
+            [chronograph.utils.time :as time]))
 
 (defn create!
   ([organization]

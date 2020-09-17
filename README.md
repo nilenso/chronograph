@@ -56,3 +56,6 @@ To run tests, do:
 lein run -- -mf config/config.test.edn
 lein test
 ```
+
+## Linting
+We use [clj-kondo](https://github.com/borkdude/clj-kondo) for linting. To run the linter, run `clj-kondo --lint src/` and `clj-kondo --lint test/` to lint the source and test directories respectively. Please fix lint errors before pushing, or your build will fail. If you think the linter is reporting a false positive, discuss it with the team and/or add an exclusion in the configuration.

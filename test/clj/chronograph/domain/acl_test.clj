@@ -1,7 +1,6 @@
 (ns chronograph.domain.acl-test
   (:require [chronograph.db.acl :as db-acl]
             [chronograph.domain.acl :as acl]
-            [chronograph.domain.organization :as organization]
             [chronograph.factories :as factories]
             [chronograph.fixtures :as fixtures]
             [clojure.test :refer :all])

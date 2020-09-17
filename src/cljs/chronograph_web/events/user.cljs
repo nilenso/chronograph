@@ -21,5 +21,5 @@
 
 (rf/reg-event-db
   ::fetch-profile-failed
-  (fn [db [_ response]]
+  (fn [db _]
     (assoc-in db [:user :signin-state] :signed-out)))

@@ -18,7 +18,7 @@
    [signin-button]])
 
 (defn authenticated-page []
-  (if-let [{:keys [handler route-params] :as route} @(rf/subscribe [::subs/current-page])]
+  (if-let [{:keys [handler route-params]} @(rf/subscribe [::subs/current-page])]
     ((routes/authenticated-view handler) route-params)
     [:div "Page not found"]))
 

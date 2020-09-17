@@ -1,7 +1,5 @@
 (ns chronograph.domain.acl
   (:require [chronograph.db.acl :as db-acl]
-            [clojure.spec.alpha :as s]
-            [chronograph.domain.user :as user]
             [chronograph.db.core :as db]))
 
 
