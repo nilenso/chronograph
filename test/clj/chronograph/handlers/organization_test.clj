@@ -4,26 +4,16 @@
             [chronograph.fixtures :as fixtures]
             [chronograph.handlers.organization :as organization]
             [clojure.spec.alpha :as s]
-            [clojure.test :refer :all]
-            [chronograph.middleware :as middleware]
-            [taoensso.timbre :as log]))
+            [clojure.test :refer :all])
+  (:import (org.postgresql.util PSQLException)))
 
 (use-fixtures :once fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)
 
-(def create-organization
-  "Test handler to mimic the relevant exception logging behaviour of the actual
-  handler.We do this because error handling is not standardised, so we can't yet
-  define a sensible test-handler."
-  (-> organization/create
-      middleware/wrap-exception-logging
-      middleware/wrap-require-user-info))
-
-
 (deftest create-new-organization-first-time
   (testing "Creating a new organization returns a valid organization map in the response, and the creator is registered as admin in the ACL."
     (let [user (factories/create-user)
-          response (create-organization {:body {:name "foo" :slug "bar"}
+          response (organization/create {:body {:name "foo" :slug "bar"}
                                          :user user})]
       (is (= 200 (:status response)))
       (is (s/valid? :organizations/organization
@@ -31,28 +21,13 @@
       (is (acl/admin? (:users/id user)
                       (:organizations/id (:body response)))))))
 
-
 (deftest create-organization-when-slug-exists
-  (testing "Creating an organization with pre-existing slug fails with an HTTP error."
-    (log/with-level :report
-      (let [user (factories/create-user)]
-        (is (= {:status  500
-                :headers {}
-                :body    {:error "Internal Server Error"}}
-               (do (create-organization {:body {:name "foo" :slug "bar"}
-                                         :user user})
-                   (create-organization {:body {:name "foo" :slug "bar"}
-                                         :user user}))))))))
-
-
-(deftest create-organization-disallows-unauthorised-user
-  (testing "Creating an organization with unauthenticated user fails with HTTP error."
-    (is (= {:status 401
-            :headers {}
-            :body {:error "Unauthorized"}}
-           (create-organization {:body {:name "foo" :slug "bar"}
-                                 :user nil})))))
-
+  (testing "Creating an organization with pre-existing slug throws an exception."
+    (let [user (factories/create-user)]
+      (organization/create {:body {:name "foo" :slug "bar"}
+                            :user user})
+      (is (thrown? PSQLException (organization/create {:body {:name "foo" :slug "bar"}
+                                                       :user user}))))))
 
 (deftest create-organization-disallows-bad-request-params
   (testing "Creating an organization with non-conforming name and/or slug fails with HTTP error."
@@ -60,31 +35,31 @@
       (is (= {:status 400
               :headers {}
               :body {:error "Bad name or slug."}}
-             (create-organization {:body {:name "" :slug "foo"}
+             (organization/create {:body {:name "" :slug "foo"}
                                    :user user}))
           "Name cannot be empty.")
       (is (= {:status 400
               :headers {}
               :body {:error "Bad name or slug."}}
-             (create-organization {:body {:name "foo bar" :slug ""}
+             (organization/create {:body {:name "foo bar" :slug ""}
                                    :user user}))
           "Slug cannot be empty.")
       (is (= {:status 400
               :headers {}
               :body {:error "Bad name or slug."}}
-             (create-organization {:body {:name "foo bar" :slug "abc - 123 "}
+             (organization/create {:body {:name "foo bar" :slug "abc - 123 "}
                                    :user user}))
           "Slug must contain only lowercase letters, and optionally numbers or hypens. No whitespace allowed.")
       (is (= {:status 400
               :headers {}
               :body {:error "Bad name or slug."}}
-             (create-organization
+             (organization/create
               {:body {:name "foo bar"
                       :slug (->> (repeat 257 "a")
                                  (apply str))}
                :user user}))
           "Slug length must not exceed 256 characters.")
-      (let [response (create-organization
+      (let [response (organization/create
                       {:body {:name "foo bar"
                               :slug (->> (repeat (/ 256 4) "a-34")
                                          (apply str))}
