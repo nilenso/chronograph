@@ -16,7 +16,6 @@
                    :updated-at now}
                   db/sql-opts))))
 
-
 (defn find-by-slug
   ([slug]
    (find-by-slug db/datasource slug))

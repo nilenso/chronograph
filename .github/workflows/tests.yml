@@ -81,3 +81,12 @@ jobs:
 
       - name: Lint the test directory
         run: clj-kondo --lint test/
+
+  check-formatting:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run cljfmt check
+        run: lein cljfmt check

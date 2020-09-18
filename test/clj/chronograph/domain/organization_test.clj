@@ -20,7 +20,7 @@
 (deftest create-organization-sets-admin-test
   (testing "Creating an organization sets the creator as the admin"
     (let [{user-id :users/id} (factories/create-user)
-          {organization-id :organizations/id} (factories/create-organization user-id) ]
+          {organization-id :organizations/id} (factories/create-organization user-id)]
       (is (true? (acl/admin? user-id organization-id))))))
 
 (deftest find-one-organization-test

@@ -9,11 +9,11 @@
   (testing "when the profile is fetched successfully"
     (rf-test/run-test-sync
      (rf/reg-fx :http-xhrio
-                (fn [_]
-                  (rf/dispatch [::user-events/fetch-profile-succeeded {:id        123
-                                                                       :name      "Foo Bar"
-                                                                       :email     "foo@bar.baz"
-                                                                       :photo-url "https://foo.png"}])))
+       (fn [_]
+         (rf/dispatch [::user-events/fetch-profile-succeeded {:id        123
+                                                              :name      "Foo Bar"
+                                                              :email     "foo@bar.baz"
+                                                              :photo-url "https://foo.png"}])))
      (rf/dispatch [::user-events/initialize])
      (is (= {:signin-state :signed-in
              :id           123
@@ -26,8 +26,8 @@
   (testing "when the profile fetch fails"
     (rf-test/run-test-sync
      (rf/reg-fx :http-xhrio
-                (fn [_]
-                  (rf/dispatch [::user-events/fetch-profile-failed "dummy"])))
+       (fn [_]
+         (rf/dispatch [::user-events/fetch-profile-failed "dummy"])))
      (rf/dispatch [::user-events/initialize])
      (is (= :signed-out
             @(rf/subscribe [::subs/signin-state]))

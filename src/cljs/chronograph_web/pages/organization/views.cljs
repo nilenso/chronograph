@@ -3,7 +3,6 @@
             [chronograph-web.subscriptions :as subs]
             [chronograph-web.pages.organization.events :as org-events]))
 
-
 (defn organization-page [{:keys [slug]}]
   (rf/dispatch [::org-events/fetch-organization slug])
   (fn [_]

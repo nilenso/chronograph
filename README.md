@@ -57,5 +57,7 @@ lein run -- -mf config/config.test.edn
 lein test
 ```
 
-## Linting
+## Linting and formatting
 We use [clj-kondo](https://github.com/borkdude/clj-kondo) for linting. To run the linter, run `clj-kondo --lint src/` and `clj-kondo --lint test/` to lint the source and test directories respectively. Please fix lint errors before pushing, or your build will fail. If you think the linter is reporting a false positive, discuss it with the team and/or add an exclusion in the configuration.
+
+We use [cljfmt](https://github.com/weavejester/cljfmt) for formatting, with minimal extra configuration. Run `lein cljfmt fix` to fix formatting for all your source files. You should run this before you commit, or CI will complain. If you don't like how cljfmt is formatting your code, discuss it with the team and/or change the configuration.
