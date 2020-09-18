@@ -19,7 +19,7 @@
 
 (defn authenticated-page []
   (if-let [{:keys [handler route-params]} @(rf/subscribe [::subs/current-page])]
-    ((routes/authenticated-view handler) route-params)
+    [(routes/authenticated-view handler) route-params]
     [:div "Page not found"]))
 
 (defn loading-page []
