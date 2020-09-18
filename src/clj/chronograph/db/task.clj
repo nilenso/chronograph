@@ -24,3 +24,11 @@
    (first (sql/query tx
                      ["SELECT * FROM tasks WHERE id=?" id]
                      db/sql-opts))))
+
+(defn where
+  ([options]
+   (where db/datasource options))
+  ([tx {:keys [organization-id]}]
+   (sql/query tx
+              ["SELECT * FROM tasks WHERE organization_id=?" organization-id]
+              db/sql-opts)))

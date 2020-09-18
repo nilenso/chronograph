@@ -4,3 +4,5 @@
 (def create task-db/create!)
 
 (def find-by-id task-db/find-by-id)
+
+(def index task-db/where)

@@ -3,6 +3,12 @@
             [chronograph-web.subscriptions :as subs]
             [chronograph-web.pages.organization.events :as org-events]))
 
+(defn task-list [organization-id]
+  (rf/dispatch [::org-events/fetch-tasks organization-id])
+  (fn []
+    (let [tasks @(rf/subscribe [::subs/tasks])]
+      [:h1 "Tasks"])))
+
 (defn organization-page [{:keys [slug]}]
   (rf/dispatch [::org-events/fetch-organization slug])
   (fn [_]
@@ -19,4 +25,5 @@
           [:li "Name: " name]
           [:li "Slug: " slug]
           [:li "Created at: " created-at]
-          [:li "Updated at: " updated-at]]]))))
+          [:li "Updated at: " updated-at]]
+         [task-list id]]))))

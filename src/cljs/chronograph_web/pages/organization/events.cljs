@@ -1,9 +1,13 @@
 (ns chronograph-web.pages.organization.events
-  (:require [re-frame.core :as rf]
+  (:require [goog.string :as gstring]
+            [re-frame.core :as rf]
             [chronograph-web.http :as http]))
 
 (def ^:private get-organization-uri
   "/api/organizations/")
+
+(defn- fetch-tasks-uri [organization-id]
+  (gstring/format "/api/organizations/%s/tasks" organization-id))
 
 (rf/reg-event-fx
   ::fetch-organization
@@ -27,3 +31,10 @@
     (assoc-in db
               [:organizations slug]
               ::not-found)))
+
+(rf/reg-event-fx
+ ::fetch-tasks
+ (fn [_ [_ organization-id]]
+   {:http-xhrio (http/get (fetch-tasks-uri organization-id)
+                          {:on-success [::fetch-tasks-success]
+                           :on-failure [::fetch-tasks-failure]})}))
