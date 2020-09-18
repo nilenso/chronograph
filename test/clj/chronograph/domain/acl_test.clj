@@ -46,3 +46,27 @@
                     :organization-id organization-id
                     :role acl/admin})
       (is (acl/admin? user-id organization-id)))))
+
+(deftest belongs-to-org?-test
+  (let [user (factories/create-user)
+        organization (factories/create-organization (:users/id user))]
+
+    (testing "when a user is an admin of the organization"
+      (is (acl/belongs-to-org? (:users/id user)
+                               (:organizations/id organization))))
+
+    (testing "when a user does not exist"
+      (is (not (acl/belongs-to-org? (Long/MAX_VALUE)
+                                    (:organizations/id organization)))))
+
+    (testing "when an organization does not exist"
+      (is (not (acl/belongs-to-org? (:users/id user)
+                                    nil))))
+
+    (testing "when a user is not an 'admin' of the organization"
+      (let [member (factories/create-user)]
+        (acl/create! {:user-id (:users/id member)
+                      :organization-id (:organizations/id organization)
+                      :role acl/member})
+        (is (acl/belongs-to-org? (:users/id member)
+                                 (:organizations/id organization)))))))

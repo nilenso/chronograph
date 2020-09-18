@@ -12,3 +12,13 @@
                        :organization-id id
                        :role acl/admin})
       organization)))
+
+(defn find-if-authorized
+  [slug user-id]
+  (jdbc/with-transaction [tx db/datasource]
+    (when-let [{:organizations/keys [id]
+                :as organization} (db-organization/find-by-slug tx slug)]
+      (when (acl/belongs-to-org? tx
+                                 user-id
+                                 id)
+        organization))))

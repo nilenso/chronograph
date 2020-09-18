@@ -22,3 +22,25 @@
     (let [{user-id :users/id} (factories/create-user)
           {organization-id :organizations/id} (factories/create-organization user-id) ]
       (is (true? (acl/admin? user-id organization-id))))))
+
+(deftest find-one-organization-test
+  (testing "when users try to look up organization information"
+    (let [;; user-one and their organization
+          {user-one :users/id} (factories/create-user)
+          organization-one (factories/create-organization user-one)
+          ;; user-two and their organization
+          {user-two :users/id} (factories/create-user)
+          organization-two (factories/create-organization user-two)]
+      (is (= organization-one
+             (organization/find-if-authorized (:organizations/slug organization-one)
+                                              user-one))
+          "user-one can look up the organization they belong to")
+      (is (nil? (organization/find-if-authorized (:organizations/slug organization-two)
+                                                 user-one))
+          "user-one CANNOT look up an organization they don't belong to")
+      (is (nil? (organization/find-if-authorized "this-does-not-exist"
+                                                 user-one))
+          "find-if-authorized returns nil when the organization does not exist")
+      (is (nil? (organization/find-if-authorized (:organizations/slug organization-one)
+                                                 (Long/MAX_VALUE)))
+          "find-one returns nil when the user does not exist"))))

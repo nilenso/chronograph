@@ -2,7 +2,6 @@
   (:require [cljs.test :refer-macros [deftest is testing run-tests]]
             [day8.re-frame.test :as rf-test]
             [re-frame.core :as rf]
-            [chronograph-web.events :as events]
             [chronograph-web.events.user :as user-events]
             [chronograph-web.subscriptions :as subs]))
 

@@ -10,6 +10,7 @@
 (use-fixtures :once fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)
 
+
 (deftest create-new-organization-first-time
   (testing "Creating a new organization returns a valid organization map in the response, and the creator is registered as admin in the ACL."
     (let [user (factories/create-user)
@@ -68,3 +69,45 @@
         (is (s/valid? :organizations/organization
                       (:body response))
             "Slug length can be exactly 256 characters at most.")))))
+
+
+(deftest find-one-organization
+  (testing "when fetching an organization"
+    (let [user (factories/create-user)
+          {:organizations/keys [slug]
+           :as organization} (factories/create-organization (:users/id user))
+          other-user (factories/create-user)
+          slug-that-doesnt-exist (str (java.util.UUID/randomUUID))]
+      (is (= {:status 200
+              :headers {}
+              :body organization}
+             (organization/find-one {:params {:slug slug}
+                                     :user user}))
+          "Fetching an organization with authorized user returns the organization details.")
+      (is (= {:status 404
+              :headers {}
+              :body {:error "Not found"}}
+             (organization/find-one {:params {:slug slug}
+                                     :user other-user}))
+          "Fetching an organization with unauthorized user fails with HTTP error.")
+      (is (= {:status 400
+              :headers {}
+              :body {:error "Bad slug"}}
+             (organization/find-one {:params {:slug nil}
+                                     :user user}))
+          "Fetching an organization with invalid slug fails with HTTP error.")
+      (is (= {:status 404
+              :headers {}
+              :body {:error "Not found"}}
+             (organization/find-one {:params {:slug slug-that-doesnt-exist}
+                                     :user user}))
+          "Fetching a non-existing organization fails with HTTP error.")
+      (is (= {:status 404
+              :headers {}
+              :body {:error "Not found"}}
+             (do ;; create org so the "other-user" gets registered in the ACL
+               (factories/create-organization (:users/id other-user))
+               ;; now try to find an org to which "other-user" does not belong
+               (organization/find-one {:params {:slug slug}
+                                       :user other-user})))
+          "Fetching org details by a user that does not belong to the org fails with HTTP error."))))
