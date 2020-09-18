@@ -26,7 +26,7 @@
   (if-not (s/valid? :organizations/slug slug)
     (response/bad-request
      {:error "Bad slug"})
-    (if-let [organization (organization/find-one slug id)]
+    (if-let [organization (organization/find-if-authorized slug id)]
       (-> organization
           response/response)
       (response/not-found

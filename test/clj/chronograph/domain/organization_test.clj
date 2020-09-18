@@ -32,15 +32,15 @@
           {user-two :users/id} (factories/create-user)
           organization-two (factories/create-organization user-two)]
       (is (= organization-one
-             (organization/find-one (:organizations/slug organization-one)
-                                    user-one))
+             (organization/find-if-authorized (:organizations/slug organization-one)
+                                              user-one))
           "user-one can look up the organization they belong to")
-      (is (nil? (organization/find-one (:organizations/slug organization-two)
-                                       user-one))
+      (is (nil? (organization/find-if-authorized (:organizations/slug organization-two)
+                                                 user-one))
           "user-one CANNOT look up an organization they don't belong to")
-      (is (nil? (organization/find-one "this-does-not-exist"
-                                       user-one))
-          "find-one returns nil when the organization does not exist")
-      (is (nil? (organization/find-one (:organizations/slug organization-one)
-                                       (Long/MAX_VALUE)))
+      (is (nil? (organization/find-if-authorized "this-does-not-exist"
+                                                 user-one))
+          "find-if-authorized returns nil when the organization does not exist")
+      (is (nil? (organization/find-if-authorized (:organizations/slug organization-one)
+                                                 (Long/MAX_VALUE)))
           "find-one returns nil when the user does not exist"))))
