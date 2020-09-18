@@ -10,7 +10,6 @@
 (use-fixtures :once fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)
 
-
 (deftest create-new-organization-first-time
   (testing "Creating a new organization returns a valid organization map in the response, and the creator is registered as admin in the ACL."
     (let [user (factories/create-user)
@@ -69,7 +68,6 @@
         (is (s/valid? :organizations/organization
                       (:body response))
             "Slug length can be exactly 256 characters at most.")))))
-
 
 (deftest find-one-organization
   (testing "when fetching an organization"

@@ -6,7 +6,6 @@
             [chronograph-web.events.routing :as routing-events]
             [chronograph-web.subscriptions :as subs]))
 
-
 (deftest get-organization-test
   (testing "When the organization is fetched successfully"
     (rf-test/run-test-sync
@@ -17,9 +16,9 @@
                          :created-at "2020-09-14T14:16:06.402873Z"
                          :updated-at "2020-09-14T14:16:06.402873Z"}]
        (rf/reg-fx :http-xhrio
-                  (fn [_]
-                    (rf/dispatch [::org-events/fetch-organization-success
-                                  organization])))
+         (fn [_]
+           (rf/dispatch [::org-events/fetch-organization-success
+                         organization])))
        (rf/dispatch [::routing-events/set-page {:slug slug :handler :organization-show}])
        (rf/dispatch [::org-events/fetch-organization slug])
        (is (= {:id 42
@@ -33,7 +32,7 @@
     (rf-test/run-test-sync
      (let [slug "a-test-org"]
        (rf/reg-fx :http-xhrio
-                  (fn [_]
-                    (rf/dispatch [::org-events/fetch-organization-fail])))
+         (fn [_]
+           (rf/dispatch [::org-events/fetch-organization-fail])))
        (rf/dispatch [::routing-events/set-page {:slug slug :handler :organization-show}])
        (is (nil? @(rf/subscribe [::subs/organization slug])))))))

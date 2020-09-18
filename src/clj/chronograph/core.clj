@@ -27,9 +27,9 @@
                  :after)
   (mu/on-up :around-exceptions
             (mu/try-catch
-              (fn [ex {:keys [name]}] (log/error ex {:event     ::state-up-failure
-                                                     :state     name
-                                                     :exception ex})))
+             (fn [ex {:keys [name]}] (log/error ex {:event     ::state-up-failure
+                                                    :state     name
+                                                    :exception ex})))
             :wrap-in))
 
 (defn -main

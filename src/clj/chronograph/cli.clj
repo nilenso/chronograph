@@ -33,8 +33,8 @@
 
 (defn help-message [{:keys [summary]}]
   (str
-    (str/join "\n\n" ["The chronograph server"
-                      "Use only one option of -s or -h at once"
-                      summary])
-    "\n"))
+   (str/join "\n\n" ["The chronograph server"
+                     "Use only one option of -s or -h at once"
+                     summary])
+   "\n"))
 

@@ -37,9 +37,9 @@
   [handler]
   (fn [{:keys [headers] :as request}]
     (let [token (some-> headers (get "authorization") token-from-bearer-value)]
-       (-> token
-           (add-user-details request)
-           handler))))
+      (-> token
+          (add-user-details request)
+          handler))))
 
 (defn wrap-cookie-auth
   [handler]

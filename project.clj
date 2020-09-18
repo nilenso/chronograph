@@ -24,6 +24,7 @@
   :uberjar-exclusions [#"dev.*"]
   :uberjar-name "chronograph.jar"
   :jar-name "chronograph-slim.jar"
+  :plugins [[lein-cljfmt "0.7.0"]]
   :profiles {:uberjar {:aot [#"chronograph.*"]}
              :cljs {:source-paths ["src/cljs" "src/cljc" "test/cljs"]
                     :dependencies ^:replace [[re-frame "1.1.1"]
@@ -40,4 +41,6 @@
                                              [binaryage/devtools "1.0.2"]]}
              :dev {:dependencies [[mock-clj "0.2.1"]
                                   [org.clojure/test.check "0.9.0"]
-                                  [vvvvalvalval/scope-capture "0.3.2"]]}})
+                                  [vvvvalvalval/scope-capture "0.3.2"]]}}
+  :cljfmt {:paths   ["src" "test"]
+           :indents {#"rf/reg-.*" [[:inner 0]]}})

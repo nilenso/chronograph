@@ -20,10 +20,10 @@
 (rf/reg-event-fx
   ::create-organization-form-submit
   (fn [{:keys [db]} _]
-    {:db (assoc-in db status-path :creating)
+    {:db         (assoc-in db status-path :creating)
      :http-xhrio (http/post create-organization-uri
-                            {:params {:name (get-in db (form-params-path :name))
-                                      :slug (get-in db (form-params-path :slug))}
+                            {:params     {:name (get-in db (form-params-path :name))
+                                          :slug (get-in db (form-params-path :slug))}
                              :on-success [::create-organization-succeeded]
                              :on-failure [::create-organization-failed]})}))
 
@@ -34,9 +34,9 @@
   ::create-organization-succeeded
   (fn [{:keys [db]} [_ {:keys [id slug] :as response}]]
     {:dispatch [::routing-events/set-token (organization-url slug)]
-     :db (-> db
-             (assoc-in status-path :created)
-             (assoc-in [:organizations slug] response))}))
+     :db       (-> db
+                   (assoc-in status-path :created)
+                   (assoc-in [:organizations slug] response))}))
 
 (rf/reg-event-db
   ::create-organization-failed

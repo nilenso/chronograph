@@ -1,11 +1,11 @@
 (ns chronograph.pages.create-organization.events-test
-    (:require [cljs.test :refer-macros [deftest is testing run-tests]]
-              [day8.re-frame.test :as rf-test]
-              [re-frame.core :as rf]
-              [chronograph.specs]
-              [chronograph-web.pages.create-organization.events :as create-organization-events]
-              [chronograph-web.events.routing :as routing-events]
-              [chronograph-web.subscriptions :as subs]))
+  (:require [cljs.test :refer-macros [deftest is testing run-tests]]
+            [day8.re-frame.test :as rf-test]
+            [re-frame.core :as rf]
+            [chronograph.specs]
+            [chronograph-web.pages.create-organization.events :as create-organization-events]
+            [chronograph-web.events.routing :as routing-events]
+            [chronograph-web.subscriptions :as subs]))
 
 (deftest create-organization-form-update-test
   (testing "when the name is updated"
@@ -49,9 +49,9 @@
            organization {:id id :name name :slug slug}
            token (atom nil)]
        (rf/reg-fx :http-xhrio
-                  (fn [_]
-                    (rf/dispatch [::create-organization-events/create-organization-succeeded
-                                  organization])))
+         (fn [_]
+           (rf/dispatch [::create-organization-events/create-organization-succeeded
+                         organization])))
        (rf/reg-fx :history-token #(reset! token %))
        (rf/dispatch [::routing-events/set-page :organization-new])
        (rf/dispatch [::routing-events/set-token "/organization/new"])
@@ -74,8 +74,8 @@
      (let [name "Name"
            slug "slug"]
        (rf/reg-fx :http-xhrio
-                  (fn [_]
-                    (rf/dispatch [::create-organization-events/create-organization-failed])))
+         (fn [_]
+           (rf/dispatch [::create-organization-events/create-organization-failed])))
        (rf/dispatch [::routing-events/set-page :organization-new])
        (rf/dispatch [::routing-events/set-token "/organization/new"])
        (rf/dispatch [::create-organization-events/create-organization-form-update :name name])
@@ -91,10 +91,10 @@
      (let [name "Name"
            slug "slug"]
        (rf/reg-fx :http-xhrio
-                  (fn [_]
-                    (js/setTimeout #(rf/dispatch
-                                     [::create-organization-events/create-organization-failed])
-                                   1000)))
+         (fn [_]
+           (js/setTimeout #(rf/dispatch
+                            [::create-organization-events/create-organization-failed])
+                          1000)))
        (rf/dispatch [::routing-events/set-page :organization-new])
        (rf/dispatch [::routing-events/set-token "/organization/new"])
        (rf/dispatch [::create-organization-events/create-organization-form-update :name name])

@@ -2,7 +2,6 @@
   (:require [chronograph.db.acl :as db-acl]
             [chronograph.db.core :as db]))
 
-
 (def admin "admin")
 (def member "member")
 

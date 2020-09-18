@@ -53,7 +53,7 @@
 
 (s/def ::port int?)
 
-(s/def ::config (s/keys :req-un [::db-spec ::oauth ::auth ::port]) )
+(s/def ::config (s/keys :req-un [::db-spec ::oauth ::auth ::port]))
 
 (defstate config
   :start (let [config-file (get-in (mount/args) [:options :config-file])

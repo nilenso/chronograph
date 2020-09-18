@@ -11,7 +11,6 @@
           :response-format (ajax/json-response-format {:keywords? true})}
          http-xhrio-map))
 
-
 (defn post [uri http-xhrio-map]
   (merge {:method :post
           :uri uri
