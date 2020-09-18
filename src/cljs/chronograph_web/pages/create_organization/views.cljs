@@ -1,7 +1,7 @@
 (ns chronograph-web.pages.create-organization.views
   (:require [re-frame.core :as rf]
-            [chronograph-web.pages.create-organization.events :as events]
-            [chronograph-web.subscriptions :as subs]
+            [chronograph-web.pages.create-organization.events :as create-events]
+            [chronograph-web.pages.create-organization.subscriptions :as create-subs]
             [clojure.spec.alpha :as s]))
 
 (defn- form-valid? [{:keys [name slug]}]
@@ -12,7 +12,7 @@
 (defn- text-input [k spec {:keys [on-change value] :as attrs}]
   [:div
    [:input (merge {:type :text
-                   :on-change #(rf/dispatch [::events/create-organization-form-update
+                   :on-change #(rf/dispatch [::create-events/create-organization-form-update
                                              k
                                              (.-value (.-currentTarget %))])}
                   attrs
@@ -21,7 +21,7 @@
                    :name (name k)})]])
 
 (defn create-organization-page [_]
-  (let [{:keys [form-params status] :as _form-data} @(rf/subscribe [::subs/create-organization-form])
+  (let [{:keys [form-params status] :as _form-data} @(rf/subscribe [::create-subs/create-organization-form])
         form-invalid? (not (form-valid? form-params))
         {:keys [name slug]} form-params]
     [:form
@@ -39,7 +39,7 @@
                :name :create
                :disabled (or (= status :creating)
                              form-invalid?)
-               :on-click (fn [] (rf/dispatch [::events/create-organization-form-submit]))}
+               :on-click (fn [] (rf/dispatch [::create-events/create-organization-form-submit]))}
       (if (= status :creating)
         "Creating..."
         "Create")]]))

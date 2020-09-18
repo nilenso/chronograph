@@ -1,14 +1,14 @@
 (ns chronograph-web.pages.create-organization.events
   (:require [re-frame.core :as rf]
             [chronograph-web.http :as http]
-            [chronograph-web.events.routing :as routing-events]
             [day8.re-frame.http-fx]))
 
 (def ^:private create-organization-uri "/api/organizations")
 
+(def ^:private page-state-key :page-state)
 (def ^:private root-path :create-organization)
-(def ^:private status-path [root-path :status])
-(defn- form-params-path [k] [root-path :form-params k])
+(def ^:private status-path [page-state-key root-path :status])
+(defn- form-params-path [k] [page-state-key root-path :form-params k])
 
 (rf/reg-event-db
   ::create-organization-form-update
@@ -32,11 +32,11 @@
 
 (rf/reg-event-fx
   ::create-organization-succeeded
-  (fn [{:keys [db]} [_ {:keys [id slug] :as response}]]
-    {:dispatch [::routing-events/set-token (organization-url slug)]
-     :db       (-> db
-                   (assoc-in status-path :created)
-                   (assoc-in [:organizations slug] response))}))
+  (fn [{:keys [db]} [_ {:keys [slug] :as response}]]
+    {:history-token (organization-url slug)
+     :db            (-> db
+                        (assoc-in status-path :created)
+                        (assoc-in [:organizations slug] response))}))
 
 (rf/reg-event-db
   ::create-organization-failed

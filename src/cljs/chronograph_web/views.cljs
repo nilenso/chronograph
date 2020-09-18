@@ -1,7 +1,8 @@
 (ns chronograph-web.views
   (:require [re-frame.core :as rf]
             [chronograph-web.routes :as routes]
-            [chronograph-web.subscriptions :as subs]))
+            [chronograph-web.subscriptions :as subs]
+            [chronograph-web.views.components :as c]))
 
 (defn login-route []
   (let [location (-> js/window .-location .-search)
@@ -22,12 +23,9 @@
     [(routes/authenticated-view handler) route-params]
     [:div "Page not found"]))
 
-(defn loading-page []
-  [:h2 "Loading..."])
-
 (defn root []
   (case @(rf/subscribe [::subs/signin-state])
     :signed-in [authenticated-page]
     :signed-out [signin-page]
-    :fetching-profile [loading-page]
-    [loading-page]))
+    :fetching-profile [c/loading-spinner]
+    [c/loading-spinner]))

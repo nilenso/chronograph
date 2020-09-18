@@ -17,10 +17,10 @@
                          :organization-show organization-page})
 
 (defn set-page! [match]
-  (rf/dispatch [::routing-events/set-page match]))
+  (rf/dispatch [::routing-events/pushy-dispatch match]))
 
-(def history
-  (pushy/pushy set-page! #(bidi/match-route routes %)))
+(defonce history (atom nil))
 
 (defn init! []
-  (pushy/start! history))
+  (reset! history (pushy/pushy set-page! #(bidi/match-route routes %)))
+  (pushy/start! @history))
