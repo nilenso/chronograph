@@ -31,3 +31,9 @@
           response/response)
       (response/not-found
        {:error "Not found"}))))
+
+(defn invite
+  [{{:keys [organization-id email]} :body
+    :as _request}]
+  (response/response
+   (organization/create-invite! organization-id email)))
