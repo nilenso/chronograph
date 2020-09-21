@@ -21,3 +21,7 @@
                                  user-id
                                  id)
         organization))))
+
+(defn create-invite!
+  [organization-id email]
+  (db-organization/create-invite! organization-id email))
