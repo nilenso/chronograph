@@ -40,9 +40,7 @@
                                                                                  :name             "Sandy"
                                                                                  :email            "sandy@nilenso.com"
                                                                                  :organization-ids [2 3 4]}]}))
-                                                            :post (fn [{:keys [params]}]
-                                                                    (response/response {:organization-id 2
-                                                                                        :email           "foo@bar.com"}))}}}]]]
+                                                            :post organization/invite}}}]]]
         [true (fn [_] (-> (response/resource-response "public/index.html")
                           (response/content-type "text/html")))]]])
 
