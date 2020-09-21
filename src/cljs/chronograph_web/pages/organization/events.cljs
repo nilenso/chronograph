@@ -48,7 +48,8 @@
     {:http-xhrio (http/post (str "/api/organizations/"
                                  (org-db/slug db)
                                  "/members")
-                            {:params     {:email (org-db/get-from-add-member-form db :email)}
+                            {:params     {:email (org-db/get-from-add-member-form db :email)
+                                          :organization-id (:id (org-db/current-org db))}
                              :on-success [::invite-member-succeeded]
                              :on-failure [::invite-member-failed]})
      :db         (-> db
