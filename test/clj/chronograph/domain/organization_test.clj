@@ -1,9 +1,11 @@
 (ns chronograph.domain.organization-test
-  (:require [chronograph.domain.organization :as organization]
-            [clojure.test :refer :all]
+  (:require [chronograph.db.core :as db]
             [chronograph.domain.acl :as acl]
+            [chronograph.factories :as factories]
             [chronograph.fixtures :as fixtures]
-            [chronograph.factories :as factories])
+            [clojure.test :refer :all]
+            [next.jdbc :refer [with-transaction]]
+            [chronograph.domain.organization :as organization])
   (:import [org.postgresql.util PSQLException]))
 
 (use-fixtures :once fixtures/config fixtures/datasource)
@@ -21,7 +23,8 @@
   (testing "Creating an organization sets the creator as the admin"
     (let [{user-id :users/id} (factories/create-user)
           {organization-id :organizations/id} (factories/create-organization user-id)]
-      (is (true? (acl/admin? user-id organization-id))))))
+      (with-transaction [tx db/datasource]
+        (is (true? (acl/admin? tx user-id organization-id)))))))
 
 (deftest find-one-organization-test
   (testing "when users try to look up organization information"

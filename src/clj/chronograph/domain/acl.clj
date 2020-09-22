@@ -7,12 +7,12 @@
 
 (def create! db-acl/create!)
 
-(defn admin? [user-id organization-id]
-  (= admin
-     (get (db-acl/find-acl user-id organization-id) :acls/role)))
+(defn admin? [tx user-id organization-id]
+  (if-let [acl (db-acl/find-one tx {:user-id user-id
+                                    :organization-id organization-id})]
+    (= admin (get acl :acls/role))
+    false))
 
-(defn belongs-to-org?
-  ([user-id organization-id]
-   (belongs-to-org? db/datasource user-id organization-id))
-  ([tx user-id organization-id]
-   (some? (db-acl/find-acl tx user-id organization-id))))
+(defn belongs-to-org? [tx user-id organization-id]
+  (some? (db-acl/find-one tx {:user-id user-id
+                              :organization-id organization-id})))

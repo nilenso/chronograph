@@ -1,10 +1,12 @@
 (ns chronograph.handlers.organization-test
-  (:require [chronograph.domain.acl :as acl]
+  (:require [chronograph.db.core :as db]
+            [chronograph.domain.acl :as acl]
             [chronograph.factories :as factories]
             [chronograph.fixtures :as fixtures]
             [chronograph.handlers.organization :as organization]
             [clojure.spec.alpha :as s]
-            [clojure.test :refer :all])
+            [clojure.test :refer :all]
+            [next.jdbc :refer [with-transaction]])
   (:import (org.postgresql.util PSQLException)))
 
 (use-fixtures :once fixtures/config fixtures/datasource)
@@ -15,11 +17,13 @@
     (let [user (factories/create-user)
           response (organization/create {:body {:name "foo" :slug "bar"}
                                          :user user})]
-      (is (= 200 (:status response)))
-      (is (s/valid? :organizations/organization
-                    (:body response)))
-      (is (acl/admin? (:users/id user)
-                      (:organizations/id (:body response)))))))
+      (with-transaction [tx db/datasource]
+        (is (= 200 (:status response)))
+        (is (s/valid? :organizations/organization
+                      (:body response)))
+        (is (acl/admin? tx
+                        (:users/id user)
+                        (:organizations/id (:body response))))))))
 
 (deftest create-organization-when-slug-exists
   (testing "Creating an organization with pre-existing slug throws an exception."
@@ -105,9 +109,7 @@
               :body {:error "Not found"}}
              (do ;; create org so the "other-user" gets registered in the ACL
                (factories/create-organization (:users/id other-user))
-                {:body {:name "other foo" :slug (str "other-" slug)}
-                 :user other-user})
                ;; now try to find an org to which "other-user" does not belong
                (organization/find-one {:params {:slug slug}
                                        :user other-user})))
-          "Fetching org details by a user that does not belong to the org fails with HTTP error.")))
+          "Fetching org details by a user that does not belong to the org fails with HTTP error."))))

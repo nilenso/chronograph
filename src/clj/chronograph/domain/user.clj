@@ -2,6 +2,8 @@
   (:require [chronograph.db.core :as db]
             [next.jdbc :as jdbc]
             [chronograph.db.google-profile :as google-profile-db]
+            [chronograph.db.acl :as acl-db]
+            [chronograph.db.organization :as org-db]
             [chronograph.db.user :as user-db]))
 
 (def find-by-google-id user-db/find-by-google-id)
@@ -16,3 +18,8 @@
       (let [{google-profiles-id :google-profiles/id} (google-profile-db/create! tx google-id)
             user (user-db/create! tx name email photo-url google-profiles-id)]
         user))))
+
+(defn organizations [{:keys [id] :as _user}]
+  (jdbc/with-transaction [tx db/datasource]
+    (let [acls (acl-db/where tx {:user-id id})]
+      (org-db/where tx {:id (map :organization-id acls)}))))
