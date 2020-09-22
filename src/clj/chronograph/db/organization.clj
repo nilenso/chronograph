@@ -34,3 +34,10 @@
                 {:organization-id organization-id
                  :email email}
                 db/sql-opts)))
+
+(defn find-invite-by-id
+  [tx invite-id]
+  (first (sql/find-by-keys tx
+                           :invites
+                           {:id invite-id}
+                           db/sql-opts)))

@@ -46,3 +46,16 @@
       (is (nil? (organization/find-if-authorized (:organizations/slug organization-one)
                                                  (Long/MAX_VALUE)))
           "find-one returns nil when the user does not exist"))))
+
+(deftest create-invite-test
+  (testing "Given a slug and an email create invite"
+    (let [{user-id :users/id} (factories/create-user)
+          organization (factories/create-organization user-id)
+          {slug :organizations/slug} organization
+          {organization-id :organizations/id} organization
+          invite (organization/create-invite! slug "test@email.com")]
+      (is (= #:invites{:organization-id organization-id,
+                       :email "test@email.com"}
+             (dissoc invite :invites/id)))
+      (is (= invite
+             (org-db/find-invite-by-id db/datasource (:invites/id invite)))))))
