@@ -1,5 +1,7 @@
 (ns chronograph.domain.organization-test
   (:require [chronograph.domain.organization :as organization]
+            [chronograph.db.organization :as org-db]
+            [chronograph.db.core :as db]
             [clojure.test :refer :all]
             [chronograph.domain.acl :as acl]
             [chronograph.fixtures :as fixtures]

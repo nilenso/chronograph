@@ -33,7 +33,8 @@
        {:error "Not found"}))))
 
 (defn invite
-  [{{:keys [organization-id email]} :body
+  [{{:keys [slug]} :params
+    {:keys [email]} :body
     :as _request}]
   (response/response
-   (organization/create-invite! organization-id email)))
+   (organization/create-invite! slug email)))
