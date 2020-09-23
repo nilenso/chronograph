@@ -1,6 +1,7 @@
 (ns chronograph.domain.organization-test
   (:require [chronograph.domain.organization :as organization]
-            [chronograph.db.organization :as org-db]
+            [chronograph.db.invite :as db-invite]
+            [chronograph.domain.invite :as invite]
             [chronograph.db.core :as db]
             [clojure.test :refer :all]
             [chronograph.domain.acl :as acl]
@@ -53,9 +54,9 @@
           organization (factories/create-organization user-id)
           {slug :organizations/slug} organization
           {organization-id :organizations/id} organization
-          invite (organization/create-invite! slug "test@email.com")]
+          invite (invite/create! slug "test@email.com")]
       (is (= #:invites{:organization-id organization-id,
                        :email "test@email.com"}
              (dissoc invite :invites/id)))
       (is (= invite
-             (org-db/find-invite-by-id db/datasource (:invites/id invite)))))))
+             (db-invite/find-by-id db/datasource (:invites/id invite)))))))

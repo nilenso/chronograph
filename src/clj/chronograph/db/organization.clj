@@ -25,19 +25,3 @@
                             {:slug slug}
                             db/sql-opts))))
 
-(defn create-invite!
-  ([organization-id email]
-   (create-invite! db/datasource organization-id email))
-  ([tx organization-id email]
-   (sql/insert! tx
-                :invites
-                {:organization-id organization-id
-                 :email email}
-                db/sql-opts)))
-
-(defn find-invite-by-id
-  [tx invite-id]
-  (first (sql/find-by-keys tx
-                           :invites
-                           {:id invite-id}
-                           db/sql-opts)))

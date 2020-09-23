@@ -22,8 +22,6 @@
                                  id)
         organization))))
 
-(defn create-invite!
-  [slug email]
-  (jdbc/with-transaction [tx db/datasource]
-    (let [organization-id (:organizations/id (db-organization/find-by-slug tx slug))]
-      (db-organization/create-invite! tx organization-id email))))
+(def find-by-slug db-organization/find-by-slug)
+
+(def members db-user/find-by-org-id)
