@@ -1,7 +1,11 @@
 (ns chronograph.handlers.organization
   (:require [ring.util.response :as response]
             [chronograph.domain.organization :as organization]
-            [clojure.spec.alpha :as s]))
+            [chronograph.domain.invite :as invite]
+            [clojure.spec.alpha :as s]
+            [next.jdbc :as jdbc]
+            [chronograph.db.core :as db]
+            [chronograph.domain.acl :as acl]))
 
 (defn create
   "Any authorized user may create a new organization, provided they submit
@@ -37,4 +41,19 @@
     {:keys [email]} :body
     :as _request}]
   (response/response
-   (organization/create-invite! slug email)))
+   (invite/create! slug email)))
+
+(defn show-members
+  [{{:keys [slug]} :params
+    {user-id :users/id} :user
+    :as _request}]
+  (jdbc/with-transaction [tx db/datasource]
+    (if-let [{:organizations/keys [id]} (organization/find-by-slug tx slug)]
+      (if (acl/admin? user-id id)
+        (response/response {:joined (organization/members tx id)
+                            :invited (invite/find-by-org-id tx id)})
+        (response/not-found
+         {:error "Not authorized"}))
+      (response/not-found
+       {:error "Not found"}))))
+

@@ -1,5 +1,14 @@
 (ns chronograph-web.pages.organization.db)
 
+;; TODO: Move this
+(defn add-to-set-in
+  "Adds v to a set in the db at the given path."
+  [db path v]
+  (update-in db
+             path
+             (fnil conj #{})
+             v))
+
 (def page-name :organization-show)
 
 (defn get-from-add-member-form
@@ -18,13 +27,17 @@
   [db slug]
   (get-in db [:organizations slug]))
 
+(defn current-org
+  [db]
+  (let [org-slug (slug db)]
+    (org-by-slug db org-slug)))
+
 (defn add-invited-member
   [db org-id email]
-  (update-in db
-             [:invited-members org-id]
-             (fnil conj #{})
-             {:organization-id org-id
-              :email           email}))
+  (add-to-set-in db
+                 [:invited-members org-id]
+                 {:organization-id org-id
+                  :email           email}))
 
 (defn add-invited-members
   [db members]
@@ -33,11 +46,15 @@
           db
           members))
 
+(defn current-org-id
+  [db]
+  (:id (current-org db)))
+
 (defn add-joined-member
   [db member]
-  (assoc-in db
-            [:joined-members (:id member)]
-            member))
+  (add-to-set-in db
+                 [:joined-members (current-org-id db)]
+                 member))
 
 (defn add-joined-members
   [db members]
@@ -45,27 +62,15 @@
           db
           members))
 
-(defn current-org
-  [db]
-  (let [org-slug (slug db)]
-    (org-by-slug db org-slug)))
-
 (defn get-invited-members
   [db]
   (get-in db [:invited-members (:id (current-org db))]))
 
-(defn- in-current-org?
-  [db {:keys [organization-ids]}]
-  (let [org-id (:id (current-org db))]
-    (contains? (set organization-ids) org-id)))
-
 (defn get-joined-members
   [db]
-  (->> db
-       :joined-members
-       vals
-       (filter (partial in-current-org? db))))
+  (get-in db [:joined-members (current-org-id db)]))
 
+;; TODO: Extract these out
 (defn report-error
   [db error]
   (update-in db

@@ -1,6 +1,7 @@
 (ns chronograph.domain.organization
   (:require [chronograph.db.core :as db]
             [chronograph.db.organization :as db-organization]
+            [chronograph.db.user :as db-user]
             [chronograph.domain.acl :as acl]
             [next.jdbc :as jdbc]))
 

@@ -32,15 +32,10 @@
                                                    middleware/wrap-authenticated)
                                    ["/" :slug] {:get       (-> organization/find-one
                                                                middleware/wrap-authenticated)
-                                                "/members" {:get  (fn [{:keys [params]}]
-                                                                    (response/response
-                                                                     {:invited [{:organization-id 2
-                                                                                 :email           "foo@bar.com"}]
-                                                                      :joined  [{:id               1
-                                                                                 :name             "Sandy"
-                                                                                 :email            "sandy@nilenso.com"
-                                                                                 :organization-ids [2 3 4]}]}))
-                                                            :post organization/invite}}}]]]
+                                                "/members" {:get  (-> organization/show-members
+                                                                      middleware/wrap-authenticated)
+                                                            :post (-> organization/invite
+                                                                      middleware/wrap-authenticated)}}}]]]
         [true (fn [_] (-> (response/resource-response "public/index.html")
                           (response/content-type "text/html")))]]])
 
