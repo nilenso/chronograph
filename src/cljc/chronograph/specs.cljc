@@ -6,7 +6,9 @@
 (def non-empty-string?
   (s/and string? (comp not string/blank?)))
 
+
 ;; Users
+
 
 (s/def :users/id pos-int?)
 (s/def :users/name string?)
@@ -55,14 +57,20 @@
                                                        :organizations/name
                                                        :organizations/slug]))
 
+
 ;; ACLs
+
+
 (s/def :acls/role #{"admin" "member"})
 (s/def :acls/user-id :users/id)
 (s/def :acls/organization-id :organizations/id)
 
 (s/def :acls/acl (s/keys :req [:acls/user-id :acls/organization-id :acls/role]))
 
+
 ;; Tasks
+
+
 (s/def :tasks/id pos-int?)
 (s/def :tasks/name non-empty-string?)
 (s/def :tasks/description string?)
@@ -76,9 +84,33 @@
 (s/def :tasks/create-params-handler (s/keys :req-un [:tasks/name]
                                             :opt-un [:tasks/description]))
 
+
 ;; Invites
+
+
 (s/def :invites/id pos-int?)
 (s/def :invites/organization-id :organizations/id)
 (s/def :invites/email :users/email)
 
 (s/def :invites/invite-un (s/keys :req-un [:invites/id :invites/organization-id :invites/email]))
+
+
+;; Timers
+
+
+(s/def :timers/id uuid?)
+(s/def :timers/user-id :users/id)
+(s/def :timers/task-id :tasks/id)
+(s/def :timers/note string?)
+
+(s/def :timers/timer (s/keys :req [:timers/id :timers/user-id :timers/task-id]
+                             :opt [:timers/note]))
+
+
+;; Time Spans
+
+
+(s/def :time-spans/id uuid?)
+(s/def :time-spans/timer-id :timers/id)
+
+(s/def :time-spans/time-span (s/keys :req [:time-spans/id :time-spans/timer-id]))
