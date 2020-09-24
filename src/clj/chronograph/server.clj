@@ -38,7 +38,11 @@
                                     :post (-> organization/create
                                               middleware/wrap-authenticated)
                                     ["" :slug] {:get (-> organization/find-one
-                                                         middleware/wrap-authenticated)}}]]]
+                                                         middleware/wrap-authenticated)}
+                                    [:slug "/tasks/"] {:post (-> task/create
+                                                        middleware/wrap-authenticated)
+                                              :get (-> task/index
+                                                       middleware/wrap-authenticated)}}]]]
         [true (fn [_] (-> (response/resource-response "public/index.html")
                           (response/content-type "text/html")))]]])
 

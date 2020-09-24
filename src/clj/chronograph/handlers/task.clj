@@ -1,6 +1,7 @@
 (ns chronograph.handlers.task
   (:require [clojure.spec.alpha :as s]
             [chronograph.domain.task :as task]
+            [taoensso.timbre :as log]
             [ring.util.response :as response]))
 
 (defn create [{:keys [body] :as _request}]
@@ -10,7 +11,7 @@
         (response/response))))
 
 (defn index [{:keys [params]}]
-  (if-let [organization-id (:organization-id params)]
-    (-> {:tasks (task/index {:organization-id organization-id})}
+  (if-let [slug (:slug params)]
+    (-> (task/index {:slug slug})
         (response/response))
     (response/bad-request {:error "Organization ID is necessary"})))

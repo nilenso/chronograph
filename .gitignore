@@ -22,3 +22,4 @@ config/*.secrets.edn
 \#*\#
 .\#*
 .clj-kondo/.cache
+shell.nix
