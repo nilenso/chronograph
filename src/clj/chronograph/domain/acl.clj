@@ -7,9 +7,9 @@
 
 (def create! db-acl/create!)
 
-(defn admin? [user-id organization-id]
+(defn admin? [tx user-id organization-id]
   (= admin
-     (get (db-acl/find-acl user-id organization-id) :acls/role)))
+     (get (db-acl/find-acl tx user-id organization-id) :acls/role)))
 
 (defn belongs-to-org?
   ([user-id organization-id]

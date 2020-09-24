@@ -3,7 +3,8 @@
             [chronograph.domain.acl :as acl]
             [chronograph.factories :as factories]
             [chronograph.fixtures :as fixtures]
-            [clojure.test :refer :all])
+            [clojure.test :refer :all]
+            [chronograph.db.core :as db])
   (:import org.postgresql.util.PSQLException))
 
 (use-fixtures :once fixtures/config fixtures/datasource)
@@ -44,7 +45,7 @@
       (acl/create! {:user-id user-id
                     :organization-id organization-id
                     :role acl/admin})
-      (is (acl/admin? user-id organization-id)))))
+      (is (acl/admin? db/datasource user-id organization-id)))))
 
 (deftest belongs-to-org?-test
   (let [user (factories/create-user)

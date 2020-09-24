@@ -49,11 +49,10 @@
     :as _request}]
   (jdbc/with-transaction [tx db/datasource]
     (if-let [{:organizations/keys [id]} (organization/find-by-slug tx slug)]
-      (if (acl/admin? user-id id)
+      (if (acl/admin? tx user-id id)
         (response/response {:joined (organization/members tx id)
                             :invited (invite/find-by-org-id tx id)})
-        (response/not-found
-         {:error "Not authorized"}))
-      (response/not-found
-       {:error "Not found"}))))
+        (-> (response/response {:error "Forbidden"})
+            (response/status 403)))
+      (response/not-found {:error "Not found"}))))
 

@@ -4,10 +4,13 @@
             [chronograph.fixtures :as fixtures]
             [chronograph.handlers.organization :as organization]
             [clojure.spec.alpha :as s]
-            [clojure.test :refer :all])
+            [clojure.test :refer :all]
+            [chronograph.db.core :as db]
+            [chronograph.domain.invite :as invite]
+            [chronograph.test-utils :as tu])
   (:import (org.postgresql.util PSQLException)))
 
-(use-fixtures :once fixtures/config fixtures/datasource)
+(use-fixtures :once  fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)
 
 (deftest create-new-organization-first-time
@@ -18,7 +21,8 @@
       (is (= 200 (:status response)))
       (is (s/valid? :organizations/organization
                     (:body response)))
-      (is (acl/admin? (:users/id user)
+      (is (acl/admin? db/datasource
+                      (:users/id user)
                       (:organizations/id (:body response)))))))
 
 (deftest create-organization-when-slug-exists
@@ -109,3 +113,44 @@
                (organization/find-one {:params {:slug slug}
                                        :user other-user})))
           "Fetching org details by a user that does not belong to the org fails with HTTP error."))))
+
+(deftest show-members-test
+  (testing "Should fetch joined and invited members and return a 200"
+    (let [user         (factories/create-user)
+          {:organizations/keys [slug]
+           org-id              :organizations/id} (factories/create-organization (:users/id user))
+          joined-user  (factories/create-user)
+          invited-user (invite/create! slug "invite@user.com")]
+      (acl/create! db/datasource {:user-id         (:users/id joined-user)
+                                  :organization-id org-id
+                                  :role            acl/member})
+      (is (= {:status 200
+              :body   {:invited [invited-user]
+                       :joined  [user joined-user]}}
+             (-> (organization/show-members {:params {:slug slug}
+                                             :user   user})
+                 (select-keys [:status :body]))))))
+
+  (testing "Should return a 404 if no org is found with the given slug"
+    (tu/with-fixtures [fixtures/clear-db]
+      (let [user (factories/create-user)]
+        (is (= {:status 404
+                :body   {:error "Not found"}}
+               (-> (organization/show-members {:params {:slug "foobar"}
+                                               :user   user})
+                   (select-keys [:status :body])))))))
+
+  (testing "Should return a 403 if the authenticated user is not an admin of the org"
+    (tu/with-fixtures [fixtures/clear-db]
+      (let [user (factories/create-user)
+            {:organizations/keys [slug]
+             org-id              :organizations/id} (factories/create-organization (:users/id user))
+            member  (factories/create-user)]
+        (acl/create! db/datasource {:user-id         (:users/id member)
+                                    :organization-id org-id
+                                    :role            acl/member})
+        (is (= {:status 403
+                :body   {:error "Forbidden"}}
+               (-> (organization/show-members {:params {:slug slug}
+                                               :user   member})
+                   (select-keys [:status :body]))))))))

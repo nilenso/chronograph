@@ -1,7 +1,5 @@
 (ns chronograph.domain.organization-test
   (:require [chronograph.domain.organization :as organization]
-            [chronograph.db.invite :as db-invite]
-            [chronograph.domain.invite :as invite]
             [chronograph.db.core :as db]
             [clojure.test :refer :all]
             [chronograph.domain.acl :as acl]
@@ -24,7 +22,7 @@
   (testing "Creating an organization sets the creator as the admin"
     (let [{user-id :users/id} (factories/create-user)
           {organization-id :organizations/id} (factories/create-organization user-id)]
-      (is (true? (acl/admin? user-id organization-id))))))
+      (is (true? (acl/admin? db/datasource user-id organization-id))))))
 
 (deftest find-one-organization-test
   (testing "when users try to look up organization information"
@@ -48,15 +46,28 @@
                                                  (Long/MAX_VALUE)))
           "find-one returns nil when the user does not exist"))))
 
-(deftest create-invite-test
-  (testing "Given a slug and an email create invite"
-    (let [{user-id :users/id} (factories/create-user)
-          organization (factories/create-organization user-id)
-          {slug :organizations/slug} organization
-          {organization-id :organizations/id} organization
-          invite (invite/create! slug "test@email.com")]
-      (is (= #:invites{:organization-id organization-id,
-                       :email "test@email.com"}
-             (dissoc invite :invites/id)))
-      (is (= invite
-             (db-invite/find-by-id db/datasource (:invites/id invite)))))))
+(deftest find-by-slug-test
+  (testing "it looks up organizations by slug"
+    (let [{user-one :users/id} (factories/create-user)
+          org (factories/create-organization user-one)]
+      (is (= org
+             (organization/find-by-slug (:organizations/slug org)))))))
+
+(deftest members-test
+  (testing "it finds all members of an organization, whether admin or member"
+    (let [{user-id-1 :users/id :as user1} (factories/create-user)
+          {org-id :organizations/id} (factories/create-organization user-id-1)
+          {user-id-2 :users/id :as user2} (factories/create-user)
+          {user-id-3 :users/id :as user3} (factories/create-user)
+          {user-id-4 :users/id :as user4} (factories/create-user)
+          {org-id-2 :organizations/id} (factories/create-organization user-id-4)]
+      (acl/create! db/datasource {:user-id         user-id-2
+                                  :organization-id org-id
+                                  :role            acl/member})
+      (acl/create! db/datasource {:user-id         user-id-3
+                                  :organization-id org-id
+                                  :role            acl/member})
+      (is (= #{user1 user2 user3}
+             (set (organization/members db/datasource org-id))))
+      (is (= #{user4}
+             (set (organization/members db/datasource org-id-2)))))))
