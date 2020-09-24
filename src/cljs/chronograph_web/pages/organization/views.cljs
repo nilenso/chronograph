@@ -37,4 +37,4 @@
              (for [member @(rf/subscribe [::org-subs/joined-members])]
                ^{:key (str "joined-" (:id member))} [:li (:name member)])
              (for [member @(rf/subscribe [::org-subs/invited-members])]
-               ^{:key (str "invited-" (:organization-id member))} [:li (str (:email member) " (invited)")])])]]))))
+               ^{:key (str "invited-" (:email member))} [:li (str (:email member) " (invited)")])])]]))))
