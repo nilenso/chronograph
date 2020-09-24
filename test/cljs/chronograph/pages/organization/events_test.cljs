@@ -25,8 +25,7 @@
                                      :email           "foo@bar.com"}]
                           :joined  [{:id               1
                                      :name             "Sandy"
-                                     :email            "sandy@nilenso.com"
-                                     :organization-ids [42 3 4]}]}])))
+                                     :email            "sandy@nilenso.com"}]}])))
        (tu/set-token (str "/organization/" slug))
        (rf/dispatch [::org-events/page-mounted])
        (is (= {:id         42
@@ -40,10 +39,9 @@
                  :email           "foo@bar.com"}}
               @(rf/subscribe [::org-subs/invited-members]))
            "The invited members should be in the DB")
-       (is (= [{:id               1
-                :name             "Sandy"
-                :email            "sandy@nilenso.com"
-                :organization-ids [42 3 4]}]
+       (is (= #{{:id    1
+                 :name  "Sandy"
+                 :email "sandy@nilenso.com"}}
               @(rf/subscribe [::org-subs/joined-members]))
            "The joined members should be in the DB"))))
 
