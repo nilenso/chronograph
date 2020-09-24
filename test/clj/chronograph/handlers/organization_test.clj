@@ -166,6 +166,7 @@
       (is (= {:status 200
               :body (first (invite/find-by-org-id db/datasource organization-id))}
              (select-keys response [:status :body])))))
+
   (testing "Should return 404 if org is not found with given slug"
     (tu/with-fixtures [fixtures/clear-db]
       (let [{user-id :users/id} (factories/create-user)]
@@ -175,6 +176,7 @@
                                          :user {:users/id user-id}
                                          :body {:email "test@email.com"}})
                    (select-keys [:status :body])))))))
+
   (testing "Should return 403 if user is not an admin of the org"
     (tu/with-fixtures [fixtures/clear-db]
       (let [{user-id :users/id} (factories/create-user)
@@ -189,4 +191,15 @@
                (-> (organization/invite {:params {:slug slug}
                                          :user {:users/id user-id-2}
                                          :body {:email "test@email.com"}})
+                   (select-keys [:status :body])))))))
+
+  (testing "Should return 400 if the email is invalid"
+    (tu/with-fixtures [fixtures/clear-db]
+      (let [{user-id :users/id :as user} (factories/create-user)
+            {:organizations/keys [slug]} (factories/create-organization user-id)]
+        (is (= {:status 400
+                :body   {:error "Invalid email"}}
+               (-> (organization/invite {:params {:slug slug}
+                                         :user   user
+                                         :body   {:email "test@emailcom"}})
                    (select-keys [:status :body]))))))))

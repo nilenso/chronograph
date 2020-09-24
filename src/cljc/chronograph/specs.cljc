@@ -6,7 +6,11 @@
 
 (s/def :users/id int?)
 (s/def :users/name string?)
-(s/def :users/email string?)
+(s/def :users/email (s/with-gen (s/and string?
+                                       #(re-matches #"^.+@.+\..+$" %))
+                      #(gen/fmap (fn [[s1 s2 s3]]
+                                   (str s1 "@" s2 "." s3))
+                                 (gen/vector (gen/string-alphanumeric) 3))))
 (s/def :users/photo-url string?)
 
 (s/def :users/user (s/keys :req [:users/id :users/name :users/email]
@@ -47,3 +51,7 @@
 (s/def :acls/organization-id :organizations/id)
 
 (s/def :acls/acl (s/keys :req [:acls/user-id :acls/organization-id :acls/role]))
+
+;; Invites
+(s/def :invites/organization-id :organizations/id)
+(s/def :invites/email :users/email)

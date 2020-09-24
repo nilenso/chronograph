@@ -43,11 +43,13 @@
     :as _request}]
   (jdbc/with-transaction [tx db/datasource]
     (if-let [{org-id :organizations/id} (organization/find-by-slug tx slug)]
-      (if (acl/admin? tx user-id org-id)
-        (response/response
-         (invite/find-or-create! tx org-id email))
-        (-> (response/response {:error "Forbidden"})
-            (response/status 403)))
+      (if (s/valid? :invites/email email)
+        (if (acl/admin? tx user-id org-id)
+          (response/response
+           (invite/find-or-create! tx org-id email))
+          (-> (response/response {:error "Forbidden"})
+              (response/status 403)))
+        (response/bad-request {:error "Invalid email"}))
       (response/not-found {:error "Not found"}))))
 
 (defn show-members
