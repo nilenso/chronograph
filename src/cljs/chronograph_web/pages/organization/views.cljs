@@ -36,18 +36,15 @@
         "Creating..."
         "Create")]]))
 
-(defn task-list-element [{:keys [name]}]
-  [:li name])
+(defn task-list-element [{:keys [id name description]}]
+  [:li {:key id}
+   [:b name] " - " description])
 
-(defn task-list [organization-id]
-  (rf/dispatch [::org-events/fetch-tasks organization-id])
-  (fn []
-    (let [tasks @(rf/subscribe [::subs/tasks])]
-      [:div
-       [:h3 "Tasks"]
-       [task-form]
-       [:ul
-        (not-empty (map task-list-element tasks))]])))
+(defn task-list [tasks]
+  [:div
+   [:h3 "Tasks"]
+   [:ul
+    (not-empty (map task-list-element tasks))]])
 
 (defn organization-page [{:keys [slug]}]
   (rf/dispatch [::org-events/fetch-organization slug])
@@ -67,4 +64,6 @@
           [:li "Slug: " slug]
           [:li "Created at: " created-at]
           [:li "Updated at: " updated-at]]
-         [task-list id]]))))
+         [task-form]
+         (when-let [tasks @(rf/subscribe [::subs/tasks])]
+           [task-list tasks])]))))

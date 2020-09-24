@@ -6,8 +6,8 @@
 (def ^:private get-organization-uri
   "/api/organizations/")
 
-(defn- tasks-uri [organization-id]
-  (gstring/format "/api/organizations/%s/tasks" organization-id))
+(defn- tasks-uri [slug]
+  (gstring/format "/api/organizations/%s/tasks/" slug))
 
 (def ^:private root-path :create-task)
 (def ^:private status-path [root-path :status])
@@ -38,8 +38,8 @@
 
 (rf/reg-event-fx
  ::fetch-tasks
- (fn [_ [_ organization-id]]
-   {:http-xhrio (http/get (tasks-uri organization-id)
+ (fn [_ [_ slug]]
+   {:http-xhrio (http/get (tasks-uri slug)
                           {:on-success [::fetch-tasks-success]
                            :on-failure [::fetch-tasks-failure]})}))
 
@@ -66,16 +66,18 @@
   ::create-task-form-submit
   (fn [{:keys [db]} _]
     {:db         (assoc-in db status-path :creating)
-     :http-xhrio (http/post (tasks-uri (-> db :current-organization :id) )
+     :http-xhrio (http/post (tasks-uri (-> db :current-organization :slug) )
                             {:params     {:name (get-in db (form-params-path :name))
-                                          :slug (get-in db (form-params-path :slug))}
+                                          :description (get-in db (form-params-path :description))}
                              :on-success [::create-task-success]
                              :on-failure [::create-task-failure]})}))
 
 (rf/reg-event-fx
   ::create-task-success
   (fn [{:keys [db]} [_ _]]
-    {:db db}))
+    (let [slug (get-in db [:current-organization :slug])]
+      {:db (dissoc db root-path)
+       :fx [[:dispatch [::fetch-tasks slug]]]})))
 
 (rf/reg-event-db
   ::create-task-failure

@@ -41,8 +41,8 @@
                                                          middleware/wrap-authenticated)}
                                     [:slug "/tasks/"] {:post (-> task/create
                                                         middleware/wrap-authenticated)
-                                              :get (-> task/index
-                                                       middleware/wrap-authenticated)}}]]]
+                                                       :get (-> task/index
+                                                                middleware/wrap-authenticated)}}]]]
         [true (fn [_] (-> (response/resource-response "public/index.html")
                           (response/content-type "text/html")))]]])
 

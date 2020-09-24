@@ -55,6 +55,5 @@
 (s/def :tasks/id int?)
 (s/def :tasks/name non-empty-string?)
 (s/def :tasks/description string?)
-(s/def :tasks/organization-id :organizations/id)
-(s/def :tasks/create-params-handler (s/keys :req-un [:tasks/name :tasks/organization-id]
+(s/def :tasks/create-params-handler (s/keys :req-un [:tasks/name]
                                             :opt-un [:tasks/description]))

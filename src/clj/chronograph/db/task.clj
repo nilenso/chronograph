@@ -17,18 +17,14 @@
                    :updated-at now}
                   db/sql-opts))))
 
+(defn where
+  ([options]
+   (where db/datasource options))
+  ([tx options]
+   (sql/find-by-keys tx :tasks options db/sql-opts)))
+
 (defn find-by-id
   ([id]
    (find-by-id db/datasource id))
   ([tx id]
-   (first (sql/query tx
-                     ["SELECT * FROM tasks WHERE id=?" id]
-                     db/sql-opts))))
-
-(defn where
-  ([options]
-   (where db/datasource options))
-  ([tx {:keys [organization-id]}]
-   (sql/query tx
-              ["SELECT * FROM tasks WHERE organization_id=?" organization-id]
-              db/sql-opts)))
+   (first (where tx {:id id}))))

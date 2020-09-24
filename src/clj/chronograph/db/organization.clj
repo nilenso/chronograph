@@ -22,11 +22,14 @@
   ([tx options]
    (sql/find-by-keys tx :organizations options db/sql-opts)))
 
+(defn find [tx options]
+  (first (where tx options)))
+
 (defn find-by-slug
   ([slug]
    (find-by-slug db/datasource slug))
   ([tx slug]
-   (first (where tx {:slug slug}))))
+   (find tx {:slug slug})))
 
 (defn by-ids [tx ids]
   (sql/query tx

@@ -1,5 +1,6 @@
 (ns chronograph.domain.organization
   (:require [chronograph.db.core :as db]
+            [chronograph.db.task :as task]
             [chronograph.db.organization :as db-organization]
             [chronograph.domain.acl :as acl]
             [next.jdbc :as jdbc]))
@@ -21,3 +22,6 @@
                                  user-id
                                  id)
         organization))))
+
+(defn tasks [tx {:organizations/keys [id]}]
+  (task/where tx {:organization-id id}))

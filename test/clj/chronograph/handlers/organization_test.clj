@@ -124,4 +124,4 @@
                ;; now try to find an org to which "other-user" does not belong
                (organization/find-one {:params {:slug slug}
                                        :user other-user})))
-          "Fetching org details by a user that does not belong to the org fails with HTTP error.")))
+          "Fetching org details by a user that does not belong to the org fails with HTTP error."))))

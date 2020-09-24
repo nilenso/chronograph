@@ -1,17 +1,25 @@
 (ns chronograph.handlers.task
   (:require [clojure.spec.alpha :as s]
             [chronograph.domain.task :as task]
-            [taoensso.timbre :as log]
-            [ring.util.response :as response]))
+            [chronograph.domain.organization :as organization]
+            [chronograph.db.core :as db]
+            [chronograph.utils.request :as req-utils]
+            [ring.util.response :as response]
+            [next.jdbc :as jdbc]))
 
-(defn create [{:keys [body] :as _request}]
+(defn create [{:keys [body params] :as request}]
   (if-not (s/valid? :tasks/create-params-handler body)
     (response/bad-request {:error "Name should be present"})
-    (-> (task/create (select-keys body [:name :description :organization-id]))
-        (response/response))))
+    (jdbc/with-transaction [tx db/datasource]
+      (when-let [organization (req-utils/current-organization tx request)]
+        (-> (task/create tx {:name (:name body)
+                             :description (:description body)
+                             :organization-id (:organizations/id organization)})
+            (response/response))))))
 
-(defn index [{:keys [params]}]
-  (if-let [slug (:slug params)]
-    (-> (task/index {:slug slug})
-        (response/response))
-    (response/bad-request {:error "Organization ID is necessary"})))
+(defn index [request]
+  (jdbc/with-transaction [tx db/datasource]
+    (if-let [organization (req-utils/current-organization tx request)]
+      (-> (organization/tasks tx organization)
+          (response/response))
+      (response/bad-request {:error "Organization slug is necessary"}))))

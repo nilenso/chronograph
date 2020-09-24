@@ -39,4 +39,4 @@
           request {:params {:organization-id (:organizations/id organization)}}
           response (task/index request)]
       (is (= 200 (:status response)))
-      (is (= 5 (-> response :body :tasks count))))))
+      (is (= 5 (-> response :body count))))))
