@@ -19,7 +19,6 @@
             user (user-db/create! tx name email photo-url google-profiles-id)]
         user))))
 
-(defn organizations [{:keys [id] :as _user}]
-  (jdbc/with-transaction [tx db/datasource]
-    (let [acls (acl-db/where tx {:user-id id})]
-      (org-db/where tx {:id (map :organization-id acls)}))))
+(defn organizations [tx {:users/keys [id] :as _user}]
+  (let [acls (acl-db/where tx {:user-id id})]
+    (org-db/by-ids tx (map :acls/organization-id acls))))

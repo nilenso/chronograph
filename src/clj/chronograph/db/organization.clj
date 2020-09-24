@@ -27,3 +27,8 @@
    (find-by-slug db/datasource slug))
   ([tx slug]
    (first (where tx {:slug slug}))))
+
+(defn by-ids [tx ids]
+  (sql/query tx
+             ["SELECT * FROM organizations where id = ANY(?)" (int-array ids)]
+             db/sql-opts))

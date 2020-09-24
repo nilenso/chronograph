@@ -29,13 +29,15 @@
         ["auth/" [["google/" google-auth-routes]]]
         ["api/" [["users/me" {:get (-> user/me
                                        middleware/wrap-authenticated)}]
-                 ["tasks" {:post (-> task/create
-                                     middleware/wrap-authenticated)
-                           :get (-> task/index
-                                    middleware/wrap-authenticated)}]
-                 ["organizations" {:post (-> organization/create
+                 ["tasks/" {:post (-> task/create
+                                      middleware/wrap-authenticated)
+                            :get (-> task/index
+                                     middleware/wrap-authenticated)}]
+                 ["organizations/" {:get (-> organization/index
                                              middleware/wrap-authenticated)
-                                   ["/" :slug] {:get (-> organization/find-one
+                                    :post (-> organization/create
+                                              middleware/wrap-authenticated)
+                                    ["" :slug] {:get (-> organization/find-one
                                                          middleware/wrap-authenticated)}}]]]
         [true (fn [_] (-> (response/resource-response "public/index.html")
                           (response/content-type "text/html")))]]])

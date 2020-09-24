@@ -12,6 +12,18 @@
 (use-fixtures :once fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)
 
+(deftest index-list-user-organizations-test
+  (testing "Returns all the organizations a user belongs to"
+    (let [user (factories/create-user)
+          organization1 (factories/create-organization (:users/id user))
+          organization2 (factories/create-organization (:users/id user))
+          response (organization/index {:user user})]
+      (is (= 200 (:status response)))
+      (is (= 2 (count (:body response))))
+      (is (= #{(:organizations/id organization1)
+               (:organizations/id organization2)}
+             (set (map :organizations/id (:body response))))))))
+
 (deftest create-new-organization-first-time
   (testing "Creating a new organization returns a valid organization map in the response, and the creator is registered as admin in the ACL."
     (let [user (factories/create-user)

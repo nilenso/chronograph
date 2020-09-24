@@ -1,7 +1,16 @@
 (ns chronograph.handlers.organization
-  (:require [ring.util.response :as response]
+  (:require [chronograph.db.core :as db]
             [chronograph.domain.organization :as organization]
-            [clojure.spec.alpha :as s]))
+            [chronograph.domain.user :as user]
+            [clojure.spec.alpha :as s]
+            [next.jdbc :as jdbc]
+            [taoensso.timbre :as log]
+            [ring.util.response :as response]))
+
+(defn index [{:keys [user]}]
+  (jdbc/with-transaction [tx db/datasource]
+    (-> (user/organizations tx user)
+        response/response)))
 
 (defn create
   "Any authorized user may create a new organization, provided they submit
