@@ -120,7 +120,7 @@
           {:organizations/keys [slug]
            org-id              :organizations/id} (factories/create-organization (:users/id user))
           joined-user  (factories/create-user)
-          invited-user (invite/create! slug "invite@user.com")]
+          invited-user (invite/find-or-create! db/datasource org-id "invite@user.com")]
       (acl/create! db/datasource {:user-id         (:users/id joined-user)
                                   :organization-id org-id
                                   :role            acl/member})
@@ -153,4 +153,40 @@
                 :body   {:error "Forbidden"}}
                (-> (organization/show-members {:params {:slug slug}
                                                :user   member})
+                   (select-keys [:status :body]))))))))
+
+(deftest invite-test
+  (testing "When the organization exists and user is an admin, an invite should be created"
+    (let [{user-id :users/id} (factories/create-user)
+          {:organizations/keys [slug]
+           organization-id :organizations/id} (factories/create-organization user-id)
+          response (organization/invite {:params {:slug slug}
+                                         :user {:users/id user-id}
+                                         :body {:email "test@email.com"}})]
+      (is (= {:status 200
+              :body (first (invite/find-by-org-id db/datasource organization-id))}
+             (select-keys response [:status :body])))))
+  (testing "Should return 404 if org is not found with given slug"
+    (tu/with-fixtures [fixtures/clear-db]
+      (let [{user-id :users/id} (factories/create-user)]
+        (is (= {:status 404
+                :body {:error "Not found"}}
+               (-> (organization/invite {:params {:slug "foobar"}
+                                         :user {:users/id user-id}
+                                         :body {:email "test@email.com"}})
+                   (select-keys [:status :body])))))))
+  (testing "Should return 403 if user is not an admin of the org"
+    (tu/with-fixtures [fixtures/clear-db]
+      (let [{user-id :users/id} (factories/create-user)
+            {organization-id :organizations/id
+             slug :organizations/slug} (factories/create-organization user-id)
+            {user-id-2 :users/id} (factories/create-user)]
+        (acl/create! db/datasource {:user-id user-id-2
+                                    :organization-id organization-id
+                                    :role acl/member})
+        (is (= {:status 403
+                :body {:error "Forbidden"}}
+               (-> (organization/invite {:params {:slug slug}
+                                         :user {:users/id user-id-2}
+                                         :body {:email "test@email.com"}})
                    (select-keys [:status :body]))))))))

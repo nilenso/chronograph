@@ -1,13 +1,10 @@
 (ns chronograph.domain.invite
-  (:require [chronograph.db.core :as db]
-            [chronograph.db.invite :as db-invite]
-            [chronograph.db.organization :as db-organization]
-            [next.jdbc :as jdbc]))
+  (:require [chronograph.db.invite :as db-invite]))
 
-(defn create!
-  [slug email]
-  (jdbc/with-transaction [tx db/datasource]
-    (let [organization-id (:organizations/id (db-organization/find-by-slug tx slug))]
-      (db-invite/create! tx organization-id email))))
+(defn find-or-create!
+  [tx org-id email]
+  (if-let [invite (db-invite/find-by-org-id-and-email tx org-id email)]
+    invite
+    (db-invite/create! tx org-id email)))
 
 (def find-by-org-id db-invite/find-by-org-id)

@@ -38,10 +38,17 @@
 
 (defn invite
   [{{:keys [slug]} :params
+    {user-id :users/id} :user
     {:keys [email]} :body
     :as _request}]
-  (response/response
-   (invite/create! slug email)))
+  (jdbc/with-transaction [tx db/datasource]
+    (if-let [{org-id :organizations/id} (organization/find-by-slug tx slug)]
+      (if (acl/admin? tx user-id org-id)
+        (response/response
+         (invite/find-or-create! tx org-id email))
+        (-> (response/response {:error "Forbidden"})
+            (response/status 403)))
+      (response/not-found {:error "Not found"}))))
 
 (defn show-members
   [{{:keys [slug]} :params
