@@ -1,23 +1,13 @@
-(ns chronograph-web.pages.organization.db)
-
-;; TODO: Move this
-(defn add-to-set-in
-  "Adds v to a set in the db at the given path."
-  [db path v]
-  (update-in db
-             path
-             (fnil conj #{})
-             v))
-
-(def page-name :organization-show)
+(ns chronograph-web.pages.organization.db
+  (:require [chronograph-web.db :as db]))
 
 (defn get-from-add-member-form
   [db form-key]
-  (get-in db [:page-state page-name :add-member-form form-key]))
+  (db/get-in-page-state db [:add-member-form form-key]))
 
 (defn set-in-add-member-form
   [db form-key value]
-  (assoc-in db [:page-state page-name :add-member-form form-key] value))
+  (db/set-in-page-state db [:add-member-form form-key] value))
 
 (defn slug
   [db]
@@ -34,10 +24,10 @@
 
 (defn add-invited-member
   [db org-id email]
-  (add-to-set-in db
-                 [:invited-members org-id]
-                 {:organization-id org-id
-                  :email           email}))
+  (db/add-to-set-in db
+                    [:invited-members org-id]
+                    {:organization-id org-id
+                     :email           email}))
 
 (defn add-invited-members
   [db members]
@@ -52,9 +42,9 @@
 
 (defn add-joined-member
   [db member]
-  (add-to-set-in db
-                 [:joined-members (current-org-id db)]
-                 member))
+  (db/add-to-set-in db
+                    [:joined-members (current-org-id db)]
+                    member))
 
 (defn add-joined-members
   [db members]
@@ -69,22 +59,3 @@
 (defn get-joined-members
   [db]
   (get-in db [:joined-members (current-org-id db)]))
-
-;; TODO: Extract these out
-(defn report-error
-  [db error]
-  (update-in db
-             [:page-state page-name :errors]
-             (fnil conj #{})
-             error))
-
-(defn remove-error
-  [db error]
-  (update-in db
-             [:page-state page-name :errors]
-             disj
-             error))
-
-(defn get-errors
-  [db]
-  (get-in db [:page-state page-name :errors]))

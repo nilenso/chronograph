@@ -1,7 +1,8 @@
 (ns chronograph-web.pages.organization.events
   (:require [re-frame.core :as rf]
             [chronograph-web.http :as http]
-            [chronograph-web.pages.organization.db :as org-db]))
+            [chronograph-web.pages.organization.db :as org-db]
+            [chronograph-web.db :as db]))
 
 (def ^:private get-organization-uri
   "/api/organizations/")
@@ -35,7 +36,7 @@
 (rf/reg-event-db
   ::fetch-organization-fail
   (fn [db _]
-    (org-db/report-error db ::error-org-not-found)))
+    (db/report-error db ::error-org-not-found)))
 
 (rf/reg-event-db
   ::email-input-changed
@@ -53,7 +54,7 @@
                              :on-failure [::invite-member-failed]})
      :db         (-> db
                      (org-db/set-in-add-member-form :email "")
-                     (org-db/remove-error ::error-invite-member-failed))}))
+                     (db/remove-error ::error-invite-member-failed))}))
 
 (rf/reg-event-db
   ::invite-member-succeeded
@@ -63,9 +64,9 @@
 (rf/reg-event-db
   ::invite-member-failed
   (fn [db _]
-    (org-db/report-error db ::error-invite-member-failed)))
+    (db/report-error db ::error-invite-member-failed)))
 
 (rf/reg-event-db
   ::fetch-members-failed
   (fn [db _]
-    (org-db/report-error db ::error-fetch-members-failed)))
+    (db/report-error db ::error-fetch-members-failed)))
