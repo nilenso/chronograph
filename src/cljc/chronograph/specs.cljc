@@ -106,6 +106,9 @@
 (s/def :timers/timer (s/keys :req [:timers/id :timers/user-id :timers/task-id]
                              :opt [:timers/note]))
 
+(s/def :handlers.timer/create-request-body (s/keys :req-un [:timers/task-id]
+                                                   :opt-un [:timers/note]))
+
 
 ;; Time Spans - DB
 
