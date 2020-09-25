@@ -95,7 +95,7 @@
 (s/def :invites/invite-un (s/keys :req-un [:invites/id :invites/organization-id :invites/email]))
 
 
-;; Timers
+;; Timers - DB
 
 
 (s/def :timers/id uuid?)
@@ -107,10 +107,25 @@
                              :opt [:timers/note]))
 
 
-;; Time Spans
+;; Time Spans - DB
 
 
 (s/def :time-spans/id uuid?)
 (s/def :time-spans/timer-id :timers/id)
 
 (s/def :time-spans/time-span (s/keys :req [:time-spans/id :time-spans/timer-id]))
+
+
+;; Timers - Handler and Domain
+
+
+(s/def :domain.timer/time-spans (s/coll-of :time-spans/time-span))
+(s/def :domain.timer/find-by-id-retval (s/keys :req [:timers/id
+                                                     :timers/user-id
+                                                     :timers/task-id
+                                                     :timers/note]
+                                               :req-un [:domain.timer/time-spans]))
+(s/def :domain.timer/find-for-user-retval (s/coll-of :domain.timer/find-by-id-retval))
+
+(s/def :handlers.timer/create-request-body (s/keys :req-un [:timers/task-id]
+                                                   :opt-un [:timers/note]))

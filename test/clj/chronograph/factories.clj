@@ -6,7 +6,8 @@
             [chronograph.domain.acl :as acl]
             [chronograph.domain.task :as task]
             [chronograph.domain.organization :as organization]
-            [next.jdbc :refer [with-transaction]]))
+            [next.jdbc :refer [with-transaction]]
+            [chronograph.domain.timer :as timer]))
 
 (defn create-user []
   (let [{:keys [users/name users/email users/photo-url]} (gen/generate (s/gen :users/user))]
@@ -35,3 +36,11 @@
                  {:user-id (:users/id user)
                   :organization-id (:organizations/id organization)
                   :role role})))
+
+(defn create-timer
+  [user-id task-id]
+  (with-transaction [tx db/datasource]
+    (timer/create! tx
+                   user-id
+                   task-id
+                   (gen/generate (s/gen :timers/note)))))
