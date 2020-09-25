@@ -25,7 +25,10 @@
   (jdbc/execute! db/datasource ["TRUNCATE TABLE users CASCADE"])
   (jdbc/execute! db/datasource ["TRUNCATE TABLE acls CASCADE"])
   (jdbc/execute! db/datasource ["TRUNCATE TABLE organizations CASCADE"])
-  (jdbc/execute! db/datasource ["TRUNCATE TABLE invites CASCADE"]))
+  (jdbc/execute! db/datasource ["TRUNCATE TABLE invites CASCADE"])
+  (jdbc/execute! db/datasource ["TRUNCATE TABLE tasks CASCADE"])
+  (jdbc/execute! db/datasource ["TRUNCATE TABLE time_spans CASCADE"])
+  (jdbc/execute! db/datasource ["TRUNCATE TABLE timers CASCADE"]))
 
 (defn clear-db [f]
   (truncate-all-tables!)
