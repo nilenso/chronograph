@@ -1,16 +1,20 @@
 (ns chronograph.pages.create-organization.events-test
-  (:require [cljs.test :refer-macros [deftest is testing run-tests]]
+  (:require [cljs.test :refer-macros [deftest is testing run-tests use-fixtures]]
             [day8.re-frame.test :as rf-test]
             [re-frame.core :as rf]
             [chronograph.specs]
             [chronograph-web.pages.create-organization.events :as create-organization-events]
             [chronograph-web.pages.create-organization.subscriptions :as create-org-subs]
             [chronograph-web.subscriptions :as subs]
-            [chronograph.test-utils :as tu]))
+            [chronograph.test-utils :as tu]
+            [chronograph.fixtures :as fixtures]))
+
+(use-fixtures :once fixtures/check-specs)
 
 (deftest create-organization-form-update-test
   (testing "when the name is updated"
     (rf-test/run-test-sync
+     (tu/initialize-db!)
      (let [name "Nom"]
        (rf/dispatch [::create-organization-events/create-organization-form-update :name name])
        (is (= @(rf/subscribe [::create-org-subs/create-organization-form])
@@ -19,6 +23,7 @@
 
   (testing "when the slug is updated"
     (rf-test/run-test-sync
+     (tu/initialize-db!)
      (let [slug "slug"]
        (rf/dispatch [::create-organization-events/create-organization-form-update :slug slug])
        (is (= @(rf/subscribe [::create-org-subs/create-organization-form])
@@ -27,6 +32,7 @@
 
   (testing "when the name is invalid"
     (rf-test/run-test-sync
+     (tu/initialize-db!)
      (let [name ""]
        (rf/dispatch [::create-organization-events/create-organization-form-update :name name])
        (is (= @(rf/subscribe [::create-org-subs/create-organization-form])
@@ -35,6 +41,7 @@
 
   (testing "when the slug is invalid"
     (rf-test/run-test-sync
+     (tu/initialize-db!)
      (let [slug "SLU UG"]
        (rf/dispatch [::create-organization-events/create-organization-form-update :slug slug])
        (is (= @(rf/subscribe [::create-org-subs/create-organization-form])
@@ -44,6 +51,7 @@
 (deftest create-organization-form-submit-test
   (testing "when the organization is created successfully"
     (rf-test/run-test-sync
+     (tu/initialize-db!)
      (tu/stub-routing)
      (let [name "Name"
            slug "slug"
@@ -72,6 +80,7 @@
 
   (testing "when organization creation fails"
     (rf-test/run-test-sync
+     (tu/initialize-db!)
      (let [name "Name"
            slug "slug"]
        (rf/reg-fx :http-xhrio
@@ -88,6 +97,7 @@
 
   (testing "when organization creation is ongoing"
     (rf-test/run-test-sync
+     (tu/initialize-db!)
      (let [name "Name"
            slug "slug"]
        (rf/reg-fx :http-xhrio

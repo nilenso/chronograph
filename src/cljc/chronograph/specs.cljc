@@ -16,6 +16,9 @@
 (s/def :users/user (s/keys :req [:users/id :users/name :users/email]
                            :opt [:users/photo-url]))
 
+(s/def :users/user-un (s/keys :req-un [:users/id :users/name :users/email]
+                              :opt-un [:users/photo-url]))
+
 (s/def :users/google-id string?)
 
 
@@ -44,6 +47,9 @@
 (s/def :organizations/organization (s/keys :req [:organizations/id
                                                  :organizations/name
                                                  :organizations/slug]))
+(s/def :organizations/organization-un (s/keys :req-un [:organizations/id
+                                                       :organizations/name
+                                                       :organizations/slug]))
 
 ;; ACLs
 (s/def :acls/role #{"admin" "member"})
@@ -53,5 +59,8 @@
 (s/def :acls/acl (s/keys :req [:acls/user-id :acls/organization-id :acls/role]))
 
 ;; Invites
+(s/def :invites/id int?)
 (s/def :invites/organization-id :organizations/id)
 (s/def :invites/email :users/email)
+
+(s/def :invites/invite-un (s/keys :req-un [:invites/id :invites/organization-id :invites/email]))

@@ -58,8 +58,8 @@
 
 (rf/reg-event-db
   ::invite-member-succeeded
-  (fn [db [_ {:keys [organization-id email]}]]
-    (org-db/add-invited-member db organization-id email)))
+  (fn [db [_ member]]
+    (org-db/add-invited-member db member)))
 
 (rf/reg-event-db
   ::invite-member-failed

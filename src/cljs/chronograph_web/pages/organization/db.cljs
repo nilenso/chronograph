@@ -23,16 +23,14 @@
     (org-by-slug db org-slug)))
 
 (defn add-invited-member
-  [db org-id email]
+  [db {:keys [organization-id] :as member}]
   (db/add-to-set-in db
-                    [:invited-members org-id]
-                    {:organization-id org-id
-                     :email           email}))
+                    [:invited-members organization-id]
+                    member))
 
 (defn add-invited-members
   [db members]
-  (reduce (fn [db {:keys [organization-id email]}]
-            (add-invited-member db organization-id email))
+  (reduce add-invited-member
           db
           members))
 
