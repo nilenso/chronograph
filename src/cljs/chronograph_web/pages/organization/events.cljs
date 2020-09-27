@@ -46,9 +46,8 @@
 (rf/reg-event-db
   ::fetch-tasks-success
   (fn [db [_ tasks]]
-    (assoc-in db
-              [:tasks]
-              tasks)))
+    (assoc-in db [:tasks]
+              (zipmap (map :id tasks) tasks))))
 
 (rf/reg-event-db
   ::fetch-tasks-failure
@@ -83,3 +82,63 @@
   ::create-task-failure
   (fn [db _]
     (assoc-in db status-path :failed)))
+
+(rf/reg-event-fx
+  ::archive-task
+  (fn [{:keys [db]} [_ task-id]]
+    (let [slug (-> db :current-organization :slug)
+          archive-url (str  (tasks-uri slug) task-id "/archive")]
+      {:http-xhrio (http/put archive-url
+                             {:on-success [::fetch-tasks slug]
+                              :on-failure [::archive-task-failure]})})))
+
+(rf/reg-event-db
+  ::archive-task-failure
+  (fn [db _] db))
+
+(rf/reg-event-db
+  ::show-update-form
+  (fn [db [_ {:keys [id name description] :as _task}]]
+    (-> db
+        (assoc-in [:tasks id :is-updating] true)
+        (assoc-in [:update-task id :form-params]
+                  {:name name
+                   :description description}))))
+
+(rf/reg-event-db
+  ::update-task-form-update
+  (fn [db [_ task-id k v]]
+    (-> db
+        (assoc-in [:update-task task-id :status] :editing)
+        (assoc-in [:update-task task-id :form-params k] v))))
+
+(rf/reg-event-db
+  ::cancel-update-task-form
+  (fn [db [_ task-id]]
+    (let [update-task-forms (dissoc (-> :update-task :db) task-id)])
+    (-> db
+        (assoc-in [:tasks task-id :is-updating] false)
+        (update-in [:update-task] dissoc task-id))))
+
+(rf/reg-event-fx
+  ::update-task-form-submit
+  (fn [{:keys [db]} [_ task-id]]
+    (let [slug (-> db :current-organization :slug)
+          update-url (str (tasks-uri slug) task-id)]
+      {:db         (assoc-in db [:update-task task-id :status] :saving)
+       :http-xhrio (http/put update-url
+                             {:params     {:updates (get-in db [:update-task task-id :form-params])}
+                              :on-success [::update-task-success task-id]
+                              :on-failure [::update-task-failure task-id]})})))
+
+(rf/reg-event-fx
+  ::update-task-success
+  (fn [{:keys [db]} [_ task-id]]
+    {:db (-> db
+             (assoc-in [:tasks task-id :is-updating] false)
+             (update-in [:update-task] dissoc task-id))
+     :fx [[:dispatch [::fetch-tasks (-> db :current-organization :slug)]]]}))
+
+(rf/reg-event-db
+  ::update-task-failure
+  (fn [db _] db))

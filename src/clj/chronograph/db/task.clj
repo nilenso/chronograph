@@ -28,3 +28,9 @@
    (find-by-id db/datasource id))
   ([tx id]
    (first (where tx {:id id}))))
+
+(defn update! [tx id updates]
+  (sql/update! tx :tasks
+               updates
+               {:id id}
+               db/sql-opts))

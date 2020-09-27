@@ -34,9 +34,14 @@
 (rf/reg-sub
   ::tasks
   (fn [db [_ _]]
-    (get-in db [:tasks])))
+    (vals (get-in db [:tasks]))))
 
 (rf/reg-sub
   ::create-task-form
   (fn [db _]
     (get-in db [:create-task])))
+
+(rf/reg-sub
+  ::update-task-form
+  (fn [db [_ task-id]]
+    (get-in db [:update-task task-id])))

@@ -23,26 +23,29 @@
    ["web/redirect" google-auth/web-redirect-handler]
    ["desktop/redirect" google-auth/desktop-redirect-handler]])
 
+(def task-routes
+  {:post (-> task/create
+             middleware/wrap-authenticated)
+   :get (-> task/index
+            middleware/wrap-authenticated)
+   [:task-id] {:put (-> task/update
+                        middleware/wrap-authenticated)}
+   [:task-id "/archive"] {:put (-> task/archive
+                                   middleware/wrap-authenticated)}})
+
 (def routes
   ["/" [["" (fn [_] (-> (response/resource-response "public/index.html")
                         (response/content-type "text/html")))]
         ["auth/" [["google/" google-auth-routes]]]
         ["api/" [["users/me" {:get (-> user/me
                                        middleware/wrap-authenticated)}]
-                 ["tasks/" {:post (-> task/create
-                                      middleware/wrap-authenticated)
-                            :get (-> task/index
-                                     middleware/wrap-authenticated)}]
                  ["organizations/" {:get (-> organization/index
                                              middleware/wrap-authenticated)
                                     :post (-> organization/create
                                               middleware/wrap-authenticated)
                                     ["" :slug] {:get (-> organization/find-one
                                                          middleware/wrap-authenticated)}
-                                    [:slug "/tasks/"] {:post (-> task/create
-                                                        middleware/wrap-authenticated)
-                                                       :get (-> task/index
-                                                                middleware/wrap-authenticated)}}]]]
+                                    [:slug "/tasks/"] task-routes}]]]
         [true (fn [_] (-> (response/resource-response "public/index.html")
                           (response/content-type "text/html")))]]])
 

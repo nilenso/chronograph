@@ -36,9 +36,50 @@
         "Creating..."
         "Create")]]))
 
-(defn task-list-element [{:keys [id name description]}]
+(defn update-form [{:keys [id] :as _task}]
+  (let [{:keys [form-params status]} @(rf/subscribe [::subs/update-task-form id])
+        form-invalid? (not (form-valid? form-params))
+        {:keys [name description]} form-params]
+    [:form
+     [components/text-input :name :tasks/name
+      {:placeholder "Name"
+       :value name
+       :on-change #(rf/dispatch [::org-events/update-task-form-update
+                                 id
+                                 :name
+                                 (.-value (.-currentTarget %))])}]
+     [components/text-input :description :tasks/description
+      {:placeholder "Name"
+       :value description
+       :on-change #(rf/dispatch [::org-events/update-task-form-update
+                                 id
+                                 :description
+                                 (.-value (.-currentTarget %))])}]
+     [:button {:type :button
+               :name :save
+               :disabled (or (= status :saving)
+                             form-invalid?)
+               :on-click (fn [] (rf/dispatch [::org-events/update-task-form-submit id]))}
+      (if (= status :saving)
+        "Saving..."
+        "Save")]
+     [:button {:type :button
+               :name :save
+               :disabled (or (= status :saving)
+                             form-invalid?)
+               :on-click (fn [] (rf/dispatch [::org-events/cancel-update-task-form id]))}
+      "Cancel"]]))
+
+(defn task-list-element [{:keys [id name description is-updating] :as task}]
   [:li {:key id}
-   [:b name] " - " description])
+   [:div
+    (if (true? is-updating)
+      [update-form task]
+      [:p [:b name] " - " description])
+    [:button {:on-click #(rf/dispatch [::org-events/archive-task id])}
+     "Archive"]
+    [:button {:on-click #(rf/dispatch [::org-events/show-update-form task])}
+     "Update"]]])
 
 (defn task-list [tasks]
   [:div
