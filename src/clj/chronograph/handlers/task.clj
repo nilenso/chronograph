@@ -23,23 +23,27 @@
     (if-let [organization (req-utils/current-organization tx request)]
       (-> (organization/tasks tx organization)
           (response/response))
-      (response/bad-request {:error "Organization slug is necessary"}))))
+      (response/not-found :not-found))))
 
 ;; TODO: Same as create, check if anyone can update a task
-(defn update [{:keys [params body] :as _request}]
-  (let [id (Integer/parseInt (:task-id params))]
-    (jdbc/with-transaction [tx db/datasource]
-      (task/update tx {:tasks/id id} (:updates body))
-      (if-let [task (task/find-by-id tx id)]
-        {:status 200
-         :body {:task task}}
-        (response/not-found "Task not found")))))
+(defn update [{:keys [params body] :as request}]
+  (jdbc/with-transaction [tx db/datasource]
+    (if-let [organization (req-utils/current-organization tx request)]
+      (let [id (Integer/parseInt (str (:task-id params)))]
+        (task/update tx {:tasks/id id} (:updates body))
+        (if-let [task (task/find-by-id tx id)]
+          {:status 200
+           :body task}
+          (response/not-found "Task not found")))
+      (response/not-found "Organization not found"))))
 
-(defn archive [{:keys [params] :as _request}]
-  (let [id (Integer/parseInt (:task-id params))]
-    (jdbc/with-transaction [tx db/datasource]
-      (task/archive tx {:tasks/id id})
-      (if-let [task (task/find-by-id tx id)]
-        {:status 200
-         :body {:task task}}
-        (response/not-found "Task not found")))))
+(defn archive [{:keys [params] :as request}]
+  (jdbc/with-transaction [tx db/datasource]
+    (if-let [organization (req-utils/current-organization tx request)]
+      (let [id (Integer/parseInt (str (:task-id params)))]
+        (task/archive tx {:tasks/id id})
+        (if-let [task (task/find-by-id tx id)]
+          {:status 200
+           :body task}
+          (response/not-found "Task not found")))
+      (response/not-found "Organization not found"))))
