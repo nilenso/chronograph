@@ -42,26 +42,26 @@
     {:keys [email]} :body
     :as _request}]
   (jdbc/with-transaction [tx db/datasource]
-    (if-let [{org-id :organizations/id} (organization/find-by-slug tx slug)]
-      (if (s/valid? :invites/email email)
-        (if (acl/admin? tx user-id org-id)
-          (response/response
-           (invite/find-or-create! tx org-id email))
-          (-> (response/response {:error "Forbidden"})
-              (response/status 403)))
-        (response/bad-request {:error "Invalid email"}))
-      (response/not-found {:error "Not found"}))))
+    (let [{org-id :organizations/id} (organization/find-by-slug tx slug)]
+      (cond
+        (not org-id)                          (response/not-found {:error "Not found"})
+        (not (s/valid? :invites/email email)) (response/bad-request {:error "Invalid email"})
+        (not (acl/admin? tx user-id org-id))  (-> (response/response {:error "Forbidden"})
+                                                  (response/status 403))
+        :else                                 (response/response
+                                               (invite/find-or-create! tx org-id email))))))
 
 (defn show-members
   [{{:keys [slug]} :params
     {user-id :users/id} :user
     :as _request}]
   (jdbc/with-transaction [tx db/datasource]
-    (if-let [{:organizations/keys [id]} (organization/find-by-slug tx slug)]
-      (if (acl/admin? tx user-id id)
-        (response/response {:joined (organization/members tx id)
-                            :invited (invite/find-by-org-id tx id)})
-        (-> (response/response {:error "Forbidden"})
-            (response/status 403)))
-      (response/not-found {:error "Not found"}))))
+    (let [{:organizations/keys [id]} (organization/find-by-slug tx slug)]
+      (cond
+        (not id)                         (response/not-found {:error "Not found"})
+        (not (acl/admin? tx user-id id)) (-> (response/response {:error "Forbidden"})
+                                             (response/status 403))
+        :else                            (response/response {:joined (organization/members tx id)
+                                                             :invited (invite/find-by-org-id tx id)})))))
+
 

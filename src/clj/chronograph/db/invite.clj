@@ -3,14 +3,12 @@
             [next.jdbc.sql :as sql]))
 
 (defn create!
-  ([organization-id email]
-   (create! db/datasource organization-id email))
-  ([tx organization-id email]
-   (sql/insert! tx
-                :invites
-                {:organization-id organization-id
-                 :email email}
-                db/sql-opts)))
+  [tx organization-id email]
+  (sql/insert! tx
+               :invites
+               {:organization-id organization-id
+                :email email}
+               db/sql-opts))
 
 (defn find-by-id
   [tx invite-id]
