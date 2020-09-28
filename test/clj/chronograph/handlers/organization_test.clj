@@ -10,7 +10,7 @@
             [chronograph.test-utils :as tu])
   (:import (org.postgresql.util PSQLException)))
 
-(use-fixtures :once  fixtures/config fixtures/datasource)
+(use-fixtures :once fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)
 
 (deftest create-new-organization-first-time
@@ -145,7 +145,7 @@
       (let [user (factories/create-user)
             {:organizations/keys [slug]
              org-id              :organizations/id} (factories/create-organization (:users/id user))
-            member  (factories/create-user)]
+            member (factories/create-user)]
         (acl/create! db/datasource {:user-id         (:users/id member)
                                     :organization-id org-id
                                     :role            acl/member})
