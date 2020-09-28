@@ -43,7 +43,8 @@
 (s/def :page-state/create-organization (page-state-map (s/keys :opt-un [:create-organization/status
                                                                         :create-organization/form-params])))
 
-(s/def ::page-state (s/keys :opt-un [:page-state/organization-show]))
+(s/def ::page-state (s/keys :opt-un [:page-state/organization-show
+                                     :page-state/create-organization]))
 
 (s/def ::db (s/keys :req-un [::user ::page]
                     :opt-un [::organizations
