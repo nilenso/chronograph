@@ -12,8 +12,12 @@
     (merge {:archived-at nil} options)))
 
 (defn update [tx {:tasks/keys [id] :as task} updates]
-  (let [update-values (select-keys updates [:name :description])]
+  (if-let [update-values (-> updates
+                             (select-keys [:name :description])
+                             not-empty )]
     (task-db/update! tx id update-values)))
 
 (defn archive [tx {:tasks/keys [id] :as task}]
-  (task-db/update! tx id {:archived-at (time/now)}))
+  (let [now (time/now)]
+    (task-db/update! tx id {:archived-at now
+                            :updated-at now})))

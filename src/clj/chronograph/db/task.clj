@@ -31,6 +31,6 @@
 
 (defn update! [tx id updates]
   (sql/update! tx :tasks
-               updates
+               (merge {:updated-at (time/now)} updates )
                {:id id}
                db/sql-opts))
