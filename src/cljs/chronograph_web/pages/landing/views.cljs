@@ -23,4 +23,5 @@
           organizations @(rf/subscribe [::subs/organizations])]
       [:div
        [:h2 (str "Hello " name "!")]
-       [organizations-list organizations]])))
+       [organizations-list organizations]
+       [:a {:href "/pending-invites"} "You have pending invites!"]])))
