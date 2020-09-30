@@ -7,15 +7,11 @@
   (let [invites @(rf/subscribe [::invites-subs/invites])]
     [:div
      [:ul
-      (map #(let [id (:id %)
-                  org-name (:name %)]
-              (println org-name)
-              [:li
-               [:p org-name]
-               [:button {:on-click (fn []
-                                     (rf/dispatch [::invites-events/reject-invite id]))}
-                "reject"]
-               [:button {:on-click (fn []
-                                     (rf/dispatch [::invites-events/accept-invite id]))}
-                "accept"]])
-           @(rf/subscribe [::invites-subs/invites]))]]))
+      (map (fn [{:keys [id name]}]
+             [:li
+              [:p name]
+              [:button {:on-click #(rf/dispatch [::invites-events/reject-invite id])}
+               "reject"]
+              [:button {:on-click #(rf/dispatch [::invites-events/accept-invite id])}
+               "accept"]])
+           invites)]]))
