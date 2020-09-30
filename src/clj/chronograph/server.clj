@@ -16,6 +16,7 @@
             [chronograph.middleware :as middleware]
             [chronograph.handlers.google-auth :as google-auth]
             [chronograph.handlers.task :as task]
+            [chronograph.handlers.timer :as timer]
             [chronograph.handlers.user :as user]
             [chronograph.handlers.organization :as organization]))
 
@@ -32,7 +33,21 @@
    [:task-id] {:put (-> task/update
                         (middleware/wrap-require-authorization #{acl/admin}))}
    [:task-id "/archive"] {:put (-> task/archive
-                                   (middleware/wrap-require-authorization #{acl/admin}))}})
+                                   (middleware/wrap-require-authorization #{acl/admin}))}
+   [:task-id "/timers"] {:get (-> timer/find-for-user-task
+                                  middleware/wrap-authenticated)}})
+
+(def timer-routes
+  {:post (-> timer/create
+             middleware/wrap-authenticated)
+   [:timer-id] {:delete (-> timer/delete
+                            middleware/wrap-authenticated)}
+   [:timer-id "/start"] {:put (-> timer/start
+                                  middleware/wrap-authenticated)}
+   [:timer-id "/stop"] {:put (-> timer/stop
+                                 middleware/wrap-authenticated)}
+   [:timer-id "/update-note"] {:put (-> timer/update-note
+                                        middleware/wrap-authenticated)}})
 
 (def routes
   ["/" [["" (fn [_] (-> (response/resource-response "public/index.html")
@@ -40,6 +55,7 @@
         ["auth/" [["google/" google-auth-routes]]]
         ["api/" [["users/me" {:get (-> user/me
                                        middleware/wrap-authenticated)}]
+                 ["timers/" timer-routes]
                  ["organizations/" {:get (-> organization/index
                                              middleware/wrap-authenticated)
                                     :post (-> organization/create
