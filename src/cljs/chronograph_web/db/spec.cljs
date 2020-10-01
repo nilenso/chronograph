@@ -42,6 +42,7 @@
                                                          :create-organization/slug]))
 (s/def :page-state/create-organization (page-state-map (s/keys :opt-un [:create-organization/status
                                                                         :create-organization/form-params])))
+(s/def ::organization-invites (s/map-of :organizations/id :organizations/organization-un))
 
 (s/def ::page-state (s/keys :opt-un [:page-state/organization-show
                                      :page-state/create-organization]))
@@ -50,4 +51,5 @@
                     :opt-un [::organizations
                              ::invited-members
                              ::joined-members
+                             ::organization-invites
                              ::page-state]))
