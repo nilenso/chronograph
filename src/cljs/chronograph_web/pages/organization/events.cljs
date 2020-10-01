@@ -37,11 +37,11 @@
               ::not-found)))
 
 (rf/reg-event-fx
- ::fetch-tasks
- (fn [_ [_ slug]]
-   {:http-xhrio (http/get (tasks-uri slug)
-                          {:on-success [::fetch-tasks-success]
-                           :on-failure [::fetch-tasks-failure]})}))
+  ::fetch-tasks
+  (fn [_ [_ slug]]
+    {:http-xhrio (http/get (tasks-uri slug)
+                           {:on-success [::fetch-tasks-success]
+                            :on-failure [::fetch-tasks-failure]})}))
 
 (rf/reg-event-db
   ::fetch-tasks-success
@@ -65,7 +65,7 @@
   ::create-task-form-submit
   (fn [{:keys [db]} _]
     {:db         (assoc-in db status-path :creating)
-     :http-xhrio (http/post (tasks-uri (-> db :current-organization :slug) )
+     :http-xhrio (http/post (tasks-uri (-> db :current-organization :slug))
                             {:params     {:name (get-in db (form-params-path :name))
                                           :description (get-in db (form-params-path :description))}
                              :on-success [::create-task-success]
@@ -115,7 +115,7 @@
 (rf/reg-event-db
   ::cancel-update-task-form
   (fn [db [_ task-id]]
-    (let [update-task-forms (dissoc (-> :update-task :db) task-id)])
+    (let [_update-task-forms (dissoc (-> :update-task :db) task-id)])
     (-> db
         (assoc-in [:tasks task-id :is-updating] false)
         (update-in [:update-task] dissoc task-id))))

@@ -2,26 +2,29 @@
   (:require [clojure.test :refer :all]
             [chronograph.factories :as factories]
             [chronograph.handlers.task :as task]
+            [chronograph.db.core :as db]
             [chronograph.db.task :as db-task]
             [chronograph.fixtures :as fixtures]
-            [chronograph.utils.time :as time]))
+            [chronograph.utils.time :as time]
+            [next.jdbc :refer [with-transaction]]))
 
 (use-fixtures :once fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)
 
 (deftest create-a-task-test
   (let [user (factories/create-user)
-        organization (factories/create-organization (:users/id user)) ]
+        organization (factories/create-organization (:users/id user))]
     (testing "Given a name and description, it creates a task"
       (let [task {:name "Task name"
                   :description "Task description"
                   :organization-id (:organizations/id organization)}
             response (task/create {:body task})
-            retrieved-task (db-task/find-by-id (:tasks/id (:body response)))]
+            retrieved-task (with-transaction [tx db/datasource]
+                             (db-task/find-by-id tx (:tasks/id (:body response))))]
         (is (= 200 (:status response)))
         (is (= (:name task) (:tasks/name retrieved-task)))
         (is (= (:description task) (:tasks/description retrieved-task)))
-        (is (= nil (:tasks/archived-at retrieved-task)))))
+        (is (nil? (:tasks/archived-at retrieved-task)))))
     (testing "Returns 400 if name is not present"
       (let [task {:description "Invalid task"}
             response (task/create {:body task})]
@@ -96,7 +99,7 @@
     (testing "It returns 200 and archives the tasks"
       (with-redefs [time/now (constantly now)]
         (let [request {:params {:organization-id organization-id
-                                :task-id task-id} }
+                                :task-id task-id}}
               response (task/archive request)
               {:tasks/keys [archived-at updated-at]} (:body response)]
           (is (= 200 (:status response)))

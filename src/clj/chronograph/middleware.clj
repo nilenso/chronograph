@@ -2,8 +2,10 @@
   (:require [taoensso.timbre :as log]
             [ring.util.response :as response]
             [chronograph.auth :as auth]
+            [chronograph.db.core :as db]
             [chronograph.domain.user :as user]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [next.jdbc :as jdbc]))
 
 (defn wrap-exception-logging [handler]
   (fn [request]
@@ -26,12 +28,13 @@
   (second (string/split bearer-value #" ")))
 
 (defn- add-user-details [token request]
-  (if-let [user (some-> token
-                        auth/verify-token
-                        :id
-                        user/find-by-id)]
-    (assoc request :user user)
-    request))
+  (jdbc/with-transaction [tx db/datasource]
+    (if-let [user (some->> token
+                           auth/verify-token
+                           :id
+                           (user/find-by-id tx))]
+      (assoc request :user user)
+      request)))
 
 (defn wrap-header-auth
   [handler]

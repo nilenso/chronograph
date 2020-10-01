@@ -1,9 +1,11 @@
 (ns chronograph.specs
-  (:require [clojure.spec.alpha :as s]
+  (:require #?(:clj [clojure.string :as string]
+               :cljs [goog.string :as string])
+            [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]))
 
 (def non-empty-string?
-  (s/and string? #(not= % "")))
+  (s/and string?  (comp not string/blank?)))
 
 ;; Users
 

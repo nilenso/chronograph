@@ -5,7 +5,8 @@
             [chronograph.db.core :as db]
             [chronograph.utils.request :as req-utils]
             [ring.util.response :as response]
-            [next.jdbc :as jdbc]))
+            [next.jdbc :as jdbc])
+  (:refer-clojure :exclude [update]))
 
 (defn create [{:keys [body params] :as request}]
   (if-not (s/valid? :tasks/create-params-handler body)
@@ -28,7 +29,7 @@
 ;; TODO: Same as create, check if anyone can update a task
 (defn update [{:keys [params body] :as request}]
   (jdbc/with-transaction [tx db/datasource]
-    (if-let [organization (req-utils/current-organization tx request)]
+    (if-let [_ (req-utils/current-organization tx request)]
       (let [id (Integer/parseInt (str (:task-id params)))]
         (task/update tx {:tasks/id id} (:updates body))
         (if-let [task (task/find-by-id tx id)]
@@ -39,7 +40,7 @@
 
 (defn archive [{:keys [params] :as request}]
   (jdbc/with-transaction [tx db/datasource]
-    (if-let [organization (req-utils/current-organization tx request)]
+    (if-let [_ (req-utils/current-organization tx request)]
       (let [id (Integer/parseInt (str (:task-id params)))]
         (task/archive tx {:tasks/id id})
         (if-let [task (task/find-by-id tx id)]

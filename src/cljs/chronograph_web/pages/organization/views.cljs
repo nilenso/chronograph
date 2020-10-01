@@ -49,7 +49,7 @@
                                  :name
                                  (.-value (.-currentTarget %))])}]
      [components/text-input :description :tasks/description
-      {:placeholder "Name"
+      {:placeholder "Description"
        :value description
        :on-change #(rf/dispatch [::org-events/update-task-form-update
                                  id

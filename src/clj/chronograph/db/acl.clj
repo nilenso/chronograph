@@ -2,7 +2,8 @@
   (:require [chronograph.db.core :as db]
             [next.jdbc.sql :as sql]
             [chronograph.utils.time :as time])
-  (:import (org.postgresql.util PGobject)))
+  (:import (org.postgresql.util PGobject))
+  (:refer-clojure :exclude [find]))
 
 (defn create! [tx {:keys [user-id organization-id role]}]
   (let [now (time/now)]
@@ -17,8 +18,8 @@
                   :updated-at now}
                  db/sql-opts)))
 
-(defn where [tx options]
-  (sql/find-by-keys tx :acls options db/sql-opts))
+(defn where [tx attributes]
+  (sql/find-by-keys tx :acls attributes db/sql-opts))
 
-(defn find-one [tx options]
-  (first (where tx options)))
+(defn find [tx attributes]
+  (first (where tx attributes)))

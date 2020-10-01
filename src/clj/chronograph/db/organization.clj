@@ -1,7 +1,8 @@
 (ns chronograph.db.organization
   (:require [chronograph.db.core :as db]
             [next.jdbc.sql :as sql]
-            [chronograph.utils.time :as time]))
+            [chronograph.utils.time :as time])
+  (:refer-clojure :exclude [find]))
 
 (defn create!
   ([organization]
@@ -16,20 +17,14 @@
                    :updated-at now}
                   db/sql-opts))))
 
-(defn where
-  ([options]
-   (where db/datasource options))
-  ([tx options]
-   (sql/find-by-keys tx :organizations options db/sql-opts)))
+(defn where [tx attributes]
+  (sql/find-by-keys tx :organizations attributes db/sql-opts))
 
-(defn find [tx options]
-  (first (where tx options)))
+(defn find [tx attributes]
+  (first (where tx attributes)))
 
-(defn find-by-slug
-  ([slug]
-   (find-by-slug db/datasource slug))
-  ([tx slug]
-   (find tx {:slug slug})))
+(defn find-by-slug [tx slug]
+  (find tx {:slug slug}))
 
 (defn by-ids [tx ids]
   (sql/query tx
