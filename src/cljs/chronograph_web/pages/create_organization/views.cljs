@@ -1,6 +1,6 @@
 (ns chronograph-web.pages.create-organization.views
   (:require [re-frame.core :as rf]
-            [chronograph-web.pages.create-organization.events :as create-events]
+            [chronograph-web.pages.create-organization.events :as events]
             [chronograph-web.pages.create-organization.subscriptions :as create-subs]
             [clojure.spec.alpha :as s]))
 
@@ -12,7 +12,7 @@
 (defn- text-input [k spec {:keys [on-change value] :as attrs}]
   [:div
    [:input (merge {:type :text
-                   :on-change #(rf/dispatch [::create-events/create-organization-form-update
+                   :on-change #(rf/dispatch [::events/create-organization-form-update
                                              k
                                              (.-value (.-currentTarget %))])}
                   attrs
@@ -39,7 +39,7 @@
                :name :create
                :disabled (or (= status :creating)
                              form-invalid?)
-               :on-click (fn [] (rf/dispatch [::create-events/create-organization-form-submit]))}
+               :on-click (fn [] (rf/dispatch [::events/create-organization-form-submit]))}
       (if (= status :creating)
         "Creating..."
         "Create")]]))

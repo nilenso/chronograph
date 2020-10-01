@@ -45,9 +45,9 @@
     (let [{org-id :organizations/id} (organization/find-by-slug tx slug)]
       (cond
         (not org-id)                          (response/not-found {:error "Not found"})
-        (not (s/valid? :invites/email email)) (response/bad-request {:error "Invalid email"})
         (not (acl/admin? tx user-id org-id))  (-> (response/response {:error "Forbidden"})
                                                   (response/status 403))
+        (not (s/valid? :invites/email email)) (response/bad-request {:error "Invalid email"})
         :else                                 (response/response
                                                (invite/find-or-create! tx org-id email))))))
 
