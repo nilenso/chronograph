@@ -10,6 +10,7 @@
       [:div
        [:ul
         (map (fn [{:keys [id name]}]
+               ^{:key id}
                [:li
                 [:p name]
                 [:button {:on-click #(rf/dispatch [::invites-events/reject-invite id])}
