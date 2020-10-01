@@ -15,76 +15,82 @@
 
 (deftest create-task-test
   (let [{user-id :users/id} (factories/create-user)
-        {organization-id :organizations/id} (factories/create-organization user-id)]
+        organization (factories/create-organization user-id)]
     (testing "Can create task with name and description"
       (with-redefs [time/now (constantly (time/now))]
-        (let [created-task (task/create {:name "Foo"
-                                         :description "Description of Foo"
-                                         :organization-id organization-id})
-              retrieved-task (task/find-by-id (:tasks/id created-task))
+        (let [created-task (with-transaction [tx db/datasource]
+                             (task/create tx
+                                          {:tasks/name "Foo"
+                                           :tasks/description "Description of Foo"}
+                                          organization))
+              retrieved-task (with-transaction [tx db/datasource]
+                               (task/find-by-id tx (:tasks/id created-task)))
               now (time/now)]
           (is (= #:tasks{:id (:tasks/id created-task)
                          :name "Foo"
                          :description "Description of Foo"
-                         :organization-id organization-id
+                         :organization-id (:organizations/id organization)
                          :created-at now
                          :updated-at now
                          :archived-at nil}
                  retrieved-task)))))
     (testing "It throws an error if name is not present"
-      (is (thrown? org.postgresql.util.PSQLException
-                   (task/create {:name nil
-                                 :description "Description"
-                                 :organization-id organization-id}))))))
+      (with-transaction [tx db/datasource]
+        (is (thrown? org.postgresql.util.PSQLException
+                     (task/create tx
+                                  {:tasks/name nil
+                                   :tasks/description "Description of Foo"}
+                                  organization)))))))
 
-(deftest find-by-id
+(deftest find-by-id-test
   (let [{user-id :users/id} (factories/create-user)
-        {organization-id :organizations/id} (factories/create-organization user-id)]
+        organization (factories/create-organization user-id)]
     (testing "It returns the task if the id is present in the DB"
-      (let [task (factories/create-task organization-id)]
+      (let [task (factories/create-task organization)]
         (with-transaction [tx db/datasource]
           (is (= task
                  (task/find-by-id tx (:tasks/id task)))))))
     (testing "It returns nil if the id is not present in the DB"
-      (let [task (factories/create-task organization-id)
+      (let [task (factories/create-task organization)
             random-id (->> :tasks/id
-                          s/gen
-                          (gen/such-that #(not= % (:tasks/id task)))
-                          gen/generate)]
+                           s/gen
+                           (gen/such-that #(not= % (:tasks/id task)))
+                           gen/generate)]
         (with-transaction [tx db/datasource]
           (is (= nil
                  (task/find-by-id tx random-id))))))))
 
-(deftest index-test
+(deftest list-test
   (let [{user-id :users/id} (factories/create-user)
-        {organization-id :organizations/id} (factories/create-organization user-id)
-        {other-organization-id :organizations/id} (factories/create-organization user-id)
-        task1 (factories/create-task organization-id)
-        task2 (factories/create-task organization-id)
-        task3 (factories/create-task other-organization-id) ]
+        organization (factories/create-organization user-id)
+        other-organization (factories/create-organization user-id)
+        task1 (factories/create-task organization)
+        task2 (factories/create-task organization)
+        _task3 (factories/create-task other-organization)]
     (testing "It returns a list of tasks that match the given attributes"
       (with-transaction [tx db/datasource]
         (is (= #{task1 task2}
-               (set (task/index tx {:organization-id organization-id}))))))
+               (set (task/list tx {:organization-id (:organizations/id organization)}))))))
     (testing "It only returns un-archived tasks"
       (with-transaction [tx db/datasource]
-        (db-task/update! tx (:tasks/id task1) {:archived-at (time/now)}))
+        (db-task/update! tx {:id (:tasks/id task1)} {:archived-at (time/now)}))
       (with-transaction [tx db/datasource]
         (is (= #{task2}
-               (set (task/index tx {:organization-id organization-id}))))))
+               (set (task/list tx {:organization-id (:organizations/id organization)}))))))
     (testing "It returns an empty list if no tasks match the attributes"
-      (let [ attributes {:organization-id (->> :organizations/id
+      (let [attributes {:organization-id (->> :organizations/id
                                               s/gen
-                                              (gen/such-that #(not (#{organization-id
-                                                                      other-organization-id} %)))
+                                              (gen/such-that #(not (#{(:organizations/id organization)
+                                                                      (:organizations/id other-organization)}
+                                                                    %)))
                                               gen/generate)}]
         (with-transaction [tx db/datasource]
-          (is (empty? (task/index tx attributes))))))))
+          (is (empty? (task/list tx attributes))))))))
 
 (deftest update-test
   (let [{user-id :users/id} (factories/create-user)
-        {organization-id :organizations/id} (factories/create-organization user-id)
-        {:tasks/keys [id] :as task} (factories/create-task organization-id)
+        organization (factories/create-organization user-id)
+        {:tasks/keys [id] :as task} (factories/create-task organization)
         now (time/now)]
 
     (testing "It updates the name of a task"
@@ -110,11 +116,11 @@
         (with-transaction [tx db/datasource]
           (let [{:tasks/keys [created-at updated-at]} (task/find-by-id tx id)]
             (is (= now updated-at))
-            (is (> 0 (compare created-at updated-at)))))))
+            (is (pos? (compare updated-at created-at)))))))
 
     (testing "It does not update the archived-at time of the task"
       ;; Redefining the task since an update has already happened
-      (let [{:tasks/keys [id] :as task} (factories/create-task organization-id)]
+      (let [{:tasks/keys [id] :as task} (factories/create-task organization)]
         (with-redefs [time/now (constantly now)]
           (with-transaction [tx db/datasource]
             (task/update tx task {:archived-at now}))
@@ -130,8 +136,8 @@
 
 (deftest archive-test
   (let [{user-id :users/id} (factories/create-user)
-        {organization-id :organizations/id} (factories/create-organization user-id)
-        {:tasks/keys [id] :as task} (factories/create-task organization-id)
+        organization (factories/create-organization user-id)
+        {:tasks/keys [id] :as task} (factories/create-task organization)
         now (time/now)]
     (testing "It sets the archived-at to the current time"
       (with-redefs [time/now (constantly now)]
@@ -141,4 +147,4 @@
           (let [{:tasks/keys [archived-at created-at updated-at]} (task/find-by-id tx id)]
             (is (= now archived-at))
             (is (= archived-at updated-at))
-            (is (> 0 (compare created-at updated-at)))))))))
+            (is (pos? (compare updated-at created-at)))))))))

@@ -6,9 +6,11 @@
             [cheshire.core :as json]
             [chronograph.fixtures :as fixtures]
             [chronograph.auth :as auth]
+            [chronograph.db.core :as db]
             [chronograph.domain.user :as user]
             [chronograph.config :as config]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [next.jdbc :refer [with-transaction]])
   (:import (java.net URI)))
 
 (use-fixtures :once fixtures/config fixtures/datasource fixtures/report-logging-only)
@@ -25,7 +27,8 @@
                                                 "email_verified" true
                                                 "picture"        "https://foo/bar.png"}]
       (let [{:keys [status cookies]} (google-auth/web-redirect-handler {:params {:code "123"}})
-            {:users/keys [id]} (user/find-by-google-id "123456")]
+            {:users/keys [id]} (with-transaction [tx db/datasource]
+                                 (user/find-by-google-id tx "123456"))]
         (is (= 302 status))
         (is (= id
                (-> cookies
@@ -85,7 +88,8 @@
                                                 "email_verified" true
                                                 "picture"        "https://foo/bar.png"}]
       (let [{:keys [status headers]} (google-auth/desktop-redirect-handler {:params {:code "123"}})
-            {:users/keys [id]} (user/find-by-google-id "123456")
+            {:users/keys [id]} (with-transaction [tx db/datasource]
+                                 (user/find-by-google-id tx "123456"))
             redirected-uri (get headers "Location")
             access-token   (-> (URI. redirected-uri)
                                (.getQuery)

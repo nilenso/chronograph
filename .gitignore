@@ -23,3 +23,5 @@ config/*.secrets.edn
 .\#*
 .clj-kondo/.cache
 shell.nix
+
+yarn-error.log

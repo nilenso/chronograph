@@ -12,6 +12,7 @@
             [org.httpkit.server :as httpkit]
             [ring.util.response :as response]
             [chronograph.config :as config]
+            [chronograph.domain.acl :as acl]
             [chronograph.middleware :as middleware]
             [chronograph.handlers.google-auth :as google-auth]
             [chronograph.handlers.task :as task]
@@ -25,13 +26,13 @@
 
 (def task-routes
   {:post (-> task/create
-             middleware/wrap-authenticated)
+             (middleware/wrap-require-authorization #{acl/admin}))
    :get (-> task/index
-            middleware/wrap-authenticated)
+            (middleware/wrap-require-authorization #{acl/admin acl/member}))
    [:task-id] {:put (-> task/update
-                        middleware/wrap-authenticated)}
+                        (middleware/wrap-require-authorization #{acl/admin}))}
    [:task-id "/archive"] {:put (-> task/archive
-                                   middleware/wrap-authenticated)}})
+                                   (middleware/wrap-require-authorization #{acl/admin}))}})
 
 (def routes
   ["/" [["" (fn [_] (-> (response/resource-response "public/index.html")

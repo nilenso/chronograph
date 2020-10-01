@@ -3,9 +3,11 @@
             [ring.util.response :as response]
             [chronograph.config :as config]
             [chronograph.auth :as auth]
+            [chronograph.db.core :as db]
             [chronograph.domain.user :as user]
             [org.httpkit.client :as http]
             [mount.core :refer [defstate]]
+            [next.jdbc :as jdbc]
             [cheshire.core :as json]
             [taoensso.timbre :as log])
   (:import (com.google.api.client.googleapis.auth.oauth2 GoogleIdTokenVerifier$Builder GoogleIdTokenVerifier)
@@ -84,13 +86,14 @@
   (try
     (if (:error params)
       (redirect-with-error (:error params))
-      (let [id-token (fetch-id-token "web" (:code params))
-            {:strs [name sub email email_verified picture]} (verify-id-token id-token)]
-        (if-not email_verified
-          (redirect-with-error "email-not-verified")
-          (let [{:users/keys [id]} (user/find-or-create-google-user! sub name email picture)]
-            (-> (response/redirect "/")
-                (auth/set-auth-cookie id))))))
+      (jdbc/with-transaction [tx db/datasource]
+        (let [id-token (fetch-id-token "web" (:code params))
+              {:strs [name sub email email_verified picture]} (verify-id-token id-token)]
+          (if-not email_verified
+            (redirect-with-error "email-not-verified")
+            (let [{:users/keys [id]} (user/find-or-create-google-user! tx sub name email picture)]
+              (-> (response/redirect "/")
+                  (auth/set-auth-cookie id)))))))
     (catch Exception e
       ;; We can't bubble up the exception and rely on our middleware here,
       ;; because we need to render the error appropriately to the user.
@@ -103,15 +106,16 @@
     (try
       (if (:error params)
         (redirect-with-error url-prefix (:error params))
-        (let [id-token (fetch-id-token "desktop" (:code params))
-              {:strs [name sub email email_verified picture]} (verify-id-token id-token)]
-          (if-not email_verified
-            (redirect-with-error url-prefix "email-not-verified")
-            (let [{:users/keys [id]} (user/find-or-create-google-user! sub name email picture)
-                  access-token (auth/create-token id)]
-              (response/redirect (format "%s?access-token=%s"
-                                         url-prefix
-                                         access-token))))))
+        (jdbc/with-transaction [tx db/datasource]
+          (let [id-token (fetch-id-token "desktop" (:code params))
+                {:strs [name sub email email_verified picture]} (verify-id-token id-token)]
+            (if-not email_verified
+              (redirect-with-error url-prefix "email-not-verified")
+              (let [{:users/keys [id]} (user/find-or-create-google-user! tx sub name email picture)
+                    access-token (auth/create-token id)]
+                (response/redirect (format "%s?access-token=%s"
+                                           url-prefix
+                                           access-token)))))))
       (catch Exception e
         ;; We can't bubble up the exception and rely on our middleware here,
         ;; because we need to render the error appropriately to the user.

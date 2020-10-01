@@ -17,8 +17,8 @@
                   :updated-at now}
                  db/sql-opts)))
 
-(defn where [tx options]
-  (sql/find-by-keys tx :acls options db/sql-opts))
+(defn where [tx attributes]
+  (sql/find-by-keys tx :acls attributes db/sql-opts))
 
-(defn find-one [tx options]
-  (first (where tx options)))
+(defn find-by [tx attributes]
+  (first (where tx attributes)))

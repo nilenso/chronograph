@@ -1,27 +1,28 @@
 (ns chronograph.domain.organization
-  (:require [chronograph.db.core :as db]
-            [chronograph.domain.task :as task]
+  (:require [chronograph.domain.task :as task]
             [chronograph.db.organization :as db-organization]
-            [chronograph.domain.acl :as acl]
-            [next.jdbc :as jdbc]))
+            [chronograph.domain.acl :as acl]))
 
-(defn create! [organization owner-id]
-  (jdbc/with-transaction [tx db/datasource]
-    (let [{:keys [organizations/id] :as organization} (db-organization/create! tx organization)]
-      (acl/create! tx {:user-id owner-id
-                       :organization-id id
-                       :role acl/admin})
-      organization)))
+(defn create! [tx organization owner-id]
+  (let [{:keys [organizations/id] :as organization} (db-organization/create! tx organization)]
+    (acl/create! tx {:user-id owner-id
+                     :organization-id id
+                     :role acl/admin})
+    organization))
 
 (defn find-if-authorized
-  [slug user-id]
-  (jdbc/with-transaction [tx db/datasource]
-    (when-let [{:organizations/keys [id]
-                :as organization} (db-organization/find-by-slug tx slug)]
-      (when (acl/belongs-to-org? tx
-                                 user-id
-                                 id)
-        organization))))
+  [tx slug user-id]
+  (when-let [{:organizations/keys [id]
+              :as organization} (db-organization/find-by-slug tx slug)]
+    (when (acl/belongs-to-org? tx
+                               user-id
+                               id)
+      organization)))
 
 (defn tasks [tx {:organizations/keys [id]}]
-  (task/index tx {:organization-id id}))
+  (task/list tx {:organization-id id}))
+
+(def find-by db-organization/find-by)
+
+(defn for-user [tx {:users/keys [id] :as _user}]
+  (db-organization/user-organizations tx id))

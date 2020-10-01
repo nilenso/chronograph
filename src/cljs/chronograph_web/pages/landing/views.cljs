@@ -14,13 +14,13 @@
      [:div
       [:p "Select organization"]
       [:ul (map #(apply organizations-list-element %) organizations)]])
-   [:a {:href "/organizations/new"} "New Organization"]])
+   [:a {:href "/organization/new"} "New Organization"]])
 
 (defn landing-page [_]
-  (fn []
-    (rf/dispatch [::org-events/fetch-organizations])
+  (rf/dispatch [::org-events/fetch-organizations])
+  (fn [_]
     (let [{:keys [name]} @(rf/subscribe [::subs/user-info])
           organizations @(rf/subscribe [::subs/organizations])]
       [:div
-       [:h2 (str "Welcome " name "!")]
+       [:h2 (str "Hello " name "!")]
        [organizations-list organizations]])))

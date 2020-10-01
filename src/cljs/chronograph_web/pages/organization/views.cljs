@@ -1,27 +1,20 @@
 (ns chronograph-web.pages.organization.views
   (:require [re-frame.core :as rf]
-            [clojure.spec.alpha :as s]
             [chronograph-web.components.common :as components]
             [chronograph-web.subscriptions :as subs]
             [chronograph-web.pages.organization.events :as org-events]))
 
-(defn- form-valid? [{:keys [name description]}]
-  (and
-   (s/valid? :tasks/name name)
-   (s/valid? :tasks/description description)))
-
 (defn task-form []
   (let [{:keys [form-params status]} @(rf/subscribe [::subs/create-task-form])
-        form-invalid? (not (form-valid? form-params))
         {:keys [name description]} form-params]
     [:form
-     [components/text-input :name :tasks/name
+     [components/text-input :name
       {:placeholder "Name"
        :value name
        :on-change #(rf/dispatch [::org-events/create-task-form-update
                                  :name
                                  (.-value (.-currentTarget %))])}]
-     [components/text-input :description :tasks/description
+     [components/text-input :description
       {:placeholder "Description"
        :value description
        :on-change #(rf/dispatch [::org-events/create-task-form-update
@@ -29,8 +22,7 @@
                                  (.-value (.-currentTarget %))])}]
      [:button {:type :button
                :name :create
-               :disabled (or (= status :creating)
-                             form-invalid?)
+               :disabled (or (= status :creating))
                :on-click (fn [] (rf/dispatch [::org-events/create-task-form-submit]))}
       (if (= status :creating)
         "Creating..."
@@ -38,18 +30,17 @@
 
 (defn update-form [{:keys [id] :as _task}]
   (let [{:keys [form-params status]} @(rf/subscribe [::subs/update-task-form id])
-        form-invalid? (not (form-valid? form-params))
         {:keys [name description]} form-params]
     [:form
-     [components/text-input :name :tasks/name
+     [components/text-input :name
       {:placeholder "Name"
        :value name
        :on-change #(rf/dispatch [::org-events/update-task-form-update
                                  id
                                  :name
                                  (.-value (.-currentTarget %))])}]
-     [components/text-input :description :tasks/description
-      {:placeholder "Name"
+     [components/text-input :description
+      {:placeholder "Description"
        :value description
        :on-change #(rf/dispatch [::org-events/update-task-form-update
                                  id
@@ -57,16 +48,14 @@
                                  (.-value (.-currentTarget %))])}]
      [:button {:type :button
                :name :save
-               :disabled (or (= status :saving)
-                             form-invalid?)
+               :disabled (or (= status :saving))
                :on-click (fn [] (rf/dispatch [::org-events/update-task-form-submit id]))}
       (if (= status :saving)
         "Saving..."
         "Save")]
      [:button {:type :button
                :name :save
-               :disabled (or (= status :saving)
-                             form-invalid?)
+               :disabled (or (= status :saving))
                :on-click (fn [] (rf/dispatch [::org-events/cancel-update-task-form id]))}
       "Cancel"]]))
 

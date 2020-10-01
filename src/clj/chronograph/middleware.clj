@@ -2,8 +2,12 @@
   (:require [taoensso.timbre :as log]
             [ring.util.response :as response]
             [chronograph.auth :as auth]
+            [chronograph.db.core :as db]
+            [chronograph.domain.acl :as acl]
             [chronograph.domain.user :as user]
-            [clojure.string :as string]))
+            [chronograph.domain.organization :as organization]
+            [clojure.string :as string]
+            [next.jdbc :as jdbc]))
 
 (defn wrap-exception-logging [handler]
   (fn [request]
@@ -26,12 +30,13 @@
   (second (string/split bearer-value #" ")))
 
 (defn- add-user-details [token request]
-  (if-let [user (some-> token
-                        auth/verify-token
-                        :id
-                        user/find-by-id)]
-    (assoc request :user user)
-    request))
+  (jdbc/with-transaction [tx db/datasource]
+    (if-let [user (some->> token
+                           auth/verify-token
+                           :id
+                           (user/find-by-id tx))]
+      (assoc request :user user)
+      request)))
 
 (defn wrap-header-auth
   [handler]
@@ -53,3 +58,38 @@
   (comp wrap-header-auth
         wrap-cookie-auth
         wrap-require-user-info))
+
+(defn wrap-current-organization
+  [handler]
+  (fn [{:keys [params] :as request}]
+    (when-let [organization (jdbc/with-transaction [tx db/datasource]
+                              (organization/find-by
+                               tx
+                               {:slug (:slug params)}))]
+      (->> organization
+           (assoc request :organization)
+           handler))))
+
+(defn wrap-require-organization
+  [handler]
+  (fn [{:keys [organization] :as request}]
+    (if organization
+      (handler request)
+      (response/not-found {:error "Organization not found"}))))
+
+(defn wrap-user-authorization
+  [handler roles]
+  (fn [{:keys [user organization] :as request}]
+    (jdbc/with-transaction [tx db/datasource]
+      (let [user-role  (acl/role tx user organization)]
+        (if ((set roles) user-role)
+          (handler request)
+          (-> (response/response {:error "Forbidden"})
+              (response/status 403)))))))
+
+(defn wrap-require-authorization [handler roles]
+  (-> handler
+      (wrap-user-authorization roles)
+      wrap-require-organization
+      wrap-current-organization
+      wrap-authenticated))

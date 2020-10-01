@@ -3,47 +3,42 @@
             [chronograph.domain.task :as task]
             [chronograph.domain.organization :as organization]
             [chronograph.db.core :as db]
-            [chronograph.utils.request :as req-utils]
             [ring.util.response :as response]
-            [next.jdbc :as jdbc]))
+            [next.jdbc :as jdbc])
+  (:refer-clojure :exclude [update]))
 
-(defn create [{:keys [body params] :as request}]
-  (if-not (s/valid? :tasks/create-params-handler body)
-    (response/bad-request {:error "Name should be present"})
-    (jdbc/with-transaction [tx db/datasource]
-      (when-let [organization (req-utils/current-organization tx request)]
-        ;; TODO: Can anyone create a task?
-        (-> (task/create tx {:name (:name body)
-                             :description (:description body)
-                             :organization-id (:organizations/id organization)})
-            (response/response))))))
-
-(defn index [request]
+(defn create [{:keys [body organization user] :as _request}]
   (jdbc/with-transaction [tx db/datasource]
-    (if-let [organization (req-utils/current-organization tx request)]
-      (-> (organization/tasks tx organization)
-          (response/response))
-      (response/not-found :not-found))))
+    (if-not (s/valid? :tasks/create-params-handler body)
+      (response/bad-request {:error "Name should be present"})
+      (-> (task/create tx
+                       {:tasks/name (:name body)
+                        :tasks/description (:description body)}
+                       organization)
+          (response/response)))))
 
-;; TODO: Same as create, check if anyone can update a task
-(defn update [{:keys [params body] :as request}]
+(defn index [{:keys [organization user] :as _request}]
   (jdbc/with-transaction [tx db/datasource]
-    (if-let [organization (req-utils/current-organization tx request)]
-      (let [id (Integer/parseInt (str (:task-id params)))]
-        (task/update tx {:tasks/id id} (:updates body))
-        (if-let [task (task/find-by-id tx id)]
-          {:status 200
-           :body task}
-          (response/not-found "Task not found")))
-      (response/not-found "Organization not found"))))
+    (-> (organization/tasks tx organization)
+        (response/response))))
 
-(defn archive [{:keys [params] :as request}]
+(defn update [{:keys [params body organization] :as _request}]
   (jdbc/with-transaction [tx db/datasource]
-    (if-let [organization (req-utils/current-organization tx request)]
-      (let [id (Integer/parseInt (str (:task-id params)))]
-        (task/archive tx {:tasks/id id})
-        (if-let [task (task/find-by-id tx id)]
-          {:status 200
-           :body task}
-          (response/not-found "Task not found")))
-      (response/not-found "Organization not found"))))
+    (if-let [task (task/update tx
+                               {:tasks/id (some-> params
+                                                  :task-id
+                                                  str
+                                                  Integer/parseInt)}
+                               (:updates body))]
+      (response/response task)
+      (response/not-found "Not found"))))
+
+(defn archive [{:keys [params] :as _request}]
+  (jdbc/with-transaction [tx db/datasource]
+    (if-let [task (task/archive tx
+                                {:tasks/id (some-> params
+                                                   :task-id
+                                                   str
+                                                   Integer/parseInt)})]
+      (response/response task)
+      (response/not-found "Not found"))))

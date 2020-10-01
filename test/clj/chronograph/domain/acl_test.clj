@@ -27,9 +27,9 @@
                       :organization-id organization-id
                       :role acl/admin
                       :created-at (time/now)
-                      :updated-at (time/now) }
+                      :updated-at (time/now)}
                (with-transaction [tx db/datasource]
-                 (db-acl/find-one tx {:user-id  user-id :organization-id organization-id}))))))))
+                 (db-acl/find-by tx {:user-id  user-id :organization-id organization-id}))))))))
 
 (deftest create-acl-when-user-organization-already-has-an-acl-test
   (testing "Creating an ACL for a user that already has one will fail"
@@ -40,12 +40,12 @@
         (acl/create! tx {:user-id user-id
                          :organization-id organization-id
                          :role acl/member}))
-      (comment (is (thrown-with-msg? PSQLException
+      (is (thrown-with-msg? PSQLException
                             #"duplicate key value violates unique constraint \"acls_user_id_organization_id_idx\""
                             (with-transaction [tx db/datasource]
                               (acl/create! tx {:user-id user-id
                                                :organization-id organization-id
-                                               :role acl/member}))))))))
+                                               :role acl/member})))))))
 
 (deftest admin?-test
   (testing "Can check whether a user is a admin of an organization"
