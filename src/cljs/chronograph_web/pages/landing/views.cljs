@@ -5,7 +5,7 @@
 
 (defn organizations-list-element [slug organization]
   [:li {:key slug}
-   [:a {:href (str "/organization/" slug)}
+   [:a {:href (str "/organizations/" slug)}
     (:name organization)]])
 
 (defn organizations-list [organizations]
@@ -14,7 +14,7 @@
      [:div
       [:p "Select organization"]
       [:ul (map #(apply organizations-list-element %) organizations)]])
-   [:a {:href "/organization/new"} "New Organization"]])
+   [:a {:href "/organizations/new"} "New Organization"]])
 
 (defn landing-page [_]
   (rf/dispatch [::org-events/fetch-organizations])

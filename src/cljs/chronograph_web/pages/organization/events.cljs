@@ -22,15 +22,15 @@
   (fn [_ [_ slug]]
    ;; TODO: optimize fetch and rendering in case we already have
    ;; data for the organization, in our db.
-    {:http-xhrio (http/get (str get-organization-uri slug)
-                           {:on-success [::fetch-organization-success]
+    {:http-xhrio (http/get {:uri (str get-organization-uri slug)
+                            :on-success [::fetch-organization-success]
                             :on-failure [::fetch-organization-fail slug]})}))
 
 (rf/reg-event-fx
   ::fetch-members
   (fn [_ [_ slug]]
-    {:http-xhrio (http/get (str get-organization-uri slug "/members")
-                           {:on-success [::fetch-members-succeeded]
+    {:http-xhrio (http/get {:uri        (str get-organization-uri slug "/members")
+                            :on-success [::fetch-members-succeeded]
                             :on-failure [::fetch-members-failed slug]})}))
 
 (rf/reg-event-db
@@ -59,10 +59,10 @@
 (rf/reg-event-fx
   ::invite-button-clicked
   (fn [{:keys [db]} _]
-    {:http-xhrio (http/post (str "/api/organizations/"
-                                 (org-db/slug db)
-                                 "/members")
-                            {:params     {:email (org-db/get-from-add-member-form db :email)}
+    {:http-xhrio (http/post {:uri        (str "/api/organizations/"
+                                              (org-db/slug db)
+                                              "/members")
+                             :params     {:email (org-db/get-from-add-member-form db :email)}
                              :on-success [::invite-member-succeeded]
                              :on-failure [::invite-member-failed]})
      :db         (-> db
@@ -87,8 +87,8 @@
 (rf/reg-event-fx
   ::fetch-tasks
   (fn [_ [_ slug]]
-    {:http-xhrio (http/get (tasks-uri slug)
-                           {:on-success [::fetch-tasks-success]
+    {:http-xhrio (http/get {:uri (tasks-uri slug)
+                            :on-success [::fetch-tasks-success]
                             :on-failure [::fetch-tasks-failure]})}))
 
 (rf/reg-event-db
@@ -115,8 +115,8 @@
   ::create-task-form-submit
   (fn [{:keys [db]} _]
     {:db         (assoc-in db status-path :creating)
-     :http-xhrio (http/post (tasks-uri (org-db/slug db))
-                            {:params     {:name (get-in db (form-params-path :name))
+     :http-xhrio (http/post {:uri (tasks-uri (-> db :current-organization :slug))
+                             :params     {:name (get-in db (form-params-path :name))
                                           :description (get-in db (form-params-path :description))}
                              :on-success [::create-task-success]
                              :on-failure [::create-task-failure]})}))
@@ -185,8 +185,8 @@
     (let [slug (org-db/slug db)
           update-url (str (tasks-uri slug) task-id)]
       {:db         (assoc-in db [:update-task task-id :status] :saving)
-       :http-xhrio (http/put update-url
-                             {:params     {:updates (get-in db [:update-task task-id :form-params])}
+       :http-xhrio (http/put {:uri update-url
+                              :params     {:updates (get-in db [:update-task task-id :form-params])}
                               :on-success [::update-task-success task-id]
                               :on-failure [::update-task-failure task-id]})})))
 

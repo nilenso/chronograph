@@ -11,8 +11,8 @@
   (fn [_ [_ slug]]
    ;; TODO: optimize fetch and rendering in case we already have
    ;; data for the organization, in our db.
-    {:http-xhrio (http/get base-url
-                           {:on-success [::fetch-organizations-success]
+    {:http-xhrio (http/get {:uri base-url
+                            :on-success [::fetch-organizations-success]
                             :on-failure [::fetch-organizations-fail slug]})}))
 
 (rf/reg-event-db

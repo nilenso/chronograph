@@ -1,7 +1,6 @@
 (ns chronograph.test-utils
   (:require [re-frame.core :as rf]
             [re-frame.db]
-            [bidi.bidi :as bidi]
             [chronograph-web.events.routing :as routing-events]
             [chronograph-web.routes :as routes]
             [chronograph-web.db :as db]
@@ -10,7 +9,7 @@
             [chronograph-web.db.spec :as db-spec]))
 
 (defn set-token [token]
-  (rf/dispatch [::routing-events/pushy-dispatch (bidi/match-route routes/routes token)]))
+  (rf/dispatch [::routing-events/pushy-dispatch (routes/match-route token)]))
 
 (defn stub-routing []
   (rf/reg-fx

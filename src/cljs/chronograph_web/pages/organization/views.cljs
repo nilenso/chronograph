@@ -1,9 +1,11 @@
 (ns chronograph-web.pages.organization.views
   (:require [re-frame.core :as rf]
+            [chronograph-web.components.form :as form]
             [chronograph-web.pages.organization.events :as org-events]
             [chronograph-web.pages.organization.subscriptions :as org-subs]
             [chronograph-web.components.common :as components]
-            [chronograph-web.subscriptions :as subs]))
+            [chronograph-web.subscriptions :as subs]
+            [chronograph-web.http :as http]))
 
 (defn- add-members-form []
   [:div
@@ -14,29 +16,22 @@
    [:button {:on-click #(rf/dispatch [::org-events/invite-button-clicked])}
     "Invite"]])
 
-(defn task-form []
-  (let [{:keys [form-params status]} @(rf/subscribe [::subs/create-task-form])
-        {:keys [name description]} form-params]
-    [:form
-     [components/text-input :name
-      {:placeholder "Name"
-       :value       name
-       :on-change   #(rf/dispatch [::org-events/create-task-form-update
-                                   :name
-                                   %])}]
-     [components/text-input :description
-      {:placeholder "Description"
-       :value       description
-       :on-change   #(rf/dispatch [::org-events/create-task-form-update
-                                   :description
-                                   %])}]
-     [:button {:type :button
-               :name :create
-               :disabled (or (= status :creating))
-               :on-click (fn [] (rf/dispatch [::org-events/create-task-form-submit]))}
-      (if (= status :creating)
-        "Creating..."
-        "Create")]]))
+(defn- tasks-uri [slug]
+  (str "/api/organizations/" slug "/tasks/"))
+
+(defn create-task-form [{:keys [slug] :as _organization}]
+  (let [{::form/keys [input-attributes-builder submit-attributes]}
+        (form/form {:form-key        ::create-task
+                    :request-builder (fn [{:keys [name description]}]
+                                       (http/post {:uri        (tasks-uri slug)
+                                                   :params     {:name        name
+                                                                :description description}
+                                                   :on-success [::org-events/fetch-tasks slug]}))})]
+    (fn [{:keys [slug] :as _organization}]
+      [:form
+       [:div [:input (input-attributes-builder :name :tasks/name)]]
+       [:div [:input (input-attributes-builder :description :tasks/description)]]
+       [:button submit-attributes "Save"]])))
 
 (defn update-form [{:keys [id] :as _task}]
   (let [{:keys [form-params status]} @(rf/subscribe [::subs/update-task-form id])
@@ -56,15 +51,15 @@
                                    id
                                    :description
                                    %])}]
-     [:button {:type :button
-               :name :save
+     [:button {:type     :button
+               :name     :save
                :disabled (or (= status :saving))
                :on-click (fn [] (rf/dispatch [::org-events/update-task-form-submit id]))}
       (if (= status :saving)
         "Saving..."
         "Save")]
-     [:button {:type :button
-               :name :save
+     [:button {:type     :button
+               :name     :save
                :disabled (or (= status :saving))
                :on-click (fn [] (rf/dispatch [::org-events/cancel-update-task-form id]))}
       "Cancel"]]))
@@ -92,7 +87,7 @@
   (rf/dispatch [::org-events/fetch-tasks slug])
   (fn [_]
     (let [errors @(rf/subscribe [::subs/page-errors])
-          {:keys [name]} @(rf/subscribe [::subs/organization slug])]
+          {:keys [name] :as organization} @(rf/subscribe [::subs/organization slug])]
       (cond
         (contains? errors ::org-events/error-org-not-found) [:h2 "Not found"]
         (not name) [components/loading-spinner]
@@ -115,6 +110,6 @@
                ^{:key (str "invited-" (:email member))} [:li (str (:email member) " (invited)")])])]
          [:div
           [:h2 "Tasks"]
-          [task-form]
+          [create-task-form organization]
           (when-let [tasks @(rf/subscribe [::org-subs/tasks])]
             [task-list tasks])]]))))

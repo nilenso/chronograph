@@ -31,7 +31,7 @@
                           :joined  [{:id    1
                                      :name  "Sandy"
                                      :email "sandy@nilenso.com"}]}])))
-       (tu/set-token (str "/organization/" slug))
+       (tu/set-token (str "/organizations/" slug))
        (rf/dispatch [::org-events/fetch-organization slug])
        (rf/dispatch [::org-events/fetch-members slug])
        (is (= {:id         42
@@ -55,7 +55,7 @@
   (testing "When the invite member form succeeds"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (tu/set-token "/organization/test-slug")
+     (tu/set-token "/organizations/test-slug")
      (rf/dispatch [::org-events/fetch-organization-success
                    {:id   1
                     :name "A Test Org"
@@ -80,7 +80,7 @@
        (rf/reg-fx :http-xhrio
          (fn [_]
            (rf/dispatch [::org-events/fetch-organization-fail])))
-       (tu/set-token (str "/organization/" slug))
+       (tu/set-token (str "/organizations/" slug))
        (rf/dispatch [::org-events/fetch-organization slug])
        (is (contains? @(rf/subscribe [::subs/page-errors]) ::org-events/error-org-not-found)
            "The reported error should be in the DB"))))
