@@ -61,7 +61,7 @@
          (fn [_]
            (rf/dispatch [::create-organization-events/create-organization-succeeded
                          organization])))
-       (tu/set-token "/organization/new")
+       (tu/set-token "/organizations/new")
        (rf/dispatch [::create-organization-events/create-organization-form-update :name name])
        (rf/dispatch [::create-organization-events/create-organization-form-update :slug slug])
        (rf/dispatch [::create-organization-events/create-organization-form-submit])
@@ -86,7 +86,7 @@
        (rf/reg-fx :http-xhrio
          (fn [_]
            (rf/dispatch [::create-organization-events/create-organization-failed])))
-       (tu/set-token "/organization/new")
+       (tu/set-token "/organizations/new")
        (rf/dispatch [::create-organization-events/create-organization-form-update :name name])
        (rf/dispatch [::create-organization-events/create-organization-form-update :slug slug])
        (rf/dispatch [::create-organization-events/create-organization-form-submit])
@@ -105,7 +105,7 @@
            (js/setTimeout #(rf/dispatch
                             [::create-organization-events/create-organization-failed])
                           1000)))
-       (tu/set-token "/organization/new")
+       (tu/set-token "/organizations/new")
        (rf/dispatch [::create-organization-events/create-organization-form-update :name name])
        (rf/dispatch [::create-organization-events/create-organization-form-update :slug slug])
        (rf/dispatch [::create-organization-events/create-organization-form-submit])

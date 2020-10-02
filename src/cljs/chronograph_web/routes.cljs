@@ -9,8 +9,8 @@
             [chronograph-web.events.routing :as routing-events]))
 
 (def routes ["/" {"" :root
-                  "organization/" {"new" :organization-new
-                                   [:slug] :organization-show}}])
+                  "organizations/" {"new" :organization-new
+                                    [:slug] :organization-show}}])
 
 (def authenticated-view {:root landing-page
                          :organization-new create-organization-page
@@ -21,6 +21,11 @@
 
 (defonce history (atom nil))
 
+(defn match-route
+  [token]
+  (or (bidi/match-route routes token)
+      (throw (ex-info "Could not match route for token" {:token token}))))
+
 (defn init! []
-  (reset! history (pushy/pushy set-page! #(bidi/match-route routes %)))
+  (reset! history (pushy/pushy set-page! match-route))
   (pushy/start! @history))
