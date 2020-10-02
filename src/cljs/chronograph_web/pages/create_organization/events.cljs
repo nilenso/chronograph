@@ -21,8 +21,8 @@
   ::create-organization-form-submit
   (fn [{:keys [db]} _]
     {:db         (assoc-in db status-path :creating)
-     :http-xhrio (http/post create-organization-uri
-                            {:params     {:name (get-in db (form-params-path :name))
+     :http-xhrio (http/post {:uri create-organization-uri
+                             :params     {:name (get-in db (form-params-path :name))
                                           :slug (get-in db (form-params-path :slug))}
                              :on-success [::create-organization-succeeded]
                              :on-failure [::create-organization-failed]})}))

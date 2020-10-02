@@ -67,8 +67,8 @@
   (let [{:keys [token-endpoint
                 client-id
                 client-secret]} (get-in config/config [:oauth :google])
-        {:keys [status body error]} @(http/post token-endpoint
-                                                {:form-params {"client_id"     client-id
+        {:keys [status body error]} @(http/post {:uri token-endpoint
+                                                 :form-params {"client_id"     client-id
                                                                "client_secret" client-secret
                                                                "code"          auth-code
                                                                "grant_type"    "authorization_code"
