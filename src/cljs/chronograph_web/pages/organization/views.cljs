@@ -1,7 +1,9 @@
 (ns chronograph-web.pages.organization.views
   (:require [re-frame.core :as rf]
+            [goog.string :as gstring]
             [clojure.spec.alpha :as s]
             [chronograph-web.components.common :as components]
+            [chronograph-web.components.form :as form]
             [chronograph-web.subscriptions :as subs]
             [chronograph-web.pages.organization.events :as org-events]))
 
@@ -10,31 +12,20 @@
    (s/valid? :tasks/name name)
    (s/valid? :tasks/description description)))
 
-(defn task-form []
-  (let [{:keys [form-params status]} @(rf/subscribe [::subs/create-task-form])
-        form-invalid? (not (form-valid? form-params))
-        {:keys [name description]} form-params]
+(defn- tasks-uri [slug]
+  (gstring/format "/api/organizations/%s/tasks/" slug))
+
+(defn task-form [{:keys [slug] :as _organization}]
+  (let [{::form/keys [input submit]}
+        (form/form {:form-key  ::create-task
+                    :form-spec :tasks/task
+                    :method :post
+                    :uri (tasks-uri slug)
+                    :on-success [[::org-events/get-tasks]]})]
     [:form
-     [components/text-input :name :tasks/name
-      {:placeholder "Name"
-       :value name
-       :on-change #(rf/dispatch [::org-events/create-task-form-update
-                                 :name
-                                 (.-value (.-currentTarget %))])}]
-     [components/text-input :description :tasks/description
-      {:placeholder "Description"
-       :value description
-       :on-change #(rf/dispatch [::org-events/create-task-form-update
-                                 :description
-                                 (.-value (.-currentTarget %))])}]
-     [:button {:type :button
-               :name :create
-               :disabled (or (= status :creating)
-                             form-invalid?)
-               :on-click (fn [] (rf/dispatch [::org-events/create-task-form-submit]))}
-      (if (= status :creating)
-        "Creating..."
-        "Create")]]))
+     [input :name :tasks/name]
+     [input :description :tasks/description]
+     [submit nil "Save"]]))
 
 (defn update-form [{:keys [id] :as _task}]
   (let [{:keys [form-params status]} @(rf/subscribe [::subs/update-task-form id])
@@ -105,6 +96,6 @@
           [:li "Slug: " slug]
           [:li "Created at: " created-at]
           [:li "Updated at: " updated-at]]
-         [task-form]
+         [task-form organization]
          (when-let [tasks @(rf/subscribe [::subs/tasks])]
            [task-list tasks])]))))

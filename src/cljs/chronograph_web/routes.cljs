@@ -9,8 +9,8 @@
             [chronograph-web.events.routing :as routing-events]))
 
 (def routes ["/" {"" :root
-                  "organization/" {"new" :organization-new
-                                   [:slug] :organization-show}}])
+                  "organizations/" {"new" :organization-new
+                                    [:slug] :organization-show}}])
 
 (def authenticated-view {:root landing-page
                          :organization-new create-organization-page

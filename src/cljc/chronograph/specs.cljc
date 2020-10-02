@@ -1,6 +1,5 @@
 (ns chronograph.specs
-  (:require #?(:clj [clojure.string :as string]
-               :cljs [goog.string :as string])
+  (:require [clojure.string :as string]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]))
 

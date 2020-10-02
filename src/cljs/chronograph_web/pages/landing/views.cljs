@@ -5,7 +5,7 @@
 
 (defn organizations-list-element [slug organization]
   [:li {:key slug}
-   [:a {:href (str "/organization/" slug)}
+   [:a {:href (str "/organizations/" slug)}
     (:name organization)]])
 
 (defn organizations-list [organizations]

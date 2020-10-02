@@ -57,18 +57,37 @@
     (let [method :post
           uri "/submit/form"
           form-key :form-key
-          values {:a 1}
+          values (gen/generate (s/gen ::form-spec))
           initial-db (form/initialize nil [::form/initialize form-key values])
           {request :http-xhrio} (form/submit-form {:db initial-db} [::form/submit-form form-key method uri])]
       (is (= {:uri uri
               :method method
               :params values
-              :on-success [::form/submit-form-success form-key]
-              :on-failure [::form/submit-form-failure form-key]}
+              :on-success [::form/submit-form-success form-key nil]
+              :on-failure [::form/submit-form-failure form-key nil]}
              (select-keys request
                           [:uri :method :params :on-success :on-failure]))))))
 
-;; TODO: Just test the event handlers as functions
+(deftest submit-form-success-test
+  (testing "it removes the form-key from the app db"
+    (let [form-key :form-key
+          values (gen/generate (s/gen ::form-spec))
+          initial-db (form/initialize nil [::form/initialize form-key values])
+          final-db (form/submit-form-success {:db initial-db} [::form/submit-form-success form-key nil])]
+      (is (nil? (get-in final-db [:forms form-key]))))))
+
+(deftest submit-form-failure-test
+  (testing "it removes the form-key from the app db"
+    (let [form-key :form-key
+          values (gen/generate (s/gen ::form-spec))
+          initial-db (form/initialize nil [::form/initialize form-key values])
+          {final-db :db} (form/submit-form-failure {:db initial-db}
+                                                   [::form/submit-form-success form-key nil])]
+      (is (= :submit-failed
+             (get-in final-db [:forms form-key :status])))
+      (is (= values
+             (get-in final-db [:forms form-key :params]))))))
+
 (deftest form-subscripton-test
   (testing "it returns the form for the given form-key"
     (rf-test/run-test-sync
@@ -97,21 +116,21 @@
     (testing "it initialized the form the app db"
       (rf-test/run-test-sync
        (let [form (rf/subscribe [::form/form form-key])]
-         (form/form form-key form-spec nil nil)
+         (form/form {:form-key form-key :form-spec form-spec})
          (is (= {:status :initialized :params nil} @form)))))
 
     (testing "it initializes a form with initial values"
       (rf-test/run-test-sync
        (let [form (rf/subscribe [::form/form form-key])
              initial-value (gen/generate (s/gen ::form-spec))]
-         (form/form form-key form-spec nil nil initial-value)
+         (form/form {:form-key form-key :form-spec form-spec :initial-values initial-value})
          (is (= {:status :initialized :params initial-value} @form)))))))
 
 (deftest input-test
   (let [form-key :form-key
         input-key :input-key
         input-spec ::form-input-string
-        {::form/keys [input]} (form/form form-key ::form-spec nil nil)
+        {::form/keys [input]} (form/form {:form-key form-key :form-spec ::form-spec})
         [_ {:keys [on-change]}] (input input-key input-spec nil)
         form (rf/subscribe [::form/form form-key])]
     (testing "it returns a input"
@@ -136,7 +155,7 @@
     (testing "it lets up set nested values for the input"
       (rf-test/run-test-sync
        (let [input-key [:parent-key :input-key]
-             {::form/keys [input]} (form/form form-key ::form-spec nil nil)
+             {::form/keys [input]} (form/form {:form-key form-key})
              [_ {:keys [on-change]}] (input input-key input-spec nil)
              new-input-value "input value"]
          (on-change (clj->js {:currentTarget {:value new-input-value}}))
@@ -162,17 +181,21 @@
   (let [form-key :form-key
         form-spec ::form-spec
         form-values (gen/generate (s/gen form-spec))
-        action "/submit/form"
+        uri "/submit/form"
         method :post]
     (testing "it returns a button"
-      (let [{::form/keys [submit]} (form/form form-key form-spec method form-values)
+      (let [{::form/keys [submit]} (form/form {:form-key form-key
+                                               :form-spec form-spec
+                                               :method method
+                                               :uri uri
+                                               :initial-values form-values})
             [component _] (submit {} "submit")]
         (is (= :button component))))
     (testing "if the form params are invalid, it changes the status to invalid")
     (testing "if the form params are valid when clicked, it changes the status to submitting"
       (rf-test/run-test-sync
        (let [form (rf/subscribe [::form/form form-key])
-             {::form/keys [submit]} (form/form form-key form-spec method form-values)
+             {::form/keys [submit]} (form/form {:form-key form-key})
              [_ {:keys [on-click]}] (submit {} "submit")]
          (on-click nil)
          (is (= :submitting (:status @form))))))

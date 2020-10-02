@@ -19,22 +19,49 @@
 
 (rf/reg-event-db ::update update-input)
 
-(defn submit-form [{:keys [db]} [_ form-key method uri]]
+(defn submit-form
+  [{:keys [db]} [_ form-key method uri on-success on-failure]]
   (let [params (get-in db [:forms form-key :params])]
     {:db (assoc-in db [:forms form-key :status] :submitting)
      :http-xhrio (http/request
-                  {:uri uri
-                   :method method
-                   :params params
-                   :on-success [::submit-form-success form-key]
-                   :on-failure [::submit-form-failure form-key]})}))
+                   {:uri uri
+                    :method method
+                    :params params
+                    :on-success [::submit-form-success form-key on-success]
+                    :on-failure [::submit-form-failure form-key on-failure]})}))
 
 (rf/reg-event-fx ::submit-form submit-form)
 
+;; TODO: Take arguments to tigger other effects
+(defn submit-form-success [_ [_ form-key on-success response]]
+  (if-let [dispatch-events  (not-empty
+                              (mapv (fn [& args]
+                                      [:dispatch (conj args response)])
+                                    on-success))]
+    {:fx (conj
+           dispatch-events
+           [:dispatch [::clear-form form-key]])}
+    {:fx [[:dispatch [::clear-form form-key]]]}))
+
+(rf/reg-event-fx ::submit-form-success submit-form-success)
+
+(defn submit-form-failure [{:keys [db]} [_ form-key on-failure _result]]
+  {:db (assoc-in db [:forms form-key :status] :submit-failed)
+   :fx on-failure})
+
+(rf/reg-event-fx ::submit-form-failure submit-form-failure)
+
+(defn clear-form [db [_ form-key]]
+  (update db :forms #(dissoc % form-key)))
+
+(rf/reg-event-db ::clear-form clear-form)
+
 (rf/reg-sub
   ::form
-  (fn [db [_ form-key]]
-    (get-in db [:forms form-key])))
+  (fn [db [_ form-key child]]
+    (get-in db (if child
+                 [:forms form-key child]
+                 [:forms form-key]))))
 
 (defn sentence-case [s]
   (-> (name s)
@@ -50,29 +77,36 @@
            :class (conj class (when-not (s/valid? spec value) "form-error"))}
           attributes)])
 
-(defn submit [form-key spec uri method attributes text]
+(defn submit
+  [{:keys [form-key form-spec uri method attributes text on-success on-failure]}]
   [:button
    (merge {:type :button
-           :on-click (fn [_] (rf/dispatch [::submit-form form-key]))}
+           :on-click (fn [_]
+                       (rf/dispatch [::submit-form
+                                     form-key
+                                     method
+                                     uri
+                                     on-success
+                                     on-failure]))}
           attributes)
    text])
 
 (defn form
-  ([form-key form-spec method uri] (form form-key form-spec method uri nil))
-  ([form-key form-spec method uri initial-values]
-   (let [subscription (rf/subscribe [::form form-key])]
-     (rf/dispatch [::initialize form-key initial-values])
-     {::subscription subscription
-      ::input (fn [input-key input-spec attributes]
-                (input form-key
-                       (flatten [input-key])
-                       input-spec
-                       (merge {:value (get-in @subscription (flatten [:params input-key]))}
-                              attributes)))
-      ::submit (fn [attributes text]
-                 (submit form-key
-                         form-spec
-                         uri
-                         method
-                         attributes
-                         text))})))
+  [{:keys [form-key form-spec method uri initial-values on-success on-failure]
+    :as form-args}]
+  (let [params (rf/subscribe [::form form-key :params])
+        errors (rf/subscribe [::form form-key :errors])]
+    (rf/dispatch [::initialize form-key initial-values])
+    {::params params
+     ::errors errors
+     ::input (fn [input-key input-spec attributes]
+               (let [input-path (flatten [input-key])]
+                 (input form-key
+                        input-path
+                        input-spec
+                        (merge {:value (get-in @params input-path)}
+                               attributes))))
+     ::submit (fn [attributes text]
+                (submit (merge form-args
+                               {:attributes attributes
+                                :text text})))}))
