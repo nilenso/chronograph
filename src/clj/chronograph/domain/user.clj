@@ -10,6 +10,6 @@
   [tx google-id name email photo-url]
   (if-let [google-user (find-by-google-id tx google-id)]
     google-user
-    (let [{google-profiles-id :google-profiles/id} (google-profile-db/create! tx google-id)
-          user (user-db/create! tx name email photo-url google-profiles-id)]
-      user)))
+    (let [{google-profiles-id :google-profiles/id}
+          (google-profile-db/create! tx {:google-profiles/google-id google-id})]
+      (user-db/create! tx name email photo-url google-profiles-id))))
