@@ -1,27 +1,18 @@
 (ns chronograph.db.organization
   (:require [chronograph.db.core :as db]
-            [next.jdbc.sql :as sql]
-            [chronograph.utils.time :as time]))
+            [next.jdbc.sql :as sql]))
 
-(defn create!
-  ([organization]
-   (create! db/datasource organization))
-  ([tx {:organizations/keys [name slug]}]
-   (let [now (time/now)]
-     (sql/insert! tx
-                  :organizations
-                  {:name name
-                   :slug slug
-                   :created-at now
-                   :updated-at now}
-                  db/sql-opts))))
+(defn create! [tx {:organizations/keys [name slug]}]
+  (db/create! :organizations
+              tx
+              {:organizations/name name
+               :organizations/slug slug}))
 
-(def where (partial db/where :organizations))
+(defn where [tx attributes]
+  (db/where :organizations tx attributes))
 
-(def find-by (partial db/find-by :organizations))
-
-(defn find-by-slug [tx slug]
-  (find-by tx {:slug slug}))
+(defn find-by [tx attributes]
+  (db/find-by :organizations tx attributes))
 
 (defn by-ids [tx ids]
   (sql/query tx

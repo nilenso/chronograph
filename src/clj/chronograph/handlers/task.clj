@@ -1,7 +1,6 @@
 (ns chronograph.handlers.task
   (:require [clojure.spec.alpha :as s]
             [chronograph.domain.task :as task]
-            [chronograph.domain.organization :as organization]
             [chronograph.db.core :as db]
             [ring.util.response :as response]
             [next.jdbc :as jdbc])
@@ -19,7 +18,7 @@
 
 (defn index [{:keys [organization user] :as _request}]
   (jdbc/with-transaction [tx db/datasource]
-    (-> (organization/tasks tx organization)
+    (-> (task/for-organization tx organization)
         (response/response))))
 
 (defn update [{:keys [params body organization] :as _request}]

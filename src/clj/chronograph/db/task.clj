@@ -1,5 +1,6 @@
 (ns chronograph.db.task
-  (:require [chronograph.db.core :as db]))
+  (:require [chronograph.db.core :as db]
+            [next.jdbc.sql :as sql]))
 
 (def create! (partial db/create! :tasks))
 
@@ -8,3 +9,11 @@
 (def find-by (partial db/find-by :tasks))
 
 (def update! (partial db/update! :tasks))
+
+(defn organization-tasks [tx organization-id]
+  (sql/query tx
+             ["SELECT tasks.* FROM tasks
+               INNER JOIN organizations
+               ON tasks.organization_id = organizations.id
+               where tasks.organization_id = ?" organization-id]
+             db/sql-opts))
