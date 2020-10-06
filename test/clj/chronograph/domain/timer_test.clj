@@ -120,51 +120,60 @@
 (deftest delete-timer-test
   (testing "Timer deletion for timer without any time spans"
     (let [test-context (setup-org-users-tasks!)
-          user-2-id (:user-2-id test-context)
+          user-id (:user-2-id test-context)
           organization-id (:organization-id test-context)
           {timer-id :timers/id :as timer} (timer/create! db/datasource
                                                          organization-id
-                                                         user-2-id
+                                                         user-id
                                                          (:task-id-1 test-context)
                                                          "A sample note.")]
+      (is (nil? (timer/delete! db/datasource
+                               user-id
+                               (java.util.UUID/randomUUID)))
+          "returns nil if the timer does not exist.")
       (is (= timer
              (timer/delete! db/datasource
-                            user-2-id
+                            user-id
                             timer-id))
-          "returns the timer id if the timer exists.")
-      (is (nil? (timer/delete! db/datasource
-                               user-2-id
-                               (java.util.UUID/randomUUID)))
-          "returns nil if the timer does not exist."))))
+          "returns the timer object if the timer exists.")
+      (is (nil? (timer/find-for-user-by-timer-id db/datasource
+                                                 user-id
+                                                 timer-id))
+          "ceases to exist in DB, and cannot be fetched."))))
 
 (deftest delete-timer-having-time-spans-test
   (testing "When a timer having time spans is being deleted"
     (let [test-context (setup-org-users-tasks!)
-          user-2-id (:user-2-id test-context)
+          user-id (:user-2-id test-context)
           organization-id (:organization-id test-context)
           {timer-id :timers/id} (timer/create! db/datasource
                                                organization-id
-                                               user-2-id
+                                               user-id
                                                (:task-id-1 test-context)
                                                "A sample note.")]
       ;; first set up 3 time spans for the timer
       (dotimes [_ 3]
         (timer/start! db/datasource
-                      user-2-id
+                      user-id
                       timer-id)
         (timer/stop! db/datasource
-                     user-2-id
+                     user-id
                      timer-id))
       ;; then verify we get back 3 time spans for the timer
       (is (= 3
              (count (db-time-span/find-all-for-timer db/datasource timer-id)))
           "we can retrieve all associated time spans, prior to timer deletion.")
       ;; now, delete the timer
-      (timer/delete! db/datasource user-2-id timer-id)
+      (timer/delete! db/datasource user-id timer-id)
+      ;; then, verify the timer is gone
+      (is (nil? (timer/find-for-user-by-timer-id db/datasource
+                                                 user-id
+                                                 timer-id))
+          "the timer ceases to exist in DB, and cannot be fetched.")
       ;; finally, verify the time spans are gone
       (is (empty?
            (db-time-span/find-all-for-timer db/datasource timer-id))
-          "all its associated time spans are deleted."))))
+          "all of the timer's time spans are deleted."))))
 
 (deftest delete-timer-isolation-by-user-test
   (testing "Users trying to delete each others' timers."
@@ -202,11 +211,11 @@
   (testing "updating a Timer's note"
     (with-redefs [time/now (constantly (time/now))]
       (let [test-context (setup-org-users-tasks!)
-            user-2-id (:user-2-id test-context)
+            user-id (:user-2-id test-context)
             organization-id (:organization-id test-context)
             {timer-id :timers/id :as timer} (timer/create! db/datasource
                                                            organization-id
-                                                           user-2-id
+                                                           user-id
                                                            (:task-id-1 test-context)
                                                            "A sample note.")
             revised-note (str "Revised note " (rand))]
@@ -214,12 +223,12 @@
                       :timers/note
                       revised-note)
                (timer/update-note! db/datasource
-                                   user-2-id
+                                   user-id
                                    timer-id
                                    revised-note))
             "returns a Timer containing the updated note.")
         (is (nil? (timer/update-note! db/datasource
-                                      user-2-id
+                                      user-id
                                       (java.util.UUID/randomUUID)
                                       revised-note))
             "does nothing if the timer does not exist.")))))
