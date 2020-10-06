@@ -30,6 +30,18 @@
                                        middleware/wrap-authenticated)}]
                  ["organizations" {:post       (-> organization/create
                                                    middleware/wrap-authenticated)
+                                   "/invited"  {:get        (constantly {:status 200
+                                                                         :body   [{:id   1
+                                                                                   :slug "slug1"
+                                                                                   :name "org1"}
+                                                                                  {:id   2
+                                                                                   :slug "slug2"
+                                                                                   :name "org2"}]})
+                                                ["/" :slug] {:post   (constantly {:status 201})
+                                                             :delete (constantly {:status 200
+                                                                                  :body   {:id   1
+                                                                                           :slug "slug1"
+                                                                                           :name "org1"}})}}
                                    ["/" :slug] {:get       (-> organization/find-one
                                                                middleware/wrap-authenticated)
                                                 "/members" {:get  (-> organization/show-members
@@ -68,5 +80,5 @@
                         :warn-logger  warn-logger})))
 
 (defstate server
-  :start (start-server!)
-  :stop (server))
+          :start (start-server!)
+          :stop (server))
