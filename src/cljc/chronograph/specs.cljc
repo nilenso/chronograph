@@ -115,8 +115,14 @@
 
 (s/def :time-spans/id uuid?)
 (s/def :time-spans/timer-id :timers/id)
+(s/def :time-spans/started-at inst?)
+(s/def :time-spans/stopped-at (s/or :running nil?
+                                    :stopped inst?))
 
-(s/def :time-spans/time-span (s/keys :req [:time-spans/id :time-spans/timer-id]))
+(s/def :time-spans/time-span (s/keys :req [:time-spans/id
+                                           :time-spans/timer-id
+                                           :time-spans/started-at
+                                           :time-spans/stopped-at]))
 
 
 ;; Timers - Handler and Domain
