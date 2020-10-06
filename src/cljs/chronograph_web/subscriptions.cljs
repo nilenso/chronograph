@@ -1,11 +1,11 @@
 (ns chronograph-web.subscriptions
-    (:require [re-frame.core :as rf]
-              [chronograph-web.db :as db]))
+  (:require [re-frame.core :as rf]
+            [chronograph-web.db :as db]))
 
 (rf/reg-sub
- ::page-errors
- (fn [db _]
-     (db/get-errors db)))
+  ::page-errors
+  (fn [db _]
+    (db/get-errors db)))
 
 (rf/reg-sub
   ::signin-state

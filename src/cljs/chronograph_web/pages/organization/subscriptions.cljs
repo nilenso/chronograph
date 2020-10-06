@@ -1,7 +1,6 @@
 (ns chronograph-web.pages.organization.subscriptions
   (:require [re-frame.core :as rf]
-            [chronograph-web.pages.organization.db :as org-db]
-            [chronograph-web.db :as db]))
+            [chronograph-web.pages.organization.db :as org-db]))
 
 (rf/reg-sub
   ::email-input-value
