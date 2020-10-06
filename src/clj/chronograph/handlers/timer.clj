@@ -28,7 +28,11 @@
       (response/bad-request
        {:error "Task does not exist."})
 
-      :else (-> (timer/create! tx user-id task-id note)
+      :else (-> (timer/create! tx
+                               organization-id
+                               user-id
+                               task-id
+                               note)
                 response/response))))
 
 (defn delete

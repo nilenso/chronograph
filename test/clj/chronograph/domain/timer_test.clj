@@ -6,7 +6,8 @@
             [chronograph.domain.acl :as acl]
             [chronograph.db.core :as db]
             [clojure.spec.alpha :as s]
-            [chronograph.db.time-span :as db-time-span])
+            [chronograph.db.time-span :as db-time-span]
+            [chronograph.utils.time :as time])
   (:import org.postgresql.util.PSQLException))
 
 (def test-context
@@ -53,31 +54,48 @@
 
 (deftest create-timer-test
   (let [task-id (:task-id-1 @test-context)
-        member-id (:member-id @test-context)]
+        member-id (:member-id @test-context)
+        organization-id (:organization-id @test-context)]
     (testing "Timer creation"
       (is (s/valid? :timers/timer
                     (timer/create! db/datasource
+                                   organization-id
                                    member-id
                                    task-id
                                    nil))
           "without a note, returns a valid timer.")
       (is (s/valid? :timers/timer
                     (timer/create! db/datasource
+                                   organization-id
                                    member-id
                                    task-id
                                    "A valid note."))
           "with a note, returns a valid timer.")
+      (let [timer (timer/create! db/datasource
+                                 organization-id
+                                 member-id
+                                 task-id
+                                 "A valid note.")]
+        (is (= (assoc timer
+                      :time-spans [])
+               (timer/find-for-user-by-timer-id db/datasource
+                                                member-id
+                                                (:timers/id timer)))
+            "followed immediately by timer fetch, succeeds."))
       (is (every? (partial s/valid? :timers/timer)
                   (into (repeatedly 3 (fn [] (timer/create! db/datasource
+                                                            organization-id
                                                             member-id
                                                             task-id
                                                             "A sample note.")))
                         (repeatedly 3 (fn [] (timer/create! db/datasource
+                                                            organization-id
                                                             member-id
                                                             (:task-id-2 @test-context)
                                                             "A sample note.")))))
           "lets a member create multiple timers for multiple tasks.")
       (let [timer (timer/create! db/datasource
+                                 organization-id
                                  member-id
                                  task-id
                                  "A sample note.")]
@@ -85,20 +103,27 @@
                                  member-id
                                  (:timers/id timer)))
             "does not implicitly start the timer."))
-      (is (thrown-with-msg? PSQLException
-                            #"ERROR: insert or update on table \"timers\" violates foreign key constraint \"timers_user_id_fkey\""
-                            (timer/create! db/datasource
-                                           Long/MAX_VALUE
-                                           task-id
-                                           "A sample note."))
-          "with a non-existing user fails with a PG exception.")
-      (is (thrown-with-msg? PSQLException
-                            #"ERROR: insert or update on table \"timers\" violates foreign key constraint \"timers_task_id_fkey\""
-                            (timer/create! db/datasource
-                                           member-id
-                                           Long/MAX_VALUE
-                                           "A sample note."))
-          "with a non-existing task fails with a PG exception."))))
+      (let [task-of-other-org (factories/create-task
+                               (factories/create-organization
+                                (:users/id (factories/create-user))))]
+        (is (nil? (timer/create! db/datasource
+                                 organization-id
+                                 member-id
+                                 (:tasks/id task-of-other-org)
+                                 "A valid note."))
+            "does nothing when the task belonging to another organization."))
+      (is (nil? (timer/create! db/datasource
+                               organization-id
+                               Long/MAX_VALUE
+                               task-id
+                               "A sample note."))
+          "does nothing when the user does not exist.")
+      (is (nil? (timer/create! db/datasource
+                               organization-id
+                               member-id
+                               Long/MAX_VALUE
+                               "A sample note."))
+          "does nothing when the task does not exist."))))
 
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -109,7 +134,9 @@
 (deftest delete-timer-test
   (testing "Timer deletion for timer without any time spans"
     (let [member-id (:member-id @test-context)
+          organization-id (:organization-id @test-context)
           {timer-id :timers/id :as timer} (timer/create! db/datasource
+                                                         organization-id
                                                          member-id
                                                          (:task-id-1 @test-context)
                                                          "A sample note.")]
@@ -126,7 +153,9 @@
 (deftest delete-timer-having-time-spans-test
   (testing "When a timer having time spans is being deleted"
     (let [member-id (:member-id @test-context)
+          organization-id (:organization-id @test-context)
           {timer-id :timers/id} (timer/create! db/datasource
+                                               organization-id
                                                member-id
                                                (:task-id-1 @test-context)
                                                "A sample note.")]
@@ -152,13 +181,16 @@
 (deftest delete-timer-isolation-by-user-test
   (let [admin-id (:owner-id @test-context)
         member-id (:member-id @test-context)
-        task-id (:task-id-1 @test-context)]
+        task-id (:task-id-1 @test-context)
+        organization-id (:organization-id @test-context)]
     (testing "Users trying to delete each others' timers."
       (let [timer-by-admin (timer/create! db/datasource
+                                          organization-id
                                           admin-id
                                           task-id
                                           "A note by an admin.")
             timer-by-member (timer/create! db/datasource
+                                           organization-id
                                            member-id
                                            task-id
                                            "A note by a member.")]
@@ -179,46 +211,42 @@
 
 (deftest update-timer-note-test
   (testing "updating a Timer's note"
-    (let [member-id (:member-id @test-context)
-          {timer-id :timers/id :as timer} (timer/create! db/datasource
-                                                         member-id
-                                                         (:task-id-1 @test-context)
-                                                         "A sample note.")
-          revised-note (str "Revised note " (rand))]
-      (is (= (dissoc (assoc timer
-                            :timers/note
-                            revised-note)
-                     :timers/updated-at)
-             (dissoc (timer/update-note! db/datasource
-                                         member-id
-                                         timer-id
-                                         revised-note)
-                     :timers/updated-at))
-          "returns a Timer containing the updated note.")
-      (is (pos? (.compareTo (:timers/updated-at
-                             (timer/update-note! db/datasource
-                                                 member-id
-                                                 timer-id
-                                                 revised-note))
-                            (:timers/updated-at
-                             timer)))
-          "returns a Timer with the updated-at time incremented.")
-      (is (nil? (timer/update-note! db/datasource
-                                    member-id
-                                    (java.util.UUID/randomUUID)
-                                    revised-note))
-          "does nothing if the timer does not exist."))))
+    (with-redefs [time/now (constantly (time/now))]
+      (let [member-id (:member-id @test-context)
+            organization-id (:organization-id @test-context)
+            {timer-id :timers/id :as timer} (timer/create! db/datasource
+                                                           organization-id
+                                                           member-id
+                                                           (:task-id-1 @test-context)
+                                                           "A sample note.")
+            revised-note (str "Revised note " (rand))]
+        (is (= (assoc timer
+                      :timers/note
+                      revised-note)
+               (timer/update-note! db/datasource
+                                          member-id
+                                          timer-id
+                                          revised-note))
+            "returns a Timer containing the updated note.")
+        (is (nil? (timer/update-note! db/datasource
+                                      member-id
+                                      (java.util.UUID/randomUUID)
+                                      revised-note))
+            "does nothing if the timer does not exist.")))))
 
 (deftest update-note-isolation-by-user-test
   (let [admin-id (:owner-id @test-context)
         member-id (:member-id @test-context)
-        task-id (:task-id-1 @test-context)]
+        task-id (:task-id-1 @test-context)
+        organization-id (:organization-id @test-context)]
     (testing "Users trying to update each others' timer notes."
       (let [unstarted-timer-by-admin (timer/create! db/datasource
+                                                    organization-id
                                                     admin-id
                                                     task-id
                                                     "A note by an admin.")
             unstarted-timer-by-member (timer/create! db/datasource
+                                                     organization-id
                                                      member-id
                                                      task-id
                                                      "A note by a member.")]
@@ -242,7 +270,9 @@
 (deftest start-timer-test
   (testing "starting a timer"
     (let [member-id (:member-id @test-context)
+          organization-id (:organization-id @test-context)
           timer (timer/create! db/datasource
+                               organization-id
                                member-id
                                (:task-id-1 @test-context)
                                "A sample note.")]
@@ -259,13 +289,16 @@
 (deftest start-timer-isolation-by-user-test
   (let [admin-id (:owner-id @test-context)
         member-id (:member-id @test-context)
-        task-id (:task-id-1 @test-context)]
+        task-id (:task-id-1 @test-context)
+        organization-id (:organization-id @test-context)]
     (testing "Users trying to start each others' timers."
       (let [unstarted-timer-by-admin (timer/create! db/datasource
+                                                    organization-id
                                                     admin-id
                                                     task-id
                                                     "A note by an admin.")
             unstarted-timer-by-member (timer/create! db/datasource
+                                                     organization-id
                                                      member-id
                                                      task-id
                                                      "A note by a member.")]
@@ -286,10 +319,12 @@
 
 (deftest stop-timer-test
   (testing "stopping an unstarted timer (having no time spans)"
-    (let [member-id (:member-id @test-context)]
+    (let [member-id (:member-id @test-context)
+          organization-id (:organization-id @test-context)]
       (is (nil? (timer/stop! db/datasource
                              member-id
                              (:timers/id (timer/create! db/datasource
+                                                        organization-id
                                                         member-id
                                                         (:task-id-1 @test-context)
                                                         "A sample note."))))
@@ -297,7 +332,9 @@
 
   (testing "stopping a running timer (having at least one time span)"
     (let [member-id (:member-id @test-context)
+          organization-id (:organization-id @test-context)
           timer (let [timer (timer/create! db/datasource
+                                           organization-id
                                            member-id
                                            (:task-id-1 @test-context)
                                            "A sample note.")]
@@ -318,9 +355,11 @@
 (deftest stop-timer-isolation-by-user-test
   (let [admin-id (:owner-id @test-context)
         member-id (:member-id @test-context)
-        task-id (:task-id-1 @test-context)]
+        task-id (:task-id-1 @test-context)
+        organization-id (:organization-id @test-context)]
     (testing "Users trying to stop each others' timers."
       (let [running-timer-by-admin (let [timer (timer/create! db/datasource
+                                                              organization-id
                                                               admin-id
                                                               task-id
                                                               "A note by an admin.")]
@@ -329,6 +368,7 @@
                                                    (:timers/id timer))
                                      timer)
             running-timer-by-member (let [timer (timer/create! db/datasource
+                                                               organization-id
                                                                member-id
                                                                task-id
                                                                "A note by an admin.")]
@@ -354,7 +394,9 @@
 (deftest find-timer-by-timer-id
   (testing "when we find a timer by timer id, and it was started and/or stopped at least once"
     (let [member-id (:member-id @test-context)
+          organization-id (:organization-id @test-context)
           {timer-id :timers/id} (timer/create! db/datasource
+                                               organization-id
                                                member-id
                                                (:task-id-1 @test-context)
                                                "A sample note.")]
@@ -375,7 +417,9 @@
 
   (testing "when we find a timer by timer id, and it was never started"
     (let [member-id (:member-id @test-context)
+          organization-id (:organization-id @test-context)
           {timer-id :timers/id} (timer/create! db/datasource
+                                               organization-id
                                                member-id
                                                (:task-id-1 @test-context)
                                                "A sample note.")
@@ -391,9 +435,11 @@
 
 (deftest find-timer-for-user
   (testing "when we find timers for a member's task"
-    (let [member-id (:member-id @test-context)]
+    (let [member-id (:member-id @test-context)
+          organization-id (:organization-id @test-context)]
       (dotimes [_ 3]
         (->> (timer/create! db/datasource
+                            organization-id
                             member-id
                             (:task-id-1 @test-context)
                             "A sample note.")
@@ -417,14 +463,17 @@
 (deftest find-timer-isolation-by-user-test
   (let [admin-id (:owner-id @test-context)
         member-id (:member-id @test-context)
+        organization-id (:organization-id @test-context)
         task-id-timed-by-admin (:task-id-1 @test-context)
         task-id-timed-by-member (:task-id-2 @test-context)]
     (testing "Users trying to read each others' timers."
       (let [timer-for-task-timed-by-admin (timer/create! db/datasource
+                                                         organization-id
                                                          admin-id
                                                          task-id-timed-by-admin
                                                          "A note by an admin.")
             timer-for-task-timed-by-member (timer/create! db/datasource
+                                                          organization-id
                                                           member-id
                                                           task-id-timed-by-member
                                                           "A note by a member.")]

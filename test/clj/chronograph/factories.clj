@@ -38,9 +38,10 @@
                   :role role})))
 
 (defn create-timer
-  [user-id task-id]
+  [organization-id user-id task-id]
   (with-transaction [tx db/datasource]
     (timer/create! tx
+                   organization-id
                    user-id
                    task-id
                    (gen/generate (s/gen :timers/note)))))

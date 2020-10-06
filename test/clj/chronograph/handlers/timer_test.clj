@@ -108,10 +108,10 @@
 
 (deftest delete-timer-test
   (testing "deleting a timer"
-    (let [{timer-id :timers/id :as timer} (timer/create! db/datasource
-                                                         (:member-id @test-context)
-                                                         (:task-id-1 @test-context)
-                                                         "A lovely timer.")
+    (let [{timer-id :timers/id :as timer} (factories/create-timer
+                                           (:organization-id @test-context)
+                                           (:member-id @test-context)
+                                           (:task-id-1 @test-context))
           response (handler-timer/delete {:params {:timer-id (str timer-id)}
                                           :user {:users/id (:member-id @test-context)}})]
       (is (= 200
@@ -135,10 +135,10 @@
 
 (deftest update-timer-note-test
   (testing "updating a timer's note"
-    (let [{timer-id :timers/id} (timer/create! db/datasource
-                                               (:member-id @test-context)
-                                               (:task-id-1 @test-context)
-                                               "A lovely timer.")
+    (let [{timer-id :timers/id} (factories/create-timer
+                                 (:organization-id @test-context)
+                                 (:member-id @test-context)
+                                 (:task-id-1 @test-context))
           response (handler-timer/update-note {:params {:timer-id (str timer-id)}
                                                :body {:note "An updated note."}
                                                :user {:users/id (:member-id @test-context)}})]
@@ -168,10 +168,10 @@
 
 (deftest start-timer-test
   (testing "starting a timer"
-    (let [{timer-id :timers/id} (timer/create! db/datasource
-                                               (:member-id @test-context)
-                                               (:task-id-1 @test-context)
-                                               "A lovely timer.")
+    (let [{timer-id :timers/id} (factories/create-timer
+                                 (:organization-id @test-context)
+                                 (:member-id @test-context)
+                                 (:task-id-1 @test-context))
           response (handler-timer/start {:params {:timer-id (str timer-id)}
                                          :user {:users/id (:member-id @test-context)}})]
       (is (= 200
@@ -202,13 +202,13 @@
 (deftest stop-timer-test
   (testing "stopping a timer"
     (let [member-id (:member-id @test-context)
-          {timer-id :timers/id} (timer/create! db/datasource
-                                               member-id
-                                               (:task-id-1 @test-context)
-                                               "A lovely timer.")
+          {timer-id :timers/id} (factories/create-timer
+                                 (:organization-id @test-context)
+                                 (:member-id @test-context)
+                                 (:task-id-1 @test-context))
           _ (timer/start! db/datasource member-id timer-id)
           response (handler-timer/stop {:params {:timer-id (str timer-id)}
-                                        :user {:users/id (:member-id @test-context)}})]
+                                        :user {:users/id member-id}})]
       (is (= 200
              (:status response))
           "the request succeeds")
@@ -238,13 +238,14 @@
           task-id (:task-id-1 @test-context)
           _timers (dotimes [_ 3]
                     (->> (timer/create! db/datasource
+                                        (:organization-id @test-context)
                                         member-id
                                         task-id
                                         "A lovely timer.")
                          :timers/id
                          (timer/start! db/datasource member-id)))
-          response (handler-timer/find-for-user-task {:params {:task-id (:task-id-1 @test-context)}
-                                                      :user {:users/id (:member-id @test-context)}})]
+          response (handler-timer/find-for-user-task {:params {:task-id task-id}
+                                                      :user {:users/id member-id}})]
       (is (= 200
              (:status response))
           "the request succeeds for an existing timer")
@@ -255,5 +256,5 @@
               :headers {}
               :body {:error "Timers not found."}}
              (handler-timer/find-for-user-task {:params {:task-id Long/MAX_VALUE}
-                                                :user {:users/id (:member-id @test-context)}}))
+                                                :user {:users/id member-id}}))
           "fails with HTTP error when timers do not exist"))))
