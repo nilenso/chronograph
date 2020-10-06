@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [chronograph-web.routes :as routes]
             [chronograph-web.subscriptions :as subs]
-            [chronograph-web.views.components :as c]))
+            [chronograph-web.components.common :as components]))
 
 (defn login-route []
   (let [location (-> js/window .-location .-search)
@@ -27,5 +27,5 @@
   (case @(rf/subscribe [::subs/signin-state])
     :signed-in [authenticated-page]
     :signed-out [signin-page]
-    :fetching-profile [c/loading-spinner]
-    [c/loading-spinner]))
+    :fetching-profile [components/loading-spinner]
+    [components/loading-spinner]))

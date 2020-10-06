@@ -33,6 +33,7 @@
                                      :email "sandy@nilenso.com"}]}])))
        (tu/set-token (str "/organization/" slug))
        (rf/dispatch [::org-events/fetch-organization slug])
+       (rf/dispatch [::org-events/fetch-members slug])
        (is (= {:id         42
                :name       "A Test Org"
                :slug       "a-test-org"
@@ -101,7 +102,7 @@
      (rf/reg-fx :http-xhrio
        (fn [_]
          (rf/dispatch [::org-events/fetch-members-failed])))
-     (rf/dispatch [::org-events/fetch-organization ""])
+     (rf/dispatch [::org-events/fetch-members ""])
      (is (contains? @(rf/subscribe [::org-subs/page-errors])
                     ::org-events/error-fetch-members-failed)
          "The reported error should be in the DB"))))

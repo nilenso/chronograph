@@ -20,12 +20,16 @@
   (fn [_ [_ slug]]
    ;; TODO: optimize fetch and rendering in case we already have
    ;; data for the organization, in our db.
-    {:http-xhrio [(http/get (str get-organization-uri slug)
-                            {:on-success [::fetch-organization-success]
-                             :on-failure [::fetch-organization-fail slug]})
-                  (http/get (str get-organization-uri slug "/members")
-                            {:on-success [::fetch-members-succeeded]
-                             :on-failure [::fetch-members-failed slug]})]}))
+    {:http-xhrio (http/get (str get-organization-uri slug)
+                           {:on-success [::fetch-organization-success]
+                            :on-failure [::fetch-organization-fail slug]})}))
+
+(rf/reg-event-fx
+ ::fetch-members
+ (fn [_ [_ slug]]
+   {:http-xhrio (http/get (str get-organization-uri slug "/members")
+                          {:on-success [::fetch-members-succeeded]
+                           :on-failure [::fetch-members-failed slug]})}))
 
 (rf/reg-event-db
   ::fetch-members-succeeded

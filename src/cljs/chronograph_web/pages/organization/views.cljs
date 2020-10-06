@@ -3,14 +3,14 @@
             [chronograph-web.pages.organization.events :as org-events]
             [chronograph-web.pages.organization.subscriptions :as org-subs]
             [chronograph-web.components.common :as components]
-            [chronograph-web.subscriptions :as subs]
-            [chronograph-web.views.components :as c]))
+            [chronograph-web.subscriptions :as subs]))
 
 (defn- add-members-form []
   [:div
-   [c/input {:placeholder "E-mail"
-             :on-change   #(rf/dispatch [::org-events/email-input-changed %])
-             :value       @(rf/subscribe [::org-subs/email-input-value])}]
+   [components/text-input :email
+    {:placeholder "E-mail"
+     :value       @(rf/subscribe [::org-subs/email-input-value])
+     :on-change   #(rf/dispatch [::org-events/email-input-changed %])}]
    [:button {:on-click #(rf/dispatch [::org-events/invite-button-clicked])}
     "Invite"]])
 
@@ -20,16 +20,16 @@
     [:form
      [components/text-input :name
       {:placeholder "Name"
-       :value name
-       :on-change #(rf/dispatch [::org-events/create-task-form-update
-                                 :name
-                                 (.-value (.-currentTarget %))])}]
+       :value       name
+       :on-change   #(rf/dispatch [::org-events/create-task-form-update
+                                   :name
+                                   %])}]
      [components/text-input :description
       {:placeholder "Description"
-       :value description
-       :on-change #(rf/dispatch [::org-events/create-task-form-update
-                                 :description
-                                 (.-value (.-currentTarget %))])}]
+       :value       description
+       :on-change   #(rf/dispatch [::org-events/create-task-form-update
+                                   :description
+                                   %])}]
      [:button {:type :button
                :name :create
                :disabled (or (= status :creating))
@@ -44,18 +44,18 @@
     [:form
      [components/text-input :name
       {:placeholder "Name"
-       :value name
-       :on-change #(rf/dispatch [::org-events/update-task-form-update
-                                 id
-                                 :name
-                                 (.-value (.-currentTarget %))])}]
+       :value       name
+       :on-change   #(rf/dispatch [::org-events/update-task-form-update
+                                   id
+                                   :name
+                                   %])}]
      [components/text-input :description
       {:placeholder "Description"
-       :value description
-       :on-change #(rf/dispatch [::org-events/update-task-form-update
-                                 id
-                                 :description
-                                 (.-value (.-currentTarget %))])}]
+       :value       description
+       :on-change   #(rf/dispatch [::org-events/update-task-form-update
+                                   id
+                                   :description
+                                   %])}]
      [:button {:type :button
                :name :save
                :disabled (or (= status :saving))
@@ -88,13 +88,14 @@
 
 (defn organization-page [{:keys [slug]}]
   (rf/dispatch [::org-events/fetch-organization slug])
+  (rf/dispatch [::org-events/fetch-members slug])
   (rf/dispatch [::org-events/fetch-tasks slug])
   (fn [_]
     (let [errors @(rf/subscribe [::org-subs/page-errors])
           {:keys [name]} @(rf/subscribe [::subs/organization slug])]
       (cond
         (contains? errors ::org-events/error-org-not-found) [:h2 "Not found"]
-        (not name) [c/loading-spinner]
+        (not name) [components/loading-spinner]
         :else
         [:div
          [:h1 name]
