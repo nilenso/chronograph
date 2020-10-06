@@ -1,6 +1,8 @@
 (ns chronograph.domain.timer
   (:require [chronograph.db.timer :as db-timer]
-            [chronograph.db.time-span :as db-time-span]))
+            [chronograph.db.time-span :as db-time-span]
+            [chronograph.domain.task :as task]
+            [chronograph.domain.acl :as acl]))
 
 ;; Timer state transitions
 #_{:create [:start]
@@ -10,12 +12,17 @@
    }
 
 (defn create!
-  [tx user-id task-id note]
-  ;; TODO: Create timer IFF task id exists, so we don't barf with PG exception.
-  (db-timer/create! tx
-                    user-id
-                    task-id
-                    (or note "")))
+  "Create a timer for a task IFF the user and the task, both belong to
+  the given organization. If the note is nil, write an empty string into the DB."
+  [tx organization-id user-id task-id note]
+  (when (and (acl/belongs-to-org? tx user-id organization-id)
+             (= organization-id
+                (:tasks/organization-id
+                 (task/find-by-id tx task-id))))
+    (db-timer/create! tx
+                      user-id
+                      task-id
+                      (or note ""))))
 
 (defn delete!
   "Given a timer ID for a user, delete it if it exists and also delete
