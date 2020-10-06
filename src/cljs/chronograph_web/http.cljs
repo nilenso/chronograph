@@ -17,3 +17,10 @@
           :format          (ajax/json-request-format)
           :response-format (ajax/json-response-format {:keywords? true})}
          http-xhrio-map))
+
+(defn put [uri http-xhrio-map]
+  (merge {:method :put
+          :uri uri
+          :format          (ajax/json-request-format)
+          :response-format (ajax/json-response-format {:keywords? true})}
+         http-xhrio-map))

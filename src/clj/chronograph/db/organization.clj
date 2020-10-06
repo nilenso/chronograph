@@ -16,12 +16,21 @@
                    :updated-at now}
                   db/sql-opts))))
 
-(defn find-by-slug
-  ([slug]
-   (find-by-slug db/datasource slug))
-  ([tx slug]
-   (first (sql/find-by-keys tx
-                            :organizations
-                            {:slug slug}
-                            db/sql-opts))))
+(def where (partial db/where :organizations))
 
+(def find-by (partial db/find-by :organizations))
+
+(defn find-by-slug [tx slug]
+  (find-by tx {:slug slug}))
+
+(defn by-ids [tx ids]
+  (sql/query tx
+             ["SELECT * FROM organizations where id = ANY(?)" (int-array ids)]
+             db/sql-opts))
+
+(defn user-organizations [tx user-id]
+  (sql/query tx
+             ["SELECT organizations.* FROM organizations
+               INNER JOIN acls
+               ON organizations.id = acls.organization_id
+               where acls.user_id = ?" user-id]))

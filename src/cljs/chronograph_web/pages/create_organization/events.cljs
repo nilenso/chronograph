@@ -3,7 +3,7 @@
             [chronograph-web.http :as http]
             [day8.re-frame.http-fx]))
 
-(def ^:private create-organization-uri "/api/organizations")
+(def ^:private create-organization-uri "/api/organizations/")
 
 (def ^:private page-state-key :page-state)
 (def ^:private root-path :create-organization)

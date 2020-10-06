@@ -1,10 +1,15 @@
 (ns chronograph.specs
-  (:require [clojure.spec.alpha :as s]
+  (:require #?(:clj [clojure.string :as string]
+               :cljs [goog.string :as string])
+            [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]))
+
+(def non-empty-string?
+  (s/and string?  (comp not string/blank?)))
 
 ;; Users
 
-(s/def :users/id int?)
+(s/def :users/id pos-int?)
 (s/def :users/name string?)
 (s/def :users/email (s/with-gen (s/and string?
                                        #(re-matches #"^.+@.+\..+$" %))
@@ -40,7 +45,7 @@
                              #(gen/fmap (fn [uid] (.toLowerCase (str uid)))
                                         (gen/uuid))))
 
-(s/def :organizations/id int?)
+(s/def :organizations/id pos-int?)
 
 (s/def :organizations/create-params (s/keys :req [:organizations/name :organizations/slug]))
 (s/def :organizations/create-params-un (s/keys :req-un [:organizations/name :organizations/slug]))
@@ -58,8 +63,19 @@
 
 (s/def :acls/acl (s/keys :req [:acls/user-id :acls/organization-id :acls/role]))
 
+;; Tasks
+(s/def :tasks/id pos-int?)
+(s/def :tasks/name non-empty-string?)
+(s/def :tasks/description string?)
+(s/def :tasks/organization-id :organizations/id)
+(s/def :tasks/task
+  (s/keys :req [:tasks/id :tasks/name :tasks/organization-id]
+          :opt [:tasks/description]))
+(s/def :tasks/create-params-handler (s/keys :req-un [:tasks/name]
+                                            :opt-un [:tasks/description]))
+
 ;; Invites
-(s/def :invites/id int?)
+(s/def :invites/id pos-int?)
 (s/def :invites/organization-id :organizations/id)
 (s/def :invites/email :users/email)
 

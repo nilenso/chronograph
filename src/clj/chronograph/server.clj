@@ -12,8 +12,10 @@
             [org.httpkit.server :as httpkit]
             [ring.util.response :as response]
             [chronograph.config :as config]
+            [chronograph.domain.acl :as acl]
             [chronograph.middleware :as middleware]
             [chronograph.handlers.google-auth :as google-auth]
+            [chronograph.handlers.task :as task]
             [chronograph.handlers.user :as user]
             [chronograph.handlers.organization :as organization]))
 
@@ -22,20 +24,33 @@
    ["web/redirect" google-auth/web-redirect-handler]
    ["desktop/redirect" google-auth/desktop-redirect-handler]])
 
+(def task-routes
+  {:post (-> task/create
+             (middleware/wrap-require-authorization #{acl/admin}))
+   :get (-> task/index
+            (middleware/wrap-require-authorization #{acl/admin acl/member}))
+   [:task-id] {:put (-> task/update
+                        (middleware/wrap-require-authorization #{acl/admin}))}
+   [:task-id "/archive"] {:put (-> task/archive
+                                   (middleware/wrap-require-authorization #{acl/admin}))}})
+
 (def routes
   ["/" [["" (fn [_] (-> (response/resource-response "public/index.html")
                         (response/content-type "text/html")))]
         ["auth/" [["google/" google-auth-routes]]]
         ["api/" [["users/me" {:get (-> user/me
                                        middleware/wrap-authenticated)}]
-                 ["organizations" {:post       (-> organization/create
-                                                   middleware/wrap-authenticated)
-                                   ["/" :slug] {:get       (-> organization/find-one
-                                                               middleware/wrap-authenticated)
+                 ["organizations/" {:get (-> organization/index
+                                             middleware/wrap-authenticated)
+                                    :post (-> organization/create
+                                              middleware/wrap-authenticated)
+                                    ["" :slug] {:get (-> organization/find-one
+                                                         middleware/wrap-authenticated)
                                                 "/members" {:get  (-> organization/show-members
                                                                       middleware/wrap-authenticated)
                                                             :post (-> organization/invite
-                                                                      middleware/wrap-authenticated)}}}]]]
+                                                                      middleware/wrap-authenticated)}}
+                                    [:slug "/tasks/"] task-routes}]]]
         [true (fn [_] (-> (response/resource-response "public/index.html")
                           (response/content-type "text/html")))]]])
 
