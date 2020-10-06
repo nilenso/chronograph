@@ -26,3 +26,11 @@
   (first (sql/query tx
                     ["SELECT * FROM users WHERE id=?" user-id]
                     db/sql-opts)))
+
+(defn find-by-org-id
+  [tx organization-id]
+  (sql/query tx
+             ["SELECT users.* FROM users, acls
+                WHERE users.id = acls.user_id
+                AND acls.organization_id=?" organization-id]
+             db/sql-opts))

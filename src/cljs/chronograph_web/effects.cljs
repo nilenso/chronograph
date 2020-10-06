@@ -6,4 +6,4 @@
 (rf/reg-fx
   :history-token
   (fn [token]
-    (pushy/set-token! routes/history token)))
+    (pushy/set-token! @routes/history token)))

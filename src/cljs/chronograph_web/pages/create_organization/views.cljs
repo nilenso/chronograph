@@ -1,7 +1,7 @@
 (ns chronograph-web.pages.create-organization.views
   (:require [re-frame.core :as rf]
             [chronograph-web.pages.create-organization.events :as events]
-            [chronograph-web.subscriptions :as subs]
+            [chronograph-web.pages.create-organization.subscriptions :as create-subs]
             [clojure.spec.alpha :as s]))
 
 (defn- form-valid? [{:keys [name slug]}]
@@ -21,7 +21,7 @@
                    :name (name k)})]])
 
 (defn create-organization-page [_]
-  (let [{:keys [form-params status] :as _form-data} @(rf/subscribe [::subs/create-organization-form])
+  (let [{:keys [form-params status] :as _form-data} @(rf/subscribe [::create-subs/create-organization-form])
         form-invalid? (not (form-valid? form-params))
         {:keys [name slug]} form-params]
     [:form

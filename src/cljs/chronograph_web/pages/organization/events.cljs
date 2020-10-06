@@ -1,7 +1,9 @@
 (ns chronograph-web.pages.organization.events
-  (:require [goog.string :as gstring]
-            [re-frame.core :as rf]
-            [chronograph-web.http :as http]))
+  (:require [re-frame.core :as rf]
+            [chronograph-web.http :as http]
+            [chronograph-web.pages.organization.db :as org-db]
+            [chronograph-web.db :as db]
+            [goog.string :as gstring]))
 
 (def ^:private get-organization-uri
   "/api/organizations/")
@@ -22,6 +24,20 @@
                            {:on-success [::fetch-organization-success]
                             :on-failure [::fetch-organization-fail slug]})}))
 
+(rf/reg-event-fx
+  ::fetch-members
+  (fn [_ [_ slug]]
+    {:http-xhrio (http/get (str get-organization-uri slug "/members")
+                           {:on-success [::fetch-members-succeeded]
+                            :on-failure [::fetch-members-failed slug]})}))
+
+(rf/reg-event-db
+  ::fetch-members-succeeded
+  (fn [db [_ {:keys [invited joined]}]]
+    (-> db
+        (org-db/add-invited-members invited)
+        (org-db/add-joined-members joined))))
+
 (rf/reg-event-db
   ::fetch-organization-success
   (fn [db [_ {:keys [slug] :as organization}]]
@@ -31,10 +47,41 @@
 
 (rf/reg-event-db
   ::fetch-organization-fail
-  (fn [db [_ slug]]
-    (assoc-in db
-              [:organizations slug]
-              ::not-found)))
+  (fn [db _]
+    (db/report-error db ::error-org-not-found)))
+
+(rf/reg-event-db
+  ::email-input-changed
+  (fn [db [_ email-value]]
+    (org-db/set-in-add-member-form db :email email-value)))
+
+(rf/reg-event-fx
+  ::invite-button-clicked
+  (fn [{:keys [db]} _]
+    {:http-xhrio (http/post (str "/api/organizations/"
+                                 (org-db/slug db)
+                                 "/members")
+                            {:params     {:email (org-db/get-from-add-member-form db :email)}
+                             :on-success [::invite-member-succeeded]
+                             :on-failure [::invite-member-failed]})
+     :db         (-> db
+                     (org-db/set-in-add-member-form :email "")
+                     (db/remove-error ::error-invite-member-failed))}))
+
+(rf/reg-event-db
+  ::invite-member-succeeded
+  (fn [db [_ member]]
+    (org-db/add-invited-member db member)))
+
+(rf/reg-event-db
+  ::invite-member-failed
+  (fn [db _]
+    (db/report-error db ::error-invite-member-failed)))
+
+(rf/reg-event-db
+  ::fetch-members-failed
+  (fn [db _]
+    (db/report-error db ::error-fetch-members-failed)))
 
 (rf/reg-event-fx
   ::fetch-tasks

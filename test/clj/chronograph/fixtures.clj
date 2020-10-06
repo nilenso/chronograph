@@ -24,7 +24,8 @@
   (jdbc/execute! db/datasource ["TRUNCATE TABLE google_profiles CASCADE"])
   (jdbc/execute! db/datasource ["TRUNCATE TABLE users CASCADE"])
   (jdbc/execute! db/datasource ["TRUNCATE TABLE acls CASCADE"])
-  (jdbc/execute! db/datasource ["TRUNCATE TABLE organizations CASCADE"]))
+  (jdbc/execute! db/datasource ["TRUNCATE TABLE organizations CASCADE"])
+  (jdbc/execute! db/datasource ["TRUNCATE TABLE invites CASCADE"]))
 
 (defn clear-db [f]
   (truncate-all-tables!)

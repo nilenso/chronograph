@@ -1,12 +1,13 @@
 (ns chronograph.handlers.organization-test
-  (:require [chronograph.db.core :as db]
-            [chronograph.domain.acl :as acl]
+  (:require [chronograph.domain.acl :as acl]
             [chronograph.factories :as factories]
             [chronograph.fixtures :as fixtures]
             [chronograph.handlers.organization :as organization]
             [clojure.spec.alpha :as s]
             [clojure.test :refer :all]
-            [next.jdbc :refer [with-transaction]])
+            [chronograph.db.core :as db]
+            [chronograph.domain.invite :as invite]
+            [chronograph.test-utils :as tu])
   (:import (org.postgresql.util PSQLException)))
 
 (use-fixtures :once fixtures/config fixtures/datasource)
@@ -29,13 +30,12 @@
     (let [user (factories/create-user)
           response (organization/create {:body {:name "foo" :slug "bar"}
                                          :user user})]
-      (with-transaction [tx db/datasource]
-        (is (= 200 (:status response)))
-        (is (s/valid? :organizations/organization
-                      (:body response)))
-        (is (acl/admin? tx
-                        (:users/id user)
-                        (:organizations/id (:body response))))))))
+      (is (= 200 (:status response)))
+      (is (s/valid? :organizations/organization
+                    (:body response)))
+      (is (acl/admin? db/datasource
+                      (:users/id user)
+                      (:organizations/id (:body response)))))))
 
 (deftest create-organization-when-slug-exists
   (testing "Creating an organization with pre-existing slug throws an exception."
@@ -125,3 +125,93 @@
                (organization/find-one {:params {:slug slug}
                                        :user other-user})))
           "Fetching org details by a user that does not belong to the org fails with HTTP error."))))
+
+(deftest show-members-test
+  (testing "Should fetch joined and invited members and return a 200"
+    (let [user         (factories/create-user)
+          {:organizations/keys [slug]
+           org-id              :organizations/id} (factories/create-organization (:users/id user))
+          joined-user  (factories/create-user)
+          invited-user (invite/find-or-create! db/datasource org-id "invite@user.com")]
+      (acl/create! db/datasource {:user-id         (:users/id joined-user)
+                                  :organization-id org-id
+                                  :role            acl/member})
+      (is (= {:status 200
+              :body   {:invited [invited-user]
+                       :joined  [user joined-user]}}
+             (-> (organization/show-members {:params {:slug slug}
+                                             :user   user})
+                 (select-keys [:status :body]))))))
+
+  (testing "Should return a 404 if no org is found with the given slug"
+    (tu/with-fixtures [fixtures/clear-db]
+      (let [user (factories/create-user)]
+        (is (= {:status 404
+                :body   {:error "Not found"}}
+               (-> (organization/show-members {:params {:slug "foobar"}
+                                               :user   user})
+                   (select-keys [:status :body])))))))
+
+  (testing "Should return a 403 if the authenticated user is not an admin of the org"
+    (tu/with-fixtures [fixtures/clear-db]
+      (let [user (factories/create-user)
+            {:organizations/keys [slug]
+             org-id              :organizations/id} (factories/create-organization (:users/id user))
+            member (factories/create-user)]
+        (acl/create! db/datasource {:user-id         (:users/id member)
+                                    :organization-id org-id
+                                    :role            acl/member})
+        (is (= {:status 403
+                :body   {:error "Forbidden"}}
+               (-> (organization/show-members {:params {:slug slug}
+                                               :user   member})
+                   (select-keys [:status :body]))))))))
+
+(deftest invite-test
+  (testing "When the organization exists and user is an admin, an invite should be created"
+    (let [{user-id :users/id} (factories/create-user)
+          {:organizations/keys [slug]
+           organization-id :organizations/id} (factories/create-organization user-id)
+          response (organization/invite {:params {:slug slug}
+                                         :user {:users/id user-id}
+                                         :body {:email "test@email.com"}})]
+      (is (= {:status 200
+              :body (first (invite/find-by-org-id db/datasource organization-id))}
+             (select-keys response [:status :body])))))
+
+  (testing "Should return 404 if org is not found with given slug"
+    (tu/with-fixtures [fixtures/clear-db]
+      (let [{user-id :users/id} (factories/create-user)]
+        (is (= {:status 404
+                :body {:error "Not found"}}
+               (-> (organization/invite {:params {:slug "foobar"}
+                                         :user {:users/id user-id}
+                                         :body {:email "test@email.com"}})
+                   (select-keys [:status :body])))))))
+
+  (testing "Should return 403 if user is not an admin of the org"
+    (tu/with-fixtures [fixtures/clear-db]
+      (let [{user-id :users/id} (factories/create-user)
+            {organization-id :organizations/id
+             slug :organizations/slug} (factories/create-organization user-id)
+            {user-id-2 :users/id} (factories/create-user)]
+        (acl/create! db/datasource {:user-id user-id-2
+                                    :organization-id organization-id
+                                    :role acl/member})
+        (is (= {:status 403
+                :body {:error "Forbidden"}}
+               (-> (organization/invite {:params {:slug slug}
+                                         :user {:users/id user-id-2}
+                                         :body {:email "test@email.com"}})
+                   (select-keys [:status :body])))))))
+
+  (testing "Should return 400 if the email is invalid"
+    (tu/with-fixtures [fixtures/clear-db]
+      (let [{user-id :users/id :as user} (factories/create-user)
+            {:organizations/keys [slug]} (factories/create-organization user-id)]
+        (is (= {:status 400
+                :body   {:error "Invalid email"}}
+               (-> (organization/invite {:params {:slug slug}
+                                         :user   user
+                                         :body   {:email "test@emailcom"}})
+                   (select-keys [:status :body]))))))))

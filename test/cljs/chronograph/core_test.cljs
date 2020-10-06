@@ -1,9 +1,12 @@
 (ns chronograph.core-test
-  (:require [cljs.test :refer-macros [deftest is testing run-tests]]
+  (:require [cljs.test :refer-macros [deftest is testing run-tests use-fixtures]]
             [day8.re-frame.test :as rf-test]
             [re-frame.core :as rf]
             [chronograph-web.events.user :as user-events]
-            [chronograph-web.subscriptions :as subs]))
+            [chronograph-web.subscriptions :as subs]
+            [chronograph.fixtures :as fixtures]))
+
+(use-fixtures :once fixtures/check-specs)
 
 (deftest initialize-test
   (testing "when the profile is fetched successfully"

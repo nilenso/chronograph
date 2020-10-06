@@ -1,6 +1,8 @@
 (ns chronograph.handlers.organization
   (:require [chronograph.db.core :as db]
+            [chronograph.domain.acl :as acl]
             [chronograph.domain.organization :as organization]
+            [chronograph.domain.invite :as invite]
             [clojure.spec.alpha :as s]
             [next.jdbc :as jdbc]
             [ring.util.response :as response]))
@@ -41,3 +43,33 @@
             response/response)
         (response/not-found
          {:error "Not found"})))))
+
+(defn invite
+  [{{:keys [slug]} :params
+    {user-id :users/id} :user
+    {:keys [email]} :body
+    :as _request}]
+  (jdbc/with-transaction [tx db/datasource]
+    (let [{org-id :organizations/id} (organization/find-by-slug tx slug)]
+      (cond
+        (not org-id)                          (response/not-found {:error "Not found"})
+        (not (acl/admin? tx user-id org-id))  (-> (response/response {:error "Forbidden"})
+                                                  (response/status 403))
+        (not (s/valid? :invites/email email)) (response/bad-request {:error "Invalid email"})
+        :else                                 (response/response
+                                               (invite/find-or-create! tx org-id email))))))
+
+(defn show-members
+  [{{:keys [slug]} :params
+    {user-id :users/id} :user
+    :as _request}]
+  (jdbc/with-transaction [tx db/datasource]
+    (let [{:organizations/keys [id]} (organization/find-by-slug tx slug)]
+      (cond
+        (not id)                         (response/not-found {:error "Not found"})
+        (not (acl/admin? tx user-id id)) (-> (response/response {:error "Forbidden"})
+                                             (response/status 403))
+        :else                            (response/response {:joined (organization/members tx id)
+                                                             :invited (invite/find-by-org-id tx id)})))))
+
+

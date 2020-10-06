@@ -1,8 +1,18 @@
 (ns chronograph-web.pages.organization.views
   (:require [re-frame.core :as rf]
+            [chronograph-web.pages.organization.events :as org-events]
+            [chronograph-web.pages.organization.subscriptions :as org-subs]
             [chronograph-web.components.common :as components]
-            [chronograph-web.subscriptions :as subs]
-            [chronograph-web.pages.organization.events :as org-events]))
+            [chronograph-web.subscriptions :as subs]))
+
+(defn- add-members-form []
+  [:div
+   [components/text-input :email
+    {:placeholder "E-mail"
+     :value       @(rf/subscribe [::org-subs/email-input-value])
+     :on-change   #(rf/dispatch [::org-events/email-input-changed %])}]
+   [:button {:on-click #(rf/dispatch [::org-events/invite-button-clicked])}
+    "Invite"]])
 
 (defn task-form []
   (let [{:keys [form-params status]} @(rf/subscribe [::subs/create-task-form])
@@ -10,16 +20,16 @@
     [:form
      [components/text-input :name
       {:placeholder "Name"
-       :value name
-       :on-change #(rf/dispatch [::org-events/create-task-form-update
-                                 :name
-                                 (.-value (.-currentTarget %))])}]
+       :value       name
+       :on-change   #(rf/dispatch [::org-events/create-task-form-update
+                                   :name
+                                   %])}]
      [components/text-input :description
       {:placeholder "Description"
-       :value description
-       :on-change #(rf/dispatch [::org-events/create-task-form-update
-                                 :description
-                                 (.-value (.-currentTarget %))])}]
+       :value       description
+       :on-change   #(rf/dispatch [::org-events/create-task-form-update
+                                   :description
+                                   %])}]
      [:button {:type :button
                :name :create
                :disabled (or (= status :creating))
@@ -34,18 +44,18 @@
     [:form
      [components/text-input :name
       {:placeholder "Name"
-       :value name
-       :on-change #(rf/dispatch [::org-events/update-task-form-update
-                                 id
-                                 :name
-                                 (.-value (.-currentTarget %))])}]
+       :value       name
+       :on-change   #(rf/dispatch [::org-events/update-task-form-update
+                                   id
+                                   :name
+                                   %])}]
      [components/text-input :description
       {:placeholder "Description"
-       :value description
-       :on-change #(rf/dispatch [::org-events/update-task-form-update
-                                 id
-                                 :description
-                                 (.-value (.-currentTarget %))])}]
+       :value       description
+       :on-change   #(rf/dispatch [::org-events/update-task-form-update
+                                   id
+                                   :description
+                                   %])}]
      [:button {:type :button
                :name :save
                :disabled (or (= status :saving))
@@ -78,22 +88,33 @@
 
 (defn organization-page [{:keys [slug]}]
   (rf/dispatch [::org-events/fetch-organization slug])
+  (rf/dispatch [::org-events/fetch-members slug])
   (rf/dispatch [::org-events/fetch-tasks slug])
   (fn [_]
-    (when-let [{:keys [id name slug created-at updated-at]
-                :as organization}
-               @(rf/subscribe [::subs/organization slug])]
-      (if (= organization ::org-events/not-found)
-        [:p "Not found"]
-
+    (let [errors @(rf/subscribe [::subs/page-errors])
+          {:keys [name]} @(rf/subscribe [::subs/organization slug])]
+      (cond
+        (contains? errors ::org-events/error-org-not-found) [:h2 "Not found"]
+        (not name) [components/loading-spinner]
+        :else
         [:div
-         [:strong "Organization details: "]
-         [:ul
-          [:li "ID: " id]
-          [:li "Name: " name]
-          [:li "Slug: " slug]
-          [:li "Created at: " created-at]
-          [:li "Updated at: " updated-at]]
-         [task-form]
-         (when-let [tasks @(rf/subscribe [::subs/tasks])]
-           [task-list tasks])]))))
+         [:h1 name]
+         [:div
+          [:h2 "Add Members"]
+          [add-members-form]
+          (when (contains? errors ::org-events/error-invite-member-failed)
+            [:p "Failed to invite the member. Please try again."])]
+         [:div
+          [:h2 "Members"]
+          (if (contains? errors ::org-events/error-fetch-members-failed)
+            [:p "Failed to load members of the organization. Please refresh the page."]
+            [:ul
+             (for [member @(rf/subscribe [::org-subs/joined-members])]
+               ^{:key (str "joined-" (:id member))} [:li (:name member)])
+             (for [member @(rf/subscribe [::org-subs/invited-members])]
+               ^{:key (str "invited-" (:email member))} [:li (str (:email member) " (invited)")])])]
+         [:div
+          [:h2 "Tasks"]
+          [task-form]
+          (when-let [tasks @(rf/subscribe [::subs/tasks])]
+            [task-list tasks])]]))))

@@ -8,7 +8,8 @@
             [chronograph-web.pages.organization.events]
             [chronograph-web.routes :as routes]
             [chronograph-web.views :as views]
-            [chronograph-web.effects]))
+            [chronograph-web.effects]
+            [chronograph-web.interceptors :as interceptors]))
 
 (defn render
   []
@@ -24,6 +25,8 @@
 ;; Entry point
 (defn ^:export run
   []
+  (when ^boolean js/goog.DEBUG
+    (rf/reg-global-interceptor interceptors/check-spec-and-print-interceptor))
   (rf/dispatch-sync [::user-events/initialize])
   (routes/init!)
   (render))

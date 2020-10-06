@@ -1,6 +1,7 @@
 (ns chronograph.domain.organization
   (:require [chronograph.domain.task :as task]
             [chronograph.db.organization :as db-organization]
+            [chronograph.db.user :as db-user]
             [chronograph.domain.acl :as acl]))
 
 (defn create! [tx organization owner-id]
@@ -26,3 +27,7 @@
 
 (defn for-user [tx {:users/keys [id] :as _user}]
   (db-organization/user-organizations tx id))
+
+(def find-by-slug db-organization/find-by-slug)
+
+(def members db-user/find-by-org-id)
