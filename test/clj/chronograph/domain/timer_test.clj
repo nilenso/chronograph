@@ -408,31 +408,40 @@
 
 (deftest find-started-timer-by-timer-id
   (testing "when we find a timer by timer id, and it was started and/or stopped at least once"
-    (let [test-context (setup-org-users-tasks!)
-          user-id (:user-2-id test-context)
-          organization-id (:organization-id test-context)
-          {timer-id :timers/id} (timer/create! db/datasource
-                                               organization-id
-                                               user-id
-                                               (:task-id-1 test-context)
-                                               "A sample note.")]
-      ;; start/stop the timer a few times
-      (dotimes [_ 3]
-        (timer/start! db/datasource
-                      user-id
-                      timer-id)
-        (timer/stop! db/datasource
-                     user-id
-                     timer-id))
-      ;; validate timer data retrieved
-      (is (s/valid? :domain.timer/find-by-id-retval
-                    (timer/find-for-user-by-timer-id db/datasource
-                                                     user-id
-                                                     timer-id))
-          "we get back a valid Timer object. The object contains Timer data, as well as all the TimeSpans associated with the Timer."))))
+    (with-redefs [time/now (constantly (time/now))]
+      (let [test-context (setup-org-users-tasks!)
+            user-id (:user-2-id test-context)
+            organization-id (:organization-id test-context)
+            {timer-id :timers/id
+             :as timer} (timer/create! db/datasource
+                                       organization-id
+                                       user-id
+                                       (:task-id-1 test-context)
+                                       "A sample note.")
+            time-spans (doall
+                        (repeatedly 3
+                                    (fn []
+                                      (timer/start! db/datasource
+                                                    user-id
+                                                    timer-id)
+                                      (timer/stop! db/datasource
+                                                   user-id
+                                                   timer-id))))]
+        ;; validate timer data retrieved
+        (is (s/valid? :domain.timer/find-by-id-retval
+                      (timer/find-for-user-by-timer-id db/datasource
+                                                       user-id
+                                                       timer-id))
+            "we get back a valid Timer object.")
+        (is (= (assoc timer
+                      :time-spans time-spans)
+               (timer/find-for-user-by-timer-id db/datasource
+                                                user-id
+                                                timer-id))
+            "The object contains Timer data, as well as all the TimeSpans associated with the Timer.")))))
 
-(deftest find-timer-for-user
-  (testing "when we find timers for user-2's task"
+(deftest find-timers-for-user-task-test
+  (testing "when we find timers for a user's task"
     (let [test-context (setup-org-users-tasks!)
           user-id (:user-2-id test-context)
           organization-id (:organization-id test-context)]
