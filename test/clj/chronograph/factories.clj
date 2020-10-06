@@ -21,7 +21,7 @@
 (defn create-organization [owner-id]
   (with-transaction [tx db/datasource]
     (organization/create! tx
-                          (gen/generate (s/gen :organizations/create-params))
+                          (gen/generate (s/gen :organizations/organization))
                           owner-id)))
 
 (defn create-task [organization]

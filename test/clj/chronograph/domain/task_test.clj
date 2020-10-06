@@ -143,3 +143,25 @@
             (is (= now archived-at))
             (is (= archived-at updated-at))
             (is (pos? (compare updated-at created-at)))))))))
+
+(deftest for-organization
+  (let [{user-id :users/id} (factories/create-user)
+        organization (factories/create-organization user-id)
+        other-organization (factories/create-organization user-id)
+        task1 (factories/create-task organization)
+        task2 (factories/create-task organization)
+        other-task1 (factories/create-task other-organization)
+        other-task2 (factories/create-task other-organization)]
+
+    (testing "It returns a list of tasks for an organization"
+      (with-transaction [tx db/datasource]
+        (let [tasks (task/for-organization tx organization)]
+          (is (= 2 (count tasks)))
+          (is (contains? (set (map :tasks/id tasks)) (:tasks/id task1)))
+          (is (contains? (set (map :tasks/id tasks)) (:tasks/id task2))))))
+
+    (testing "It returns a list of tasks for another organization"
+      (with-transaction [tx db/datasource]
+        (let [tasks (task/for-organization tx organization)]
+          (is (not (contains? (set (map :tasks/id tasks)) (:tasks/id other-task1))))
+          (is (not (contains? (set (map :tasks/id tasks)) (:tasks/id other-task2)))))))))
