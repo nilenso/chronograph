@@ -91,7 +91,7 @@
   (rf/dispatch [::org-events/fetch-members slug])
   (rf/dispatch [::org-events/fetch-tasks slug])
   (fn [_]
-    (let [errors @(rf/subscribe [::org-subs/page-errors])
+    (let [errors @(rf/subscribe [::subs/page-errors])
           {:keys [name]} @(rf/subscribe [::subs/organization slug])]
       (cond
         (contains? errors ::org-events/error-org-not-found) [:h2 "Not found"]

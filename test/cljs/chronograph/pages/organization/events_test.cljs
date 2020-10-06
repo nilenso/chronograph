@@ -82,7 +82,7 @@
            (rf/dispatch [::org-events/fetch-organization-fail])))
        (tu/set-token (str "/organization/" slug))
        (rf/dispatch [::org-events/fetch-organization slug])
-       (is (contains? @(rf/subscribe [::org-subs/page-errors]) ::org-events/error-org-not-found)
+       (is (contains? @(rf/subscribe [::subs/page-errors]) ::org-events/error-org-not-found)
            "The reported error should be in the DB"))))
 
   (testing "When the invite member form fails"
@@ -92,7 +92,7 @@
        (fn [_]
          (rf/dispatch [::org-events/invite-member-failed])))
      (rf/dispatch [::org-events/invite-button-clicked])
-     (is (contains? @(rf/subscribe [::org-subs/page-errors])
+     (is (contains? @(rf/subscribe [::subs/page-errors])
                     ::org-events/error-invite-member-failed)
          "The reported error should be in the DB")))
 
@@ -103,6 +103,6 @@
        (fn [_]
          (rf/dispatch [::org-events/fetch-members-failed])))
      (rf/dispatch [::org-events/fetch-members ""])
-     (is (contains? @(rf/subscribe [::org-subs/page-errors])
+     (is (contains? @(rf/subscribe [::subs/page-errors])
                     ::org-events/error-fetch-members-failed)
          "The reported error should be in the DB"))))

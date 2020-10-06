@@ -17,8 +17,3 @@
   ::joined-members
   (fn [db _]
     (org-db/get-joined-members db)))
-
-(rf/reg-sub
-  ::page-errors
-  (fn [db _]
-    (db/get-errors db)))
