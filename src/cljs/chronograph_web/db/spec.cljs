@@ -22,6 +22,7 @@
 (s/def ::organizations (s/map-of :organizations/slug :organizations/organization-un))
 (s/def ::invited-members (s/map-of :organizations/id (set-of :invites/invite-un)))
 (s/def ::joined-members (s/map-of :organizations/id (set-of :users/user-un)))
+(s/def ::tasks (s/map-of :tasks/id :tasks/task-un))
 
 (s/def :page-state/errors (s/nilable set?))
 
@@ -46,8 +47,15 @@
 (s/def ::page-state (s/keys :opt-un [:page-state/organization-show
                                      :page-state/create-organization]))
 
+(s/def :update-task/name (s/nilable string?))
+(s/def :update-task/slug (s/nilable string?))
+(s/def :update-task/form-params (s/keys :opt-un [:update-task/name :update-task/description]))
+(s/def ::update-task (s/map-of :tasks/id :update-task/form-params))
+
 (s/def ::db (s/keys :req-un [::user ::page]
                     :opt-un [::organizations
                              ::invited-members
                              ::joined-members
+                             ::tasks
+                             ::update-task
                              ::page-state]))

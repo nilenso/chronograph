@@ -1,11 +1,10 @@
 (ns chronograph.specs
-  (:require #?(:clj [clojure.string :as string]
-               :cljs [goog.string :as string])
+  (:require [clojure.string :as string]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]))
 
 (def non-empty-string?
-  (s/and string?  (comp not string/blank?)))
+  (s/and string? (comp not string/blank?)))
 
 ;; Users
 
@@ -71,6 +70,9 @@
 (s/def :tasks/task
   (s/keys :req [:tasks/id :tasks/name :tasks/organization-id]
           :opt [:tasks/description]))
+(s/def :tasks/task-un
+  (s/keys :req-un [:tasks/id :tasks/name :tasks/organization-id]
+          :opt-un [:tasks/description]))
 (s/def :tasks/create-params-handler (s/keys :req-un [:tasks/name]
                                             :opt-un [:tasks/description]))
 
