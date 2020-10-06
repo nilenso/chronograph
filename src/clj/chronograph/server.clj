@@ -40,16 +40,28 @@
         ["auth/" [["google/" google-auth-routes]]]
         ["api/" [["users/me" {:get (-> user/me
                                        middleware/wrap-authenticated)}]
-                 ["organizations/" {:get (-> organization/index
-                                             middleware/wrap-authenticated)
-                                    :post (-> organization/create
-                                              middleware/wrap-authenticated)
-                                    ["" :slug] {:get (-> organization/find-one
-                                                         middleware/wrap-authenticated)
-                                                "/members" {:get  (-> organization/show-members
+                 ["organizations/" {:get              (-> organization/index
+                                                          middleware/wrap-authenticated)
+                                    :post             (-> organization/create
+                                                          middleware/wrap-authenticated)
+                                    "invited"         {:get        (constantly {:status 200
+                                                                                :body   [{:id   1
+                                                                                          :slug "slug1"
+                                                                                          :name "org1"}
+                                                                                         {:id   2
+                                                                                          :slug "slug2"
+                                                                                          :name "org2"}]})
+                                                       ["/" :slug] {:post   (constantly {:status 201})
+                                                                    :delete (constantly {:status 200
+                                                                                         :body   {:id   1
+                                                                                                  :slug "slug1"
+                                                                                                  :name "org1"}})}}
+                                    ["" :slug]        {:get       (-> organization/find-one
                                                                       middleware/wrap-authenticated)
-                                                            :post (-> organization/invite
-                                                                      middleware/wrap-authenticated)}}
+                                                       "/members" {:get  (-> organization/show-members
+                                                                             middleware/wrap-authenticated)
+                                                                   :post (-> organization/invite
+                                                                             middleware/wrap-authenticated)}}
                                     [:slug "/tasks/"] task-routes}]]]
         [true (fn [_] (-> (response/resource-response "public/index.html")
                           (response/content-type "text/html")))]]])

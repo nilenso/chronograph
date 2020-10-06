@@ -1,4 +1,5 @@
-(ns chronograph-web.pages.pending-invites.db)
+(ns chronograph-web.pages.pending-invites.db
+  (:require [chronograph-web.db :as db]))
 
 (defn invite-by-id
   [db id]
@@ -12,6 +13,11 @@
   [db id]
   (update db :organization-invites (fn [invite]
                                      (dissoc invite id))))
+
+(defn add-invited-orgs
+  [db invited-orgs]
+  (println invited-orgs)
+  (update db :organization-invites merge (db/normalize-by :id invited-orgs)))
 
 (defn set-invites-in-db
   [db]
