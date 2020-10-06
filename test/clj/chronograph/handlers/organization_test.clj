@@ -1,25 +1,41 @@
 (ns chronograph.handlers.organization-test
-  (:require [chronograph.domain.acl :as acl]
+  (:require [chronograph.db.core :as db]
+            [chronograph.domain.acl :as acl]
             [chronograph.factories :as factories]
             [chronograph.fixtures :as fixtures]
             [chronograph.handlers.organization :as organization]
             [clojure.spec.alpha :as s]
-            [clojure.test :refer :all])
+            [clojure.test :refer :all]
+            [next.jdbc :refer [with-transaction]])
   (:import (org.postgresql.util PSQLException)))
 
 (use-fixtures :once fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)
+
+(deftest index-list-user-organizations-test
+  (testing "Returns all the organizations a user belongs to"
+    (let [user (factories/create-user)
+          organization1 (factories/create-organization (:users/id user))
+          organization2 (factories/create-organization (:users/id user))
+          response (organization/index {:user user})]
+      (is (= 200 (:status response)))
+      (is (= 2 (count (:body response))))
+      (is (= #{(:organizations/id organization1)
+               (:organizations/id organization2)}
+             (set (map :organizations/id (:body response))))))))
 
 (deftest create-new-organization-first-time
   (testing "Creating a new organization returns a valid organization map in the response, and the creator is registered as admin in the ACL."
     (let [user (factories/create-user)
           response (organization/create {:body {:name "foo" :slug "bar"}
                                          :user user})]
-      (is (= 200 (:status response)))
-      (is (s/valid? :organizations/organization
-                    (:body response)))
-      (is (acl/admin? (:users/id user)
-                      (:organizations/id (:body response)))))))
+      (with-transaction [tx db/datasource]
+        (is (= 200 (:status response)))
+        (is (s/valid? :organizations/organization
+                      (:body response)))
+        (is (acl/admin? tx
+                        (:users/id user)
+                        (:organizations/id (:body response))))))))
 
 (deftest create-organization-when-slug-exists
   (testing "Creating an organization with pre-existing slug throws an exception."

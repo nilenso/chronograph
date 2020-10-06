@@ -10,6 +10,7 @@ pom.xml.asc
 /.nrepl-port
 .hgignore
 .hg/
+.DS_Store
 .idea/
 *.iml
 .shadow-cljs
@@ -21,3 +22,6 @@ config/*.secrets.edn
 \#*\#
 .\#*
 .clj-kondo/.cache
+shell.nix
+
+yarn-error.log

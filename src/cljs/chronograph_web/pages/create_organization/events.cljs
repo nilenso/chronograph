@@ -4,7 +4,7 @@
             [chronograph-web.events.routing :as routing-events]
             [day8.re-frame.http-fx]))
 
-(def ^:private create-organization-uri "/api/organizations")
+(def ^:private create-organization-uri "/api/organizations/")
 
 (def ^:private root-path :create-organization)
 (def ^:private status-path [root-path :status])

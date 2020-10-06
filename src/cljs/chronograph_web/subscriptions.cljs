@@ -22,6 +22,26 @@
     (get-in db [:create-organization])))
 
 (rf/reg-sub
+  ::organizations
+  (fn [db [_ _]]
+    (get-in db [:organizations])))
+
+(rf/reg-sub
   ::organization
   (fn [db [_ slug]]
     (get-in db [:organizations slug])))
+
+(rf/reg-sub
+  ::tasks
+  (fn [db [_ _]]
+    (vals (get-in db [:tasks]))))
+
+(rf/reg-sub
+  ::create-task-form
+  (fn [db _]
+    (get-in db [:create-task])))
+
+(rf/reg-sub
+  ::update-task-form
+  (fn [db [_ task-id]]
+    (get-in db [:update-task task-id])))
