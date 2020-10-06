@@ -3,6 +3,13 @@
 (def default-db {:user {:signin-state :fetching-profile}
                  :page {:handler :root}})
 
+(defn normalize-by
+  "Like group-by, except f is expected to be unique
+  for each value in the collection. Returns a map of
+  keys returned by f to the values in the collection."
+  [f coll]
+  (zipmap (map f coll) coll))
+
 (def conj-to-set (fnil conj #{}))
 
 (defn add-to-set-in

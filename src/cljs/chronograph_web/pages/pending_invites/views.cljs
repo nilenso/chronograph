@@ -4,7 +4,7 @@
             [chronograph-web.pages.pending-invites.subscriptions :as invites-subs]))
 
 (defn pending-invites-page [_]
-  (rf/dispatch [::invites-events/page-mounted])
+  (rf/dispatch [::invites-events/fetch-invited-orgs])
   (fn [_]
     (let [invites @(rf/subscribe [::invites-subs/invites])]
       [:div
