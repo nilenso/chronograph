@@ -1,24 +1,18 @@
 (ns chronograph.db.acl
-  (:require [chronograph.db.core :as db]
-            [next.jdbc.sql :as sql]
-            [chronograph.utils.time :as time])
+  (:require [chronograph.db.core :as db])
   (:import (org.postgresql.util PGobject)))
 
-(defn create! [tx {:keys [user-id organization-id role]}]
-  (let [now (time/now)]
-    (sql/insert! tx
-                 :acls
-                 {:user-id user-id
-                  :organization-id organization-id
-                  :role (doto (PGobject.)
-                          (.setType "user_role")
-                          (.setValue role))
-                  :created-at now
-                  :updated-at now}
-                 db/sql-opts)))
+(defn create! [tx {:acls/keys [user-id organization-id role]}]
+  (db/create! :acls
+              tx
+              {:acls/user-id user-id
+               :acls/organization-id organization-id
+               :acls/role (doto (PGobject.)
+                            (.setType "user_role")
+                            (.setValue role))}))
 
 (defn where [tx attributes]
-  (sql/find-by-keys tx :acls attributes db/sql-opts))
+  (db/where :acls tx attributes))
 
 (defn find-by [tx attributes]
-  (first (where tx attributes)))
+  (db/find-by :acls tx attributes))

@@ -90,12 +90,12 @@
           {user-id-3 :users/id :as user3} (factories/create-user)
           {user-id-4 :users/id :as user4} (factories/create-user)
           {org-id-2 :organizations/id} (factories/create-organization user-id-4)]
-      (acl/create! db/datasource {:user-id         user-id-2
-                                  :organization-id org-id
-                                  :role            acl/member})
-      (acl/create! db/datasource {:user-id         user-id-3
-                                  :organization-id org-id
-                                  :role            acl/member})
+      (acl/create! db/datasource {:acls/user-id         user-id-2
+                                  :acls/organization-id org-id
+                                  :acls/role            acl/member})
+      (acl/create! db/datasource {:acls/user-id         user-id-3
+                                  :acls/organization-id org-id
+                                  :acls/role            acl/member})
       (is (= #{user1 user2 user3}
              (set (organization/members db/datasource org-id))))
       (is (= #{user4}

@@ -6,9 +6,9 @@
 
 (defn create! [tx organization owner-id]
   (let [{:keys [organizations/id] :as organization} (db-organization/create! tx organization)]
-    (acl/create! tx {:user-id owner-id
-                     :organization-id id
-                     :role acl/admin})
+    (acl/create! tx {:acls/user-id owner-id
+                     :acls/organization-id id
+                     :acls/role acl/admin})
     organization))
 
 (defn find-if-authorized

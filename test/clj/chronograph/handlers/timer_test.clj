@@ -19,9 +19,9 @@
 
         {user-2-id :users/id} (factories/create-user)
         _ (acl/create! db/datasource
-                       {:user-id user-2-id
-                        :organization-id organization-id
-                        :role acl/member})
+                       #:acls{:user-id user-2-id
+                              :organization-id organization-id
+                              :role acl/member})
         {task-id-1 :tasks/id} (factories/create-task organization)
         {task-id-2 :tasks/id} (factories/create-task organization)]
     {:user-1-id user-1-id
