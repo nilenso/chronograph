@@ -20,9 +20,9 @@
             {user-id :users/id} (factories/create-user)
             {organization-id :organizations/id} (factories/create-organization admin-id)]
         (with-transaction [tx db/datasource]
-          (acl/create! tx {:user-id user-id
-                           :organization-id organization-id
-                           :role acl/admin}))
+          (acl/create! tx {:acls/user-id user-id
+                           :acls/organization-id organization-id
+                           :acls/role acl/admin}))
         (is (= #:acls{:user-id user-id
                       :organization-id organization-id
                       :role acl/admin
@@ -37,15 +37,15 @@
           {user-id :users/id} (factories/create-user)
           {organization-id :organizations/id} (factories/create-organization admin-id)]
       (with-transaction [tx db/datasource]
-        (acl/create! tx {:user-id user-id
-                         :organization-id organization-id
-                         :role acl/member}))
+        (acl/create! tx {:acls/user-id user-id
+                         :acls/organization-id organization-id
+                         :acls/role acl/member}))
       (is (thrown-with-msg? PSQLException
                             #"duplicate key value violates unique constraint \"acls_user_id_organization_id_idx\""
                             (with-transaction [tx db/datasource]
-                              (acl/create! tx {:user-id user-id
-                                               :organization-id organization-id
-                                               :role acl/member})))))))
+                              (acl/create! tx {:acls/user-id user-id
+                                               :acls/organization-id organization-id
+                                               :acls/role acl/member})))))))
 
 (deftest admin?-test
   (testing "Can check whether a user is a admin of an organization"
@@ -53,9 +53,9 @@
           {user-id :users/id} (factories/create-user)
           {organization-id :organizations/id} (factories/create-organization admin-id)]
       (with-transaction [tx db/datasource]
-        (acl/create! tx {:user-id user-id
-                         :organization-id organization-id
-                         :role acl/admin}))
+        (acl/create! tx {:acls/user-id user-id
+                         :acls/organization-id organization-id
+                         :acls/role acl/admin}))
       (with-transaction [tx db/datasource]
         (is (acl/admin? tx user-id organization-id))))))
 
@@ -83,9 +83,9 @@
       (let [member (factories/create-user)]
         (with-transaction [tx db/datasource]
           (acl/create! tx
-                       {:user-id (:users/id member)
-                        :organization-id (:organizations/id organization)
-                        :role acl/member}))
+                       {:acls/user-id (:users/id member)
+                        :acls/organization-id (:organizations/id organization)
+                        :acls/role acl/member}))
         (with-transaction [tx db/datasource]
           (is (acl/belongs-to-org? tx
                                    (:users/id member)

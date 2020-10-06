@@ -33,9 +33,9 @@
 (defn create-acl [user organization role]
   (with-transaction [tx db/datasource]
     (acl/create! tx
-                 {:user-id (:users/id user)
-                  :organization-id (:organizations/id organization)
-                  :role role})))
+                 {:acls/user-id (:users/id user)
+                  :acls/organization-id (:organizations/id organization)
+                  :acls/role role})))
 
 (defn create-timer
   [organization-id user-id task-id]

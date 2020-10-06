@@ -133,9 +133,9 @@
            org-id              :organizations/id} (factories/create-organization (:users/id user))
           joined-user  (factories/create-user)
           invited-user (invite/find-or-create! db/datasource org-id "invite@user.com")]
-      (acl/create! db/datasource {:user-id         (:users/id joined-user)
-                                  :organization-id org-id
-                                  :role            acl/member})
+      (acl/create! db/datasource {:acls/user-id         (:users/id joined-user)
+                                  :acls/organization-id org-id
+                                  :acls/role            acl/member})
       (is (= {:status 200
               :body   {:invited [invited-user]
                        :joined  [user joined-user]}}
@@ -158,9 +158,9 @@
             {:organizations/keys [slug]
              org-id              :organizations/id} (factories/create-organization (:users/id user))
             member (factories/create-user)]
-        (acl/create! db/datasource {:user-id         (:users/id member)
-                                    :organization-id org-id
-                                    :role            acl/member})
+        (acl/create! db/datasource {:acls/user-id         (:users/id member)
+                                    :acls/organization-id org-id
+                                    :acls/role            acl/member})
         (is (= {:status 403
                 :body   {:error "Forbidden"}}
                (-> (organization/show-members {:params {:slug slug}
@@ -195,9 +195,9 @@
             {organization-id :organizations/id
              slug :organizations/slug} (factories/create-organization user-id)
             {user-id-2 :users/id} (factories/create-user)]
-        (acl/create! db/datasource {:user-id user-id-2
-                                    :organization-id organization-id
-                                    :role acl/member})
+        (acl/create! db/datasource {:acls/user-id user-id-2
+                                    :acls/organization-id organization-id
+                                    :acls/role acl/member})
         (is (= {:status 403
                 :body {:error "Forbidden"}}
                (-> (organization/invite {:params {:slug slug}

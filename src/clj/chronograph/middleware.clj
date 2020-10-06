@@ -81,7 +81,7 @@
   [handler roles]
   (fn [{:keys [user organization] :as request}]
     (jdbc/with-transaction [tx db/datasource]
-      (let [user-role  (acl/role tx user organization)]
+      (let [user-role  (acl/role tx (:users/id user) (:organizations/id organization))]
         (if ((set roles) user-role)
           (handler request)
           (-> (response/response {:error "Forbidden"})
