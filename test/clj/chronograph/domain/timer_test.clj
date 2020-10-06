@@ -59,6 +59,13 @@
                                    task-id
                                    "A valid note."))
           "with a note, returns a valid timer.")
+      (is (apply = ((juxt :timers/created-at :timers/updated-at)
+                    (timer/create! db/datasource
+                                   organization-id
+                                   user-id
+                                   task-id
+                                   "A valid note.")))
+          "Has created_at = updated_at when just created.")
       (let [timer (timer/create! db/datasource
                                  organization-id
                                  user-id
@@ -69,7 +76,7 @@
                (timer/find-for-user-by-timer-id db/datasource
                                                 user-id
                                                 (:timers/id timer)))
-            "followed immediately by timer fetch, succeeds."))
+            "Create followed immediately by timer fetch, succeeds."))
       (is (every? (partial s/valid? :timers/timer)
                   (into (repeatedly 3 (fn [] (timer/create! db/datasource
                                                             organization-id
