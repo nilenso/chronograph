@@ -39,6 +39,7 @@
 ;; Create Timer Tests
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
 (deftest create-timer-success-test
   (testing "Timer creation"
     (let [test-context (setup-org-users-tasks!)
@@ -325,6 +326,7 @@
 ;; Stop Timer Tests
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
 (deftest stop-unstarted-timer-test
   (testing "stopping an unstarted timer (having no time spans)"
     (let [test-context (setup-org-users-tasks!)
@@ -401,6 +403,7 @@
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Find Timer Tests
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (deftest find-unstarted-timer-by-timer-id
   (testing "when we find a timer by timer id, and it was never started"
