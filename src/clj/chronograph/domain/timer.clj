@@ -4,13 +4,6 @@
             [chronograph.domain.task :as task]
             [chronograph.domain.acl :as acl]))
 
-;; Timer state transitions
-#_{:create [:start]
-   :start [:running] ; create TimeSpan on start
-   :running [:stop]  ; update running TimeSpan on stop
-   :stop [:start]    ; create new TimeSpan on restart
-   }
-
 (defn create!
   "Create a timer for a task IFF the user and the task, both belong to
   the given organization. If the note is nil, write an empty string into the DB."
