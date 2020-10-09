@@ -18,7 +18,8 @@
             [chronograph.handlers.task :as task]
             [chronograph.handlers.timer :as timer]
             [chronograph.handlers.user :as user]
-            [chronograph.handlers.organization :as organization]))
+            [chronograph.handlers.organization :as organization]
+            [chronograph.handlers.invite :as invite]))
 
 (def google-auth-routes
   [["login" google-auth/login-handler]
@@ -49,6 +50,14 @@
    [:timer-id "/update-note"] {:put (-> timer/update-note
                                         middleware/wrap-authenticated)}})
 
+(def invited-org-routes
+  {:get        (-> organization/invited
+                   middleware/wrap-authenticated)
+   ["/" :slug] {:post   (-> invite/accept
+                            middleware/wrap-authenticated)
+                :delete (-> invite/reject
+                            middleware/wrap-authenticated)}})
+
 (def routes
   ["/" [["" (fn [_] (-> (response/resource-response "public/index.html")
                         (response/content-type "text/html")))]
@@ -60,21 +69,7 @@
                                                           middleware/wrap-authenticated)
                                     :post             (-> organization/create
                                                           middleware/wrap-authenticated)
-                                    "invited"         {:get        (constantly {:status 200
-                                                                                :body   [{:id   1
-                                                                                          :slug "slug1"
-                                                                                          :name "org1"}
-                                                                                         {:id   2
-                                                                                          :slug "slug2"
-                                                                                          :name "org2"}]})
-                                                       ["/" :slug] {:post   (constantly {:status 201
-                                                                                         :body   {:id   1
-                                                                                                  :slug "slug1"
-                                                                                                  :name "org1"}})
-                                                                    :delete (constantly {:status 200
-                                                                                         :body   {:id   1
-                                                                                                  :slug "slug1"
-                                                                                                  :name "org1"}})}}
+                                    "invited"         invited-org-routes
                                     ["" :slug]        {:get       (-> organization/find-one
                                                                       middleware/wrap-authenticated)
                                                        "/members" {:get  (-> organization/show-members

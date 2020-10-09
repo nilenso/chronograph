@@ -24,6 +24,10 @@
                           (gen/generate (s/gen :organizations/organization))
                           owner-id)))
 
+(defn create-user-and-organization []
+  (let [{user-id :users/id} (create-user)]
+    (create-organization user-id)))
+
 (defn create-task [organization]
   (with-transaction [tx db/datasource]
     (task/create tx

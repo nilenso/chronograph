@@ -1,5 +1,6 @@
 (ns chronograph.domain.invite
-  (:require [chronograph.db.invite :as db-invite]))
+  (:require [chronograph.db.invite :as db-invite]
+            [chronograph.domain.acl :as acl]))
 
 (defn find-or-create!
   [tx org-id email]
@@ -7,3 +8,20 @@
       (db-invite/create! tx org-id email)))
 
 (def find-by-org-id db-invite/find-by-org-id)
+
+(defn find-by-org-slug-and-email
+  [tx org-slug email]
+  (db-invite/find-by-org-slug-and-email tx org-slug email))
+
+(defn accept!
+  [tx invite-id user-id]
+  (let [{:invites/keys [organization-id]
+         :as           deleted-invite} (db-invite/delete! tx {:id invite-id})]
+    (acl/create! tx #:acls{:user-id         user-id
+                           :organization-id organization-id
+                           :role            acl/member})
+    deleted-invite))
+
+(defn reject!
+  [tx invite-id]
+  (db-invite/delete! tx {:id invite-id}))

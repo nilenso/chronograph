@@ -4,13 +4,14 @@
             [chronograph.core :as core]
             [chronograph.config :as config]
             [chronograph.migrations :as migrations]
-            [migratus.core :as migratus]))
+            [migratus.core :as migratus]
+            [chronograph.db.core :as db]))
 
 (defn start-app! []
   (core/mount-init!)
   (-> (mount/with-args {:options {:config-file "config/config.dev.edn"}})
       (mount/swap-states {#'server/server {:start #(server/start-server! #'server/handler)
-                                           :stop #(server/server)}})
+                                           :stop  #(server/server)}})
       mount/start))
 
 (defn restart-app! []
@@ -25,3 +26,10 @@
 
 (defn create-migration [migration-name]
   (migratus/create (migrations/config) migration-name))
+
+(defn remove-user-from-org!
+  [user-id org-id]
+  (db/delete! :acls
+              db/datasource
+              {:user-id         user-id
+               :organization-id org-id}))
