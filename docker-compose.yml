@@ -3,6 +3,9 @@ services:
   dev_db:
     image: postgres:12.3
     environment:
+      # Ensure we configure the db user below, in the local dev/test EDN files.
+      # Some migrations like CREATE EXTENSION require superuser privileges,
+      # which only this POSTGRES_USER has locally.
       POSTGRES_USER: chronograph_dev
       POSTGRES_DB: chronograph_dev
       POSTGRES_PASSWORD: chronograph_devpwd

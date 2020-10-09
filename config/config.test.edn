@@ -2,8 +2,8 @@
            :dbname   "chronograph_test"
            :host     "localhost"
            :port     19401
-           :user     "chronograph_test"
-           :password "chronograph_testpwd"}
+           :user     "chronograph_dev" ; take from docker-compose.yml
+           :password "chronograph_devpwd"}
  :oauth   {:google {:web-redirect-uri     "http://localhost:8000/auth/google/web/redirect"
                     :desktop-redirect-uri "http://localhost:8000/auth/google/desktop/redirect"
                     :response-type        "code"
