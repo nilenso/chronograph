@@ -4,7 +4,7 @@
 (def admin "admin")
 (def member "member")
 
-(defn create! [tx {:acls/keys [role] :as attributes}]
+(defn create! [tx attributes]
   (db-acl/create! tx
                   (select-keys attributes
                                [:acls/user-id
@@ -19,6 +19,9 @@
 
 (defn admin? [tx user-id organization-id]
   (= admin (role tx user-id organization-id)))
+
+(defn member? [tx user-id organization-id]
+  (= member (role tx user-id organization-id)))
 
 (defn belongs-to-org? [tx user-id organization-id]
   (some? (role tx user-id organization-id)))

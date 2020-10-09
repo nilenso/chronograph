@@ -29,5 +29,9 @@
 
 (def members db-user/find-by-org-id)
 
+(defn find-invited
+  [tx email]
+  (db-organization/invited-organizations tx email))
+
 (defn for-user [tx user]
   (db-organization/user-organizations tx (:users/id user)))

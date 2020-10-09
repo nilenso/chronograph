@@ -50,3 +50,9 @@
                         {:created-at now
                          :updated-at now})
                  sql-opts)))
+
+(defn delete! [table-name tx attributes]
+  (sql/delete! tx table-name attributes sql-opts))
+
+(defn query [tx sql-vec]
+  (sql/query tx sql-vec sql-opts))

@@ -25,3 +25,10 @@
                INNER JOIN acls
                ON organizations.id = acls.organization_id
                where acls.user_id = ?" user-id]))
+
+(defn invited-organizations [tx email]
+  (sql/query tx
+             ["SELECT organizations.* FROM organizations, invites
+               WHERE invites.organization_id = organizations.id
+               AND invites.email = ?" email]
+             db/sql-opts))

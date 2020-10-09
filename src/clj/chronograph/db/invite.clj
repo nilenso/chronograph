@@ -31,3 +31,14 @@
                            {:organization-id organization-id
                             :email email}
                            db/sql-opts)))
+
+(defn find-by-org-slug-and-email
+  [tx org-slug email]
+  (first (db/query tx ["SELECT invites.* from invites, organizations
+                        WHERE invites.organization_id = organizations.id
+                        AND organizations.slug = ?
+                        AND invites.email = ?" org-slug email])))
+
+(defn delete!
+  [tx attributes]
+  (db/delete! :invites tx attributes))

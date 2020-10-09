@@ -72,4 +72,6 @@
         :else                            (response/response {:joined (organization/members tx id)
                                                              :invited (invite/find-by-org-id tx id)})))))
 
-
+(defn invited
+  [{{email :users/email} :user}]
+  (response/response (organization/find-invited db/datasource email)))

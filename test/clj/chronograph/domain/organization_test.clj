@@ -5,7 +5,8 @@
             [chronograph.fixtures :as fixtures]
             [clojure.test :refer :all]
             [next.jdbc :refer [with-transaction]]
-            [chronograph.domain.organization :as organization])
+            [chronograph.domain.organization :as organization]
+            [chronograph.domain.invite :as invite])
   (:import [org.postgresql.util PSQLException]))
 
 (use-fixtures :once fixtures/config fixtures/datasource)
@@ -100,3 +101,16 @@
              (set (organization/members db/datasource org-id))))
       (is (= #{user4}
              (set (organization/members db/datasource org-id-2)))))))
+
+(deftest find-invited-test
+  (testing "It finds orgs that the user has been invited to"
+    (let [{user-id-1 :users/id} (factories/create-user)
+          {org-id :organizations/id :as org1} (factories/create-organization user-id-1)
+          {org-id-2 :organizations/id :as org2} (factories/create-organization user-id-1)
+          {user-id-2 :users/id
+           email     :users/email} (factories/create-user)]
+      (factories/create-organization user-id-2) ; This should not show in up the invited orgs
+      (invite/find-or-create! db/datasource org-id email)
+      (invite/find-or-create! db/datasource org-id-2 email)
+      (is (= #{org1 org2}
+             (set (organization/find-invited db/datasource email)))))))
