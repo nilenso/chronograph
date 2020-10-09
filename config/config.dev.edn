@@ -2,7 +2,7 @@
            :dbname   "chronograph_dev"
            :host     "localhost"
            :port     19401
-           :user     "chronograph_dev"
+           :user     "chronograph_dev" ; take from docker-compose.yml
            :password "chronograph_devpwd"}
  :oauth   {:google #merge [{:web-redirect-uri     "http://localhost:8000/auth/google/web/redirect"
                             :desktop-redirect-uri "http://localhost:8000/auth/google/desktop/redirect"

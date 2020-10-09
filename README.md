@@ -19,6 +19,23 @@ Although it's not necessary for hot reloading, you should connect to the REPL fr
 `yarn release`. Assets will go into the `resources/public` folder.
 
 ### Backend Setup
+
+#### Database Provisioning
+
+A Postgres superuser must enable the "uuid-ossp" extension as part of provisioning the DB, in staging and production. This is a one-time migration. Ref: [GCP docs on PG extensions](https://cloud.google.com/sql/docs/postgres/extensions).
+
+```psql
+CREATE EXTENSION "uuid-ossp";
+```
+
+We want Postgres to generate UUIDs for us, as default values for some fields. This is only possible with the uuid-ossp extension enabled, in Postgres 12 (or below), which we are using in GCP. Further, only a Postgres superuser may create the extension. The user that runs migrations when deploying to staging/production does NOT have superuser privileges.
+
+For staging and production, we should create the extension at the time of provisioning since it is a one-time setup, and it is not good to expose superuser credentials for deploy-time migrations.
+
+For local use, the DB user created by docker-compose already is a superuser, and we can configure the same in dev/test config.edns. Compare docker-compose.yml with config.dev.edn and config.test.edn, for example.
+
+Postgres 13+ supports UUID generation out-of-the-box.
+
 #### Local Development
 
 - Ensure you have docker-compose installed. podman-compose will also work.
