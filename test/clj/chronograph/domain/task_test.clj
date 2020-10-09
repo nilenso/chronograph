@@ -51,14 +51,9 @@
           (is (= task
                  (task/find-by-id tx (:tasks/id task)))))))
     (testing "It returns nil if the id is not present in the DB"
-      (let [task (factories/create-task organization)
-            random-id (->> :tasks/id
-                           s/gen
-                           (gen/such-that #(not= % (:tasks/id task)))
-                           gen/generate)]
-        (with-transaction [tx db/datasource]
-          (is (= nil
-                 (task/find-by-id tx random-id))))))))
+      (with-transaction [tx db/datasource]
+        (is (= nil
+               (task/find-by-id tx Long/MAX_VALUE)))))))
 
 (deftest list-test
   (let [{user-id :users/id} (factories/create-user)
