@@ -42,9 +42,8 @@
 (rf/reg-event-db
   ::fetch-organization-success
   (fn [db [_ {:keys [slug] :as organization}]]
-    (-> db
-        (assoc-in [:organizations slug] organization)
-        (assoc-in [:current-organization] organization))))
+    (assoc-in db
+              [:organizations slug] organization)))
 
 (rf/reg-event-db
   ::fetch-organization-fail
@@ -115,7 +114,7 @@
   ::create-task-form-submit
   (fn [{:keys [db]} _]
     {:db         (assoc-in db status-path :creating)
-     :http-xhrio (http/post (tasks-uri (-> db :current-organization :slug))
+     :http-xhrio (http/post (tasks-uri (org-db/slug db))
                             {:params     {:name (get-in db (form-params-path :name))
                                           :description (get-in db (form-params-path :description))}
                              :on-success [::create-task-success]
@@ -124,7 +123,7 @@
 (rf/reg-event-fx
   ::create-task-success
   (fn [{:keys [db]} [_ _]]
-    (let [slug (get-in db [:current-organization :slug])]
+    (let [slug (org-db/slug db)]
       {:db (dissoc db root-path)
        :fx [[:dispatch [::fetch-tasks slug]]]})))
 
@@ -136,7 +135,7 @@
 (rf/reg-event-fx
   ::archive-task
   (fn [{:keys [db]} [_ task-id]]
-    (let [slug (-> db :current-organization :slug)
+    (let [slug (org-db/slug db)
           archive-url (str  (tasks-uri slug) task-id "/archive")]
       {:http-xhrio (http/put archive-url
                              {:on-success [::fetch-tasks slug]
@@ -173,7 +172,7 @@
 (rf/reg-event-fx
   ::update-task-form-submit
   (fn [{:keys [db]} [_ task-id]]
-    (let [slug (-> db :current-organization :slug)
+    (let [slug (org-db/slug db)
           update-url (str (tasks-uri slug) task-id)]
       {:db         (assoc-in db [:update-task task-id :status] :saving)
        :http-xhrio (http/put update-url
@@ -187,7 +186,7 @@
     {:db (-> db
              (assoc-in [:tasks task-id :is-updating] false)
              (update-in [:update-task] dissoc task-id))
-     :fx [[:dispatch [::fetch-tasks (-> db :current-organization :slug)]]]}))
+     :fx [[:dispatch [::fetch-tasks (org-db/slug db)]]]}))
 
 (rf/reg-event-db
   ::update-task-failure
