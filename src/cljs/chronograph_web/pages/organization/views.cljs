@@ -116,5 +116,5 @@
          [:div
           [:h2 "Tasks"]
           [task-form]
-          (when-let [tasks @(rf/subscribe [::subs/tasks])]
+          (when-let [tasks @(rf/subscribe [::org-subs/tasks])]
             [task-list tasks])]]))))
