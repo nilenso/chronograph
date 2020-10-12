@@ -16,7 +16,10 @@
 (defn find-by-id [tx id]
   (find-by tx {:id id}))
 
-(defn list [tx attributes]
+(defn list
+  "List un-archived tasks by default. Optionally list archived tasks,
+  given :archived-at."
+  [tx attributes]
   (db-task/where
    tx
    (merge {:archived-at nil} attributes)))
