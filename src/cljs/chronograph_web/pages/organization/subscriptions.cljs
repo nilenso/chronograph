@@ -24,5 +24,7 @@
                                 :as _task}]
                             (= (org-db/current-org-id db)
                                organization-id))]
-      (filter belongs-to-org?
-              (vals (get-in db [:tasks]))))))
+      (->> (get-in db [:tasks])
+           vals
+           (filter belongs-to-org?)
+           (sort-by :id)))))
