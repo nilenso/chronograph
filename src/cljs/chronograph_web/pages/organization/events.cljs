@@ -2,7 +2,8 @@
   (:require [re-frame.core :as rf]
             [chronograph-web.http :as http]
             [chronograph-web.pages.organization.db :as org-db]
-            [chronograph-web.db :as db]))
+            [chronograph-web.db :as db]
+            [chronograph.utils.data :as datautils]))
 
 (def ^:private get-organization-uri
   "/api/organizations/")
@@ -93,10 +94,10 @@
 (rf/reg-event-db
   ::fetch-tasks-success
   (fn [db [_ tasks]]
-    (update-in db
-               [:tasks]
-               merge
-               (zipmap (map :id tasks) tasks))))
+    (update db
+            :tasks
+            merge
+            (datautils/normalize-by :id tasks))))
 
 (rf/reg-event-db
   ::fetch-tasks-failure
