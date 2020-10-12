@@ -94,8 +94,10 @@
 (rf/reg-event-db
   ::fetch-tasks-success
   (fn [db [_ tasks]]
-    (assoc-in db [:tasks]
-              (zipmap (map :id tasks) tasks))))
+    (update-in db
+               [:tasks]
+               merge
+               (zipmap (map :id tasks) tasks))))
 
 (rf/reg-event-db
   ::fetch-tasks-failure
