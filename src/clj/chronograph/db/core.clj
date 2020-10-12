@@ -37,7 +37,8 @@
 (defn update! [table-name tx attributes updates]
   (sql/update! tx
                table-name
-               (merge {:updated-at (time/now)} updates)
+               (merge updates
+                      {:updated-at (time/now)})
                attributes
                sql-opts))
 
@@ -45,7 +46,7 @@
   (let [now (time/now)]
     (sql/insert! tx
                  table-name
-                 (merge {:created-at now
-                         :updated-at now}
-                        attributes)
+                 (merge attributes
+                        {:created-at now
+                         :updated-at now})
                  sql-opts)))
