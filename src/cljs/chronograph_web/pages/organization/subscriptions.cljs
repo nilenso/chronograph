@@ -16,3 +16,13 @@
   ::joined-members
   (fn [db _]
     (org-db/get-joined-members db)))
+
+(rf/reg-sub
+  ::tasks
+  (fn [db [_ _]]
+    (let [belongs-to-org? (fn [{:keys [organization-id]
+                                :as _task}]
+                            (= (org-db/current-org-id db)
+                               organization-id))]
+      (filter belongs-to-org?
+              (vals (get-in db [:tasks]))))))
