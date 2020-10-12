@@ -2,14 +2,15 @@
   (:require [re-frame.core :as rf]
             [chronograph-web.http :as http]
             [chronograph-web.pages.organization.db :as org-db]
-            [chronograph-web.db :as db]
-            [goog.string :as gstring]))
+            [chronograph-web.db :as db]))
 
 (def ^:private get-organization-uri
   "/api/organizations/")
 
 (defn- tasks-uri [slug]
-  (gstring/format "/api/organizations/%s/tasks/" slug))
+  (str "/api/organizations/"
+       slug
+       "/tasks/"))
 
 (def ^:private root-path :create-task)
 (def ^:private status-path [root-path :status])
