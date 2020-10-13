@@ -1,26 +1,52 @@
 (ns chronograph-web.pages.landing.views
   (:require [re-frame.core :as rf]
+            [reagent.core :as r]
             [chronograph-web.events.organization :as org-events]
-            [chronograph-web.subscriptions :as subs]))
+            [chronograph-web.subscriptions :as subs]
+            [chronograph-web.pages :as pages]
+            ["antd" :as antd]
+            ["@ant-design/icons" :as icons]))
 
-(defn organizations-list-element [slug organization]
-  [:li {:key slug}
-   [:a {:href (str "/organizations/" slug)}
-    (:name organization)]])
+;; TODO: This needs to go
+(set! *warn-on-infer* false)
+
+(defn- organizations-table [organizations]
+  [:> antd/Table {:rowKey "id"
+                  :columns [{:title "Name"
+                             :dataIndex "name"
+                             :key "name"
+                             :render #(r/create-element
+                                       (r/reactify-component
+                                        (fn [] [:a
+                                                {:href (str "/organizations/"
+                                                            (. %2 -slug))}
+                                                %1])))}
+                            {:title "Role"
+                             :dataIndex "role"
+                             :key "role"}]
+                  :dataSource (->> organizations
+                                   vals
+                                   (map #(assoc % :role "Unknown")))}])
 
 (defn organizations-list [organizations]
   [:div
    (when (not-empty organizations)
-     [:div
-      [:p "Select organization"]
-      [:ul (map #(apply organizations-list-element %) organizations)]])
-   [:a {:href "/organizations/new"} "New Organization"]])
+     (organizations-table organizations))])
 
 (defn landing-page [_]
-  (rf/dispatch [::org-events/fetch-organizations])
-  (fn [_]
-    (let [{:keys [name]} @(rf/subscribe [::subs/user-info])
-          organizations @(rf/subscribe [::subs/organizations])]
-      [:div
-       [:h2 (str "Hello " name "!")]
-       [organizations-list organizations]])))
+  (fn []
+    (rf/dispatch [::org-events/fetch-organizations])
+    (let [organizations @(rf/subscribe [::subs/organizations])]
+      [pages/with-user-header
+       [:> antd/PageHeader {:title "Organizations"
+                            :extra (r/create-element (r/reactify-component (fn []
+                                                                             [:>
+                                                                              antd/Button
+                                                                              {:type "primary"
+                                                                               :icon (r/create-element icons/PlusOutlined)
+                                                                               :href "/organizations/new"}
+                                                                              "Create"])))
+                            :breadcrumb {:routes [{:path "organizations"
+                                                   :breadcrumbName "Organizations"}]}}
+        [organizations-list organizations]]])))
+

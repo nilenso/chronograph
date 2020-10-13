@@ -6,19 +6,24 @@ const sourcemaps = require("gulp-sourcemaps");
 const concat = require("gulp-concat");
 const cssnano = require("cssnano");
 const postcss = require("gulp-postcss");
+const merge = require("merge-stream");
+const rename = require("gulp-rename");
 
 const { spawn } = require("child_process");
 
 sass.compiler = require("sass");
 
 const sassDev = function () {
-  return gulp
+  return merge(
+    gulp.src("./node_modules/antd/dist/antd.css")
+    .pipe(gulp.dest("./resources/public/css"))
+    , gulp
     .src("./src/styles/**/*.scss")
     .pipe(sourcemaps.init())
     .pipe(sass().on("error", sass.logError))
     .pipe(concat("index.css"))
     .pipe(sourcemaps.write())
-    .pipe(gulp.dest("./resources/public/css"));
+    .pipe(gulp.dest("./resources/public/css")));
 };
 
 exports.watchSass = function () {
@@ -28,12 +33,16 @@ exports.watchSass = function () {
 exports.buildSassProd = function () {
   var plugins = [cssnano()];
 
-  return gulp
+  return merge(
+    gulp.src("./node_modules/antd/dist/antd.min.css")
+    .pipe(rename("antd.css"))
+    .pipe(gulp.dest("./resources/public/css"))
+    , gulp
     .src("./src/styles/**/*.scss")
     .pipe(sass().on("error", sass.logError))
     .pipe(concat("index.css"))
     .pipe(postcss(plugins))
-    .pipe(gulp.dest("./resources/public/css"));
+    .pipe(gulp.dest("./resources/public/css")));
 };
 
 exports.runShadow = function (cb) {
