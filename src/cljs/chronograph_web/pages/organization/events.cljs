@@ -13,10 +13,6 @@
        slug
        "/tasks/"))
 
-(def ^:private root-path :create-task)
-(def ^:private status-path [root-path :status])
-(defn- form-params-path [k] [root-path :form-params k])
-
 (rf/reg-event-fx
   ::fetch-organization
   (fn [_ [_ slug]]
@@ -105,33 +101,9 @@
     db))
 
 (rf/reg-event-db
-  ::create-task-form-update
-  (fn [db [_ k v]]
-    (-> db
-        (assoc-in status-path :editing)
-        (assoc-in (form-params-path k) v))))
-
-(rf/reg-event-fx
-  ::create-task-form-submit
-  (fn [{:keys [db]} _]
-    {:db         (assoc-in db status-path :creating)
-     :http-xhrio (http/post {:uri (tasks-uri (-> db :current-organization :slug))
-                             :params     {:name (get-in db (form-params-path :name))
-                                          :description (get-in db (form-params-path :description))}
-                             :on-success [::create-task-success]
-                             :on-failure [::create-task-failure]})}))
-
-(rf/reg-event-fx
-  ::create-task-success
-  (fn [{:keys [db]} [_ _]]
-    (let [slug (org-db/slug db)]
-      {:db (dissoc db root-path)
-       :fx [[:dispatch [::fetch-tasks slug]]]})))
-
-(rf/reg-event-db
-  ::create-task-failure
+  ::create-task-failed
   (fn [db _]
-    (assoc-in db status-path :failed)))
+    (db/report-error db ::error-creating-task-failed)))
 
 (rf/reg-event-fx
   ::archive-task

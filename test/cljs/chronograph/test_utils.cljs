@@ -16,6 +16,27 @@
     :history-token
     set-token))
 
+(defn stub-event
+  [event-name]
+  (let [dispatched-event (atom nil)]
+    (rf/reg-event-db
+      event-name
+      (fn [db event]
+        (reset! dispatched-event event)
+        db))
+    dispatched-event))
+
+(defn stub-xhrio
+  [response success?]
+  (let [effect (atom nil)]
+    (rf/reg-fx :http-xhrio
+      (fn [{:keys [on-success on-failure] :as params}]
+        (reset! effect params)
+        (if success?
+          (rf/dispatch (conj on-success response))
+          (rf/dispatch (conj on-failure response)))))
+    effect))
+
 (defn initialize-db! []
   (reset! re-frame.db/app-db db/default-db))
 
