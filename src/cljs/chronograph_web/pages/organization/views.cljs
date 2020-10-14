@@ -26,11 +26,12 @@
                                        (http/post {:uri        (tasks-uri slug)
                                                    :params     {:name        name
                                                                 :description description}
-                                                   :on-success [::org-events/fetch-tasks slug]}))})]
-    (fn [{:keys [slug] :as _organization}]
+                                                   :on-success [::org-events/fetch-tasks slug]
+                                                   :on-failure [::org-events/create-task-failed]}))})]
+    (fn [_organization]
       [:form
-       [:div [:input (input-attributes-builder :name :tasks/name)]]
-       [:div [:input (input-attributes-builder :description :tasks/description)]]
+       [:div [:input (input-attributes-builder :name nil :tasks/name)]]
+       [:div [:input (input-attributes-builder :description nil :tasks/description)]]
        [:button submit-attributes "Save"]])))
 
 (defn update-form [{:keys [id] :as _task}]
@@ -111,5 +112,7 @@
          [:div
           [:h2 "Tasks"]
           [create-task-form organization]
+          (when (contains? errors ::org-events/error-creating-task-failed)
+            [:p "Failed to save the task. Please try again."])
           (when-let [tasks @(rf/subscribe [::org-subs/tasks])]
             [task-list tasks])]]))))

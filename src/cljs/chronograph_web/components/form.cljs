@@ -14,7 +14,7 @@
 (defn update-input [db [_ form-key input-key value]]
   (-> db
       (assoc-in [:forms form-key :status] :editing)
-      (assoc-in (flatten [:forms form-key :params input-key]) value)))
+      (assoc-in [:forms form-key :params input-key] value)))
 
 (defn submit-form
   [{:keys [db]} [_ form-key request-builder]]
@@ -61,14 +61,17 @@
       (string/replace #"[-_]" " ")
       string/capitalize))
 
-(defn input-attributes [form-key input-key spec {:keys [value class] :as attributes}]
+(defn input-attributes
+  [form-key input-key {:keys [value class] :as attributes} spec]
   (merge {:on-change   #(rf/dispatch [::update form-key input-key (-> %
                                                                       .-currentTarget
                                                                       .-value)])
           :value       value
-          :placeholder (string/join " " (map sentence-case input-key))}
-         (assoc attributes :class (conj class (when-not (s/valid? spec value)
-                                                "form-error")))))
+          :placeholder (sentence-case input-key)}
+         attributes
+         (when (and spec
+                    (not (s/valid? spec value)))
+           {:class (string/trim (str class " form-error"))})))
 
 (defn submit-attributes
   [form-key request-builder]
@@ -83,10 +86,13 @@
   (let [params (rf/subscribe [::form form-key :params])]
     (rf/dispatch [::initialize form-key initial-values])
     {::submit-attributes        (submit-attributes form-key request-builder)
-     ::input-attributes-builder (fn [input-key input-spec attributes]
-                                  (let [input-path (flatten [input-key])]
-                                    (input-attributes form-key
-                                                      input-path
-                                                      input-spec
-                                                      (merge {:value (get-in @params input-path)}
-                                                             attributes))))}))
+     ::input-attributes-builder (fn builder
+                                  ([input-key]
+                                   (builder input-key nil nil))
+                                  ([input-key attributes]
+                                   (builder input-key attributes nil))
+                                  ([input-key attributes input-spec]
+                                   (input-attributes form-key
+                                                     input-key
+                                                     (assoc attributes :value (get @params input-key))
+                                                     input-spec)))}))
