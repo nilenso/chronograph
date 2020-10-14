@@ -20,7 +20,7 @@
   (str "/api/organizations/" slug "/tasks/"))
 
 (defn create-task-form [{:keys [slug] :as _organization}]
-  (let [{::form/keys [input-attributes-builder submit-attributes]}
+  (let [{::form/keys [get-input-attributes get-submit-attributes]}
         (form/form {:form-key        ::create-task
                     :request-builder (fn [{:keys [name description]}]
                                        (http/post {:uri        (tasks-uri slug)
@@ -30,9 +30,9 @@
                                                    :on-failure [::org-events/create-task-failed]}))})]
     (fn [_organization]
       [:form
-       [:div [:input (input-attributes-builder :name nil :tasks/name)]]
-       [:div [:input (input-attributes-builder :description nil :tasks/description)]]
-       [:button submit-attributes "Save"]])))
+       [:div [:input (get-input-attributes :name nil :tasks/name)]]
+       [:div [:input (get-input-attributes :description nil :tasks/description)]]
+       [:button (get-submit-attributes) "Save"]])))
 
 (defn update-form [{:keys [id] :as _task}]
   (let [{:keys [form-params status]} @(rf/subscribe [::subs/update-task-form id])

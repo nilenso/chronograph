@@ -3,96 +3,101 @@
             [clojure.string :as string]
             [re-frame.core :as rf]))
 
+(defn- get-input-params
+  [db form-key]
+  (get-in db [:forms form-key :params]))
+
+(defn- set-status
+  [db form-key status]
+  (assoc-in db [:forms form-key :status] status))
+
+(defn- set-input-value
+  [db form-key input-key value]
+  (assoc-in db [:forms form-key :params input-key] value))
+
+(defn- clear-form [db form-key]
+  (update db :forms #(dissoc % form-key)))
+
 ;; Events
 
-(defn initialize [db [_ form-key initial-values]]
-  (assoc-in db
-            [:forms form-key]
-            {:status :initialized
-             :params initial-values}))
+(rf/reg-event-db ::initialize
+  (fn [db [_ form-key initial-values]]
+    (assoc-in db
+              [:forms form-key]
+              {:status :initialized
+               :params initial-values})))
 
-(defn update-input [db [_ form-key input-key value]]
-  (-> db
-      (assoc-in [:forms form-key :status] :editing)
-      (assoc-in [:forms form-key :params input-key] value)))
+(rf/reg-event-db ::update
+  (fn [db [_ form-key input-key value]]
+    (-> db
+        (set-status form-key :editing)
+        (set-input-value form-key input-key value))))
 
-(defn submit-form
-  [{:keys [db]} [_ form-key request-builder]]
-  (let [params (get-in db [:forms form-key :params])]
-    {:db         (assoc-in db [:forms form-key :status] :submitting)
-     :http-xhrio (-> (request-builder params)
+(rf/reg-event-fx ::submit-button-clicked
+  (fn [{:keys [db]} [_ form-key request-builder]]
+    {:db         (set-status db form-key :submitting)
+     :http-xhrio (-> (request-builder (get-input-params db form-key))
                      (update :on-success (fn [on-success]
                                            [::submit-form-success form-key on-success]))
                      (update :on-failure (fn [on-failure]
                                            [::submit-form-failure form-key on-failure])))}))
 
-(defn clear-form [db form-key]
-  (update db :forms #(dissoc % form-key)))
+(rf/reg-event-fx ::submit-form-success
+  (fn [{:keys [db]} [_ form-key on-success response]]
+    (cond-> {:db (clear-form db form-key)}
+      on-success (assoc :fx [[:dispatch (conj on-success response)]]))))
 
-(defn submit-form-success [{:keys [db]} [_ form-key on-success response]]
-  (let [effects {:db (clear-form db form-key)}]
-    (if on-success
-      (assoc effects :fx [[:dispatch (conj on-success response)]])
-      effects)))
-
-(defn submit-form-failure [{:keys [db]} [_ form-key on-failure result]]
-  (let [effects {:db (assoc-in db [:forms form-key :status] :submit-failed)}]
-    (if on-failure
-      (assoc effects :fx [[:dispatch (conj on-failure result)]])
-      effects)))
-
-(rf/reg-event-db ::initialize initialize)
-(rf/reg-event-db ::update update-input)
-(rf/reg-event-fx ::submit-form submit-form)
-(rf/reg-event-fx ::submit-form-success submit-form-success)
-(rf/reg-event-fx ::submit-form-failure submit-form-failure)
+(rf/reg-event-fx ::submit-form-failure
+  (fn [{:keys [db]} [_ form-key on-failure result]]
+    (cond-> {:db (set-status db form-key :submit-failed)}
+      on-failure (assoc :fx [[:dispatch (conj on-failure result)]]))))
 
 ;; Subs
 
-(rf/reg-sub
-  ::form
+(rf/reg-sub ::form
   (fn [db [_ form-key child]]
     (get-in db (if child
                  [:forms form-key child]
                  [:forms form-key]))))
+
+;; Attribute builders and form function
 
 (defn sentence-case [s]
   (-> (name s)
       (string/replace #"[-_]" " ")
       string/capitalize))
 
-(defn input-attributes
-  [form-key input-key {:keys [value class] :as attributes} spec]
-  (merge {:on-change   #(rf/dispatch [::update form-key input-key (-> %
-                                                                      .-currentTarget
-                                                                      .-value)])
-          :value       value
-          :placeholder (sentence-case input-key)}
-         attributes
-         (when (and spec
-                    (not (s/valid? spec value)))
-           {:class (string/trim (str class " form-error"))})))
-
-(defn submit-attributes
-  [form-key request-builder]
+(defn- submit-attributes
+  [status form-key request-builder]
   {:type     :button
+   :disabled (= @status
+                :submitting)
    :on-click (fn [_]
-               (rf/dispatch [::submit-form
+               (rf/dispatch [::submit-button-clicked
                              form-key
                              request-builder]))})
 
+(defn- input-attributes-builder
+  ([form-key params input-key]
+   (input-attributes-builder form-key params input-key nil nil))
+  ([form-key params input-key attributes]
+   (input-attributes-builder form-key params input-key attributes nil))
+  ([form-key params input-key {:keys [class] :as attributes} spec]
+   (let [value (get @params input-key)]
+     (merge {:placeholder (sentence-case input-key)}
+            attributes
+            {:on-change #(rf/dispatch [::update form-key input-key (-> %
+                                                                       .-currentTarget
+                                                                       .-value)])
+             :value     value}
+            (when (and spec
+                       (not (s/valid? spec value)))
+              {:class (string/trim (str class " form-error"))})))))
+
 (defn form
   [{:keys [form-key initial-values request-builder]}]
-  (let [params (rf/subscribe [::form form-key :params])]
+  (let [params (rf/subscribe [::form form-key :params])
+        status (rf/subscribe [::form form-key :status])]
     (rf/dispatch [::initialize form-key initial-values])
-    {::submit-attributes        (submit-attributes form-key request-builder)
-     ::input-attributes-builder (fn builder
-                                  ([input-key]
-                                   (builder input-key nil nil))
-                                  ([input-key attributes]
-                                   (builder input-key attributes nil))
-                                  ([input-key attributes input-spec]
-                                   (input-attributes form-key
-                                                     input-key
-                                                     (assoc attributes :value (get @params input-key))
-                                                     input-spec)))}))
+    {::get-submit-attributes #(submit-attributes status form-key request-builder)
+     ::get-input-attributes  (partial input-attributes-builder form-key params)}))
