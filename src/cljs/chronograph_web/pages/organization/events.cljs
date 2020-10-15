@@ -138,9 +138,18 @@
   (fn [{:keys [db]} [_ task-id]]
     (let [slug (org-db/slug db)
           archive-url (str  (tasks-uri slug) task-id "/archive")]
-      {:http-xhrio (http/put archive-url
-                             {:on-success [::fetch-tasks slug]
+      {:http-xhrio (http/put {:uri archive-url
+                              :on-success [::archive-task-success slug task-id]
                               :on-failure [::archive-task-failure]})})))
+
+(rf/reg-event-fx
+  ::archive-task-success
+  (fn [{db :db} [_ slug id]]
+    {:db (update-in db
+                    [:tasks]
+                    dissoc
+                    id)
+     :fx [[:dispatch [::fetch-tasks slug]]]}))
 
 (rf/reg-event-db
   ::archive-task-failure
