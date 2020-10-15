@@ -25,7 +25,11 @@
 (s/def :users/user-un (s/keys :req-un [:users/id :users/name :users/email]
                               :opt-un [:users/photo-url]))
 
-(s/def :users/google-id string?)
+(s/def :users/google-id (s/with-gen
+                          string?
+                          ;; A UUID ensures tests do not flake. A UUID is fine
+                          ;; because a google id is a uniquely random value.
+                          #(gen/fmap str (gen/uuid))))
 
 
 ;; Organizations
