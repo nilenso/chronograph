@@ -8,13 +8,20 @@
             [chronograph-web.http :as http]))
 
 (defn- add-members-form []
-  [:div
-   [components/text-input :email
-    {:placeholder "E-mail"
-     :value       @(rf/subscribe [::org-subs/email-input-value])
-     :on-change   #(rf/dispatch [::org-events/email-input-changed %])}]
-   [:button {:on-click #(rf/dispatch [::org-events/invite-button-clicked])}
-    "Invite"]])
+  (let [slug @(rf/subscribe [::org-subs/org-slug])
+        {::form/keys [get-input-attributes get-submit-attributes]}
+        (form/form {:form-key ::add-member
+                    :request-builder (fn [{:keys [email]}]
+                                       (http/post {:uri (str "/api/organizations/"
+                                                             slug
+                                                             "/members")
+                                                   :params {:email email}
+                                                   :on-success [::org-events/invite-member-succeeded]
+                                                   :on-failure [::org-events/invite-member-failed]}))})]
+    (fn []
+      [:div
+       [:input (get-input-attributes :email)]
+       [:button (get-submit-attributes) "Invite"]])))
 
 (defn- tasks-uri [slug]
   (str "/api/organizations/" slug "/tasks/"))

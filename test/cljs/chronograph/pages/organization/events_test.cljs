@@ -60,13 +60,10 @@
                    {:id   1
                     :name "A Test Org"
                     :slug "test-slug"}])
-     (rf/reg-fx :http-xhrio
-       (fn [_]
-         (rf/dispatch [::org-events/invite-member-succeeded
-                       {:id              1
-                        :organization-id 1
-                        :email           "foo@bar.com"}])))
-     (rf/dispatch [::org-events/invite-button-clicked])
+     (rf/dispatch [::org-events/invite-member-succeeded
+                   {:id              1
+                    :organization-id 1
+                    :email           "foo@bar.com"}])
      (is (= #{{:id              1
                :organization-id 1
                :email           "foo@bar.com"}}
@@ -88,10 +85,7 @@
   (testing "When the invite member form fails"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (rf/reg-fx :http-xhrio
-       (fn [_]
-         (rf/dispatch [::org-events/invite-member-failed])))
-     (rf/dispatch [::org-events/invite-button-clicked])
+     (rf/dispatch [::org-events/invite-member-failed])
      (is (contains? @(rf/subscribe [::subs/page-errors])
                     ::org-events/error-invite-member-failed)
          "The reported error should be in the DB")))
