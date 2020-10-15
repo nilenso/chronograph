@@ -41,53 +41,60 @@
        [:div [:input (get-input-attributes :description nil :tasks/description)]]
        [:button (get-submit-attributes) "Save"]])))
 
-(defn update-form [{:keys [id] :as _task}]
-  (let [{:keys [form-params status]} @(rf/subscribe [::subs/update-task-form id])
-        {:keys [name description]} form-params]
-    [:form
-     [components/text-input :name
-      {:placeholder "Name"
-       :value       name
-       :on-change   #(rf/dispatch [::org-events/update-task-form-update
-                                   id
-                                   :name
-                                   %])}]
-     [components/text-input :description
-      {:placeholder "Description"
-       :value       description
-       :on-change   #(rf/dispatch [::org-events/update-task-form-update
-                                   id
-                                   :description
-                                   %])}]
-     [:button {:type     :button
-               :name     :save
-               :disabled (or (= status :saving))
-               :on-click (fn [] (rf/dispatch [::org-events/update-task-form-submit id]))}
-      (if (= status :saving)
-        "Saving..."
-        "Save")]
-     [:button {:type     :button
-               :name     :save
-               :disabled (or (= status :saving))
-               :on-click (fn [] (rf/dispatch [::org-events/cancel-update-task-form id]))}
-      "Cancel"]]))
+(defn update-form
+  [{:keys [id name description] :as task}]
+  (let [slug @(rf/subscribe [::org-subs/org-slug])
+        {::form/keys [get-input-attributes get-submit-attributes]}
+        (form/form {:form-key [::update-task id]
+                    :initial-values task
+                    :request-builder (fn [task]
+                                       (http/put {:uri (str (tasks-uri slug) id)
+                                                  :params {:updates task}
+                                                  :on-success [::org-events/update-task-success id]
+                                                  :on-failure [::org-events/update-task-failure id]}))})
+        form-sub (rf/subscribe [::form/form [::update-task id] nil])]
+    (fn [_task]
+      (let [status (:status @form-sub)]
+        [:form
+         [:div [:input (get-input-attributes :name nil :tasks/name)]]
+         [:div [:input (get-input-attributes :description nil :tasks/description)]]
+         [:button (get-submit-attributes) "Save"]
+         [:button {:type     :button
+                   :name     :cancel
+                   :disabled (= status :submitting)
+                   :on-click (fn [] (rf/dispatch [::org-events/cancel-update-task-form id]))}
+          "Cancel"]]))))
+
+(defn- archived?
+  [{:keys [archived-at] :as _task}]
+  archived-at)
 
 (defn task-list-element [{:keys [id name description is-updating] :as task}]
   [:li {:key id}
    [:div
-    (if (true? is-updating)
+    (cond
+      (true? is-updating)
       [update-form task]
-      [:p [:b name] " - " description])
-    [:button {:on-click #(rf/dispatch [::org-events/archive-task id])}
-     "Archive"]
-    [:button {:on-click #(rf/dispatch [::org-events/show-update-form task])}
-     "Update"]]])
+
+      (archived? task)
+      [:p [:b name] " - " description]
+
+      :else [:div [:p [:b name] " - " description]
+             [:button {:on-click #(rf/dispatch [::org-events/archive-task id])}
+              "Archive"]
+             [:button {:on-click #(rf/dispatch [::org-events/show-update-form task])}
+              "Update"]])]])
 
 (defn task-list [tasks]
   [:div
    [:h3 "Tasks"]
    [:ul
-    (not-empty (map task-list-element tasks))]])
+    (not-empty (map task-list-element
+                    (filter (complement archived?) tasks)))]
+   [:h3 "Archived Tasks"]
+   [:ul
+    (not-empty (map task-list-element
+                    (filter archived? tasks)))]])
 
 (defn organization-page [{:keys [slug]}]
   (rf/dispatch [::org-events/fetch-organization slug])

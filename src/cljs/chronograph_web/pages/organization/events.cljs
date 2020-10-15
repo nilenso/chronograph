@@ -121,30 +121,12 @@
                    :description description}))))
 
 (rf/reg-event-db
-  ::update-task-form-update
-  (fn [db [_ task-id k v]]
-    (-> db
-        (assoc-in [:update-task task-id :status] :editing)
-        (assoc-in [:update-task task-id :form-params k] v))))
-
-(rf/reg-event-db
   ::cancel-update-task-form
   (fn [db [_ task-id]]
     (let [_update-task-forms (dissoc (-> :update-task :db) task-id)])
     (-> db
         (assoc-in [:tasks task-id :is-updating] false)
         (update-in [:update-task] dissoc task-id))))
-
-(rf/reg-event-fx
-  ::update-task-form-submit
-  (fn [{:keys [db]} [_ task-id]]
-    (let [slug (org-db/slug db)
-          update-url (str (tasks-uri slug) task-id)]
-      {:db         (assoc-in db [:update-task task-id :status] :saving)
-       :http-xhrio (http/put {:uri update-url
-                              :params     {:updates (get-in db [:update-task task-id :form-params])}
-                              :on-success [::update-task-success task-id]
-                              :on-failure [::update-task-failure task-id]})})))
 
 (rf/reg-event-fx
   ::update-task-success
