@@ -48,27 +48,11 @@
     (db/report-error db ::error-org-not-found)))
 
 (rf/reg-event-db
-  ::email-input-changed
-  (fn [db [_ email-value]]
-    (org-db/set-in-add-member-form db :email email-value)))
-
-(rf/reg-event-fx
-  ::invite-button-clicked
-  (fn [{:keys [db]} _]
-    {:http-xhrio (http/post {:uri        (str "/api/organizations/"
-                                              (org-db/slug db)
-                                              "/members")
-                             :params     {:email (org-db/get-from-add-member-form db :email)}
-                             :on-success [::invite-member-succeeded]
-                             :on-failure [::invite-member-failed]})
-     :db         (-> db
-                     (org-db/set-in-add-member-form :email "")
-                     (db/remove-error ::error-invite-member-failed))}))
-
-(rf/reg-event-db
   ::invite-member-succeeded
   (fn [db [_ member]]
-    (org-db/add-invited-member db member)))
+    (-> db
+        (org-db/add-invited-member member)
+        (db/remove-error ::error-invite-member-failed))))
 
 (rf/reg-event-db
   ::invite-member-failed

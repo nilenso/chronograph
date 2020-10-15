@@ -3,11 +3,6 @@
             [chronograph-web.pages.organization.db :as org-db]))
 
 (rf/reg-sub
-  ::email-input-value
-  (fn [db _]
-    (org-db/get-from-add-member-form db :email)))
-
-(rf/reg-sub
   ::invited-members
   (fn [db _]
     (org-db/get-invited-members db)))
@@ -28,3 +23,8 @@
            vals
            (filter belongs-to-org?)
            (sort-by :id)))))
+
+(rf/reg-sub
+  ::org-slug
+  (fn [db _]
+    (org-db/slug db)))
