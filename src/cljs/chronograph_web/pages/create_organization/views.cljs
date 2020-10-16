@@ -1,45 +1,24 @@
 (ns chronograph-web.pages.create-organization.views
   (:require [re-frame.core :as rf]
+            [chronograph-web.components.form :as form]
             [chronograph-web.pages.create-organization.events :as events]
-            [chronograph-web.pages.create-organization.subscriptions :as create-subs]
-            [clojure.spec.alpha :as s]))
-
-(defn- form-valid? [{:keys [name slug]}]
-  (and
-   (s/valid? :organizations/name name)
-   (s/valid? :organizations/slug slug)))
-
-(defn- text-input [k spec {:keys [on-change value] :as attrs}]
-  [:div
-   [:input (merge {:type :text
-                   :on-change #(rf/dispatch [::events/create-organization-form-update
-                                             k
-                                             (.-value (.-currentTarget %))])}
-                  attrs
-                  {:value (or value "")
-                   :class (when (not (s/valid? spec value)) "form-error")
-                   :name (name k)})]])
+            [chronograph-web.http :as http]))
 
 (defn create-organization-page [_]
-  (let [{:keys [form-params status] :as _form-data} @(rf/subscribe [::create-subs/create-organization-form])
-        form-invalid? (not (form-valid? form-params))
-        {:keys [name slug]} form-params]
-    [:form
-     (when (= status :failed)
-       [:div "Error creating the organization"])
-     (when (and status form-invalid?)
-       [:div "Please fix form errors"])
-     (text-input :name
-                 :organizations/name
-                 {:placeholder "Name" :value name :autoFocus true})
-     (text-input :slug
-                 :organizations/slug
-                 {:placeholder "Slug" :value slug})
-     [:button {:type :button
-               :name :create
-               :disabled (or (= status :creating)
-                             form-invalid?)
-               :on-click (fn [] (rf/dispatch [::events/create-organization-form-submit]))}
-      (if (= status :creating)
-        "Creating..."
-        "Create")]]))
+  (let [{::form/keys [get-input-attributes get-submit-attributes]}
+        (form/form {:form-key ::create-organization
+                    :request-builder (fn [{name :name slug :slug}]
+                                       (http/post {:uri "/api/organizations/"
+                                                   :params {:name name
+                                                            :slug slug}
+                                                   :on-success [::events/create-organization-succeeded]
+                                                   :on-failure [::events/create-organization-failed]}))})
+
+        form-sub (rf/subscribe [::form/form ::create-organization nil])]
+    (fn [_]
+      [:form
+       (when (= :submit-failed (:status @form-sub))
+         [:div "Error creating the organization"])
+       [:div [:input (get-input-attributes :name {:type :text :autoFocus true} :organizations/name)]]
+       [:div [:input (get-input-attributes :slug {:type :text} :organizations/slug)]]
+       [:button (get-submit-attributes) "Create"]])))
