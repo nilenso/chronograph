@@ -99,7 +99,7 @@
   (rf/dispatch [::org-events/fetch-organization slug])
   (rf/dispatch [::org-events/fetch-members slug])
   (rf/dispatch [::org-events/fetch-tasks slug])
-  (fn [_]
+  (fn [{:keys [slug]}]
     (let [errors @(rf/subscribe [::subs/page-errors])
           {:keys [name] :as organization} @(rf/subscribe [::subs/organization slug])]
       (cond
