@@ -133,9 +133,11 @@
   (fn [{:keys [db]} [_ task-id]]
     {:db (-> db
              (assoc-in [:tasks task-id :is-updating] false)
-             (update-in [:update-task] dissoc task-id))
+             (update-in [:update-task] dissoc task-id)
+             (db/remove-error ::error-update-task-failed))
      :fx [[:dispatch [::fetch-tasks (org-db/slug db)]]]}))
 
 (rf/reg-event-db
   ::update-task-failure
-  (fn [db _] db))
+  (fn [db _]
+    (db/report-error db ::error-update-task-failed)))
