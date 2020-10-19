@@ -36,14 +36,7 @@
      (tu/initialize-db!)
      (let [slug "slug"]
        (rf/dispatch [::create-organization-events/create-organization-failed])
-       (is (nil? @(rf/subscribe [::subs/organization slug]))))))
-
-  (testing "when organization creation is ongoing"
-    (rf-test/run-test-sync
-     (tu/initialize-db!)
-     (let [slug "slug"]
-       (js/setTimeout #(rf/dispatch
-                        [::create-organization-events/create-organization-failed])
-                      1000)
-       (is (nil? @(rf/subscribe [::subs/organization slug]))
-           "the organization should not exist in the db")))))
+       (is (nil? @(rf/subscribe [::subs/organization slug])))
+       (is (contains? @(rf/subscribe [::subs/page-errors])
+                      ::create-organization-events/error-create-organization-failed)
+           "the page error is updated")))))

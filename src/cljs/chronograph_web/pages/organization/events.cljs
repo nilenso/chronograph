@@ -18,7 +18,7 @@
   (fn [_ [_ slug]]
    ;; TODO: optimize fetch and rendering in case we already have
    ;; data for the organization, in our db.
-    {:http-xhrio (http/get {:uri (str get-organization-uri slug)
+    {:http-xhrio (http/get {:uri        (str get-organization-uri slug)
                             :on-success [::fetch-organization-success]
                             :on-failure [::fetch-organization-fail slug]})}))
 
@@ -67,7 +67,7 @@
 (rf/reg-event-fx
   ::fetch-tasks
   (fn [_ [_ slug]]
-    {:http-xhrio (http/get {:uri (tasks-uri slug)
+    {:http-xhrio (http/get {:uri        (tasks-uri slug)
                             :on-success [::fetch-tasks-success]
                             :on-failure [::fetch-tasks-failure]})}))
 
@@ -82,7 +82,7 @@
 (rf/reg-event-db
   ::fetch-tasks-failure
   (fn [db [_ _]]
-    db))
+    (db/report-error db ::error-fetch-tasks-failed)))
 
 (rf/reg-event-db
   ::create-task-failed
@@ -92,9 +92,9 @@
 (rf/reg-event-fx
   ::archive-task
   (fn [{:keys [db]} [_ task-id]]
-    (let [slug (org-db/slug db)
-          archive-url (str  (tasks-uri slug) task-id "/archive")]
-      {:http-xhrio (http/put {:uri archive-url
+    (let [slug        (org-db/slug db)
+          archive-url (str (tasks-uri slug) task-id "/archive")]
+      {:http-xhrio (http/put {:uri        archive-url
                               :on-success [::archive-task-success slug task-id]
                               :on-failure [::archive-task-failure]})})))
 
@@ -112,21 +112,15 @@
   (fn [db _] db))
 
 (rf/reg-event-db
-  ::show-update-form
-  (fn [db [_ {:keys [id name description] :as _task}]]
-    (-> db
-        (assoc-in [:tasks id :is-updating] true)
-        (assoc-in [:update-task id :form-params]
-                  {:name name
-                   :description description}))))
+  ::show-update-task-form
+  (fn [db [_ task-id]]
+    (assoc-in db [:tasks task-id :is-updating] true)))
 
 (rf/reg-event-db
-  ::cancel-update-task-form
+  ::hide-update-task-form
   (fn [db [_ task-id]]
-    (let [_update-task-forms (dissoc (-> :update-task :db) task-id)])
     (-> db
-        (assoc-in [:tasks task-id :is-updating] false)
-        (update-in [:update-task] dissoc task-id))))
+        (assoc-in [:tasks task-id :is-updating] false))))
 
 (rf/reg-event-fx
   ::update-task-success
