@@ -89,11 +89,7 @@
    [:h3 "Tasks"]
    [:ul
     (not-empty (map task-list-element
-                    (filter (complement archived?) tasks)))]
-   [:h3 "Archived Tasks"]
-   [:ul
-    (not-empty (map task-list-element
-                    (filter archived? tasks)))]])
+                    (filter (complement archived?) tasks)))]])
 
 (defn organization-page [{:keys [slug]}]
   (rf/dispatch [::org-events/fetch-organization slug])
