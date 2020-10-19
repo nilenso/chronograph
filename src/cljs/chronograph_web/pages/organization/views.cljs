@@ -52,18 +52,17 @@
                                                   :params {:updates task}
                                                   :on-success [::org-events/update-task-success id]
                                                   :on-failure [::org-events/update-task-failure id]}))})
-        form-sub (rf/subscribe [::form/form [::update-task id] nil])]
+        status (rf/subscribe [::form/form [::update-task id :status] nil])]
     (fn [_task]
-      (let [status (:status @form-sub)]
-        [:form
+      [:form
          [:div [:input (get-input-attributes :name nil :tasks/name)]]
          [:div [:input (get-input-attributes :description nil :tasks/description)]]
          [:button (get-submit-attributes) "Save"]
          [:button {:type     :button
                    :name     :cancel
-                   :disabled (= status :submitting)
+                   :disabled (= @status :submitting)
                    :on-click (fn [] (rf/dispatch [::org-events/cancel-update-task-form id]))}
-          "Cancel"]]))))
+          "Cancel"]])))
 
 (defn- archived?
   [{:keys [archived-at] :as _task}]
