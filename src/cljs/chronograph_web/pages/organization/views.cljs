@@ -41,8 +41,8 @@
        [:div [:input (get-input-attributes :description nil :tasks/description)]]
        [:button (get-submit-attributes) "Save"]])))
 
-(defn update-form
-  [{:keys [id name description] :as task}]
+(defn update-task-form
+  [{:keys [id] :as task}]
   (let [slug @(rf/subscribe [::org-subs/org-slug])
         {::form/keys [get-input-attributes get-submit-attributes]}
         (form/form {:form-key [::update-task id]
@@ -55,14 +55,14 @@
         status (rf/subscribe [::form/form [::update-task id :status] nil])]
     (fn [_task]
       [:form
-         [:div [:input (get-input-attributes :name nil :tasks/name)]]
-         [:div [:input (get-input-attributes :description nil :tasks/description)]]
-         [:button (get-submit-attributes) "Save"]
-         [:button {:type     :button
-                   :name     :cancel
-                   :disabled (= @status :submitting)
-                   :on-click (fn [] (rf/dispatch [::org-events/cancel-update-task-form id]))}
-          "Cancel"]])))
+       [:div [:input (get-input-attributes :name nil :tasks/name)]]
+       [:div [:input (get-input-attributes :description nil :tasks/description)]]
+       [:button (get-submit-attributes) "Save"]
+       [:button {:type     :button
+                 :name     :cancel
+                 :disabled (= @status :submitting)
+                 :on-click (fn [] (rf/dispatch [::org-events/hide-update-task-form id]))}
+        "Cancel"]])))
 
 (defn- archived?
   [{:keys [archived-at] :as _task}]
@@ -73,7 +73,7 @@
    [:div
     (cond
       (true? is-updating)
-      [update-form task]
+      [update-task-form task]
 
       (archived? task)
       [:p [:b name] " - " description]
@@ -81,7 +81,7 @@
       :else [:div [:p [:b name] " - " description]
              [:button {:on-click #(rf/dispatch [::org-events/archive-task id])}
               "Archive"]
-             [:button {:on-click #(rf/dispatch [::org-events/show-update-form task])}
+             [:button {:on-click #(rf/dispatch [::org-events/show-update-task-form id])}
               "Update"]])]])
 
 (defn task-list [tasks]

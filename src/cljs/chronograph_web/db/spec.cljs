@@ -47,15 +47,9 @@
 (s/def ::page-state (s/keys :opt-un [:page-state/organization-show
                                      :page-state/create-organization]))
 
-(s/def :update-task/name (s/nilable string?))
-(s/def :update-task/slug (s/nilable string?))
-(s/def :update-task/form-params (s/keys :opt-un [:update-task/name :update-task/description]))
-(s/def ::update-task (s/map-of :tasks/id :update-task/form-params))
-
 (s/def ::db (s/keys :req-un [::user ::page]
                     :opt-un [::organizations
                              ::invited-members
                              ::joined-members
                              ::tasks
-                             ::update-task
                              ::page-state]))
