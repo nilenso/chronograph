@@ -7,20 +7,21 @@
             ["antd" :as antd]
             ["@ant-design/icons" :as icons]))
 
-;; TODO: This needs to go
-(set! *warn-on-infer* false)
-
 (defn- organizations-table [organizations]
   [:> antd/Table {:rowKey "id"
                   :columns [{:title "Name"
                              :dataIndex "name"
                              :key "name"
-                             :render #(r/create-element
-                                       (r/reactify-component
-                                        (fn [] [:a
-                                                {:href (str "/organizations/"
-                                                            (. %2 -slug))}
-                                                %1])))}
+                             ;; The render function expects a JS object. Something
+                             ;; (maybe antd/Table) magically turns our nice Clojure
+                             ;; into JS.
+                             :render (fn [org-name ^js org-obj]
+                                       (r/create-element
+                                        (r/reactify-component
+                                         (fn [] [:a
+                                                 {:href (str "/organizations/"
+                                                             (.-slug org-obj))}
+                                                 org-name]))))}
                             {:title "Role"
                              :dataIndex "role"
                              :key "role"}]
@@ -48,5 +49,5 @@
                                                                               "Create"])))
                             :breadcrumb {:routes [{:path "organizations"
                                                    :breadcrumbName "Organizations"}]}}
-        [organizations-list organizations]]])))
-
+        [organizations-list organizations]
+        [:a {:href "/pending-invites"} "You have pending invites!"]]])))
