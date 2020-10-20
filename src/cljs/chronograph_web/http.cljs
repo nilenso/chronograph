@@ -4,8 +4,7 @@
             [chronograph-web.config :as config]))
 
 (defn request [http-xhrio-map]
-  (merge {:timeout config/request-timeout
-          :format          (ajax/json-request-format)
+  (merge {:format          (ajax/json-request-format)
           :timeout config/request-timeout
           :response-format (ajax/json-response-format {:keywords? true})}
          http-xhrio-map))
