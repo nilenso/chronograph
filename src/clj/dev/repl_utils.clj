@@ -5,7 +5,11 @@
             [chronograph.config :as config]
             [chronograph.migrations :as migrations]
             [migratus.core :as migratus]
-            [chronograph.db.core :as db]))
+            [next.jdbc :refer [with-transaction]]
+            [chronograph.db.core :as db]
+            [chronograph.domain.user :as user]
+            [chronograph.domain.organization :as organization]
+            [chronograph.domain.invite :as invite]))
 
 (defn start-app! []
   (core/mount-init!)
@@ -27,7 +31,30 @@
 (defn create-migration [migration-name]
   (migratus/create (migrations/config) migration-name))
 
+(defn setup-org-for-invites-and-invite-self!
+  "For REPL use, to help with click-through testing for the invite user flow.
+
+  A user having the invited email must _not_ already be part of the inviting
+  organization. Also we should be able to OAuth using an email ID we control.
+
+  Thus, we can setup an organization _not_ owned by us, to which we can
+  invite our email."
+  [email-id-to-invite]
+  (with-transaction [tx db/datasource]
+    (let [uuid (str (java.util.UUID/randomUUID))
+          owner (user/find-or-create-google-user! tx
+                                                  uuid
+                                                  (str "Some User " uuid)
+                                                  "some-email@nilenso.org"
+                                                  "http://my.photo.org/foo.jpg")
+          org (organization/create! tx
+                                    #:organizations{:name (str "A test organization " uuid)
+                                                    :slug (str "test-org-" uuid)}
+                                    (:users/id owner))]
+      (invite/find-or-create! tx (:organizations/id org) email-id-to-invite))))
+
 (defn remove-user-from-org!
+  "For REPL use, when one wants to remove a user from an organization."
   [user-id org-id]
   (db/delete! :acls
               db/datasource
