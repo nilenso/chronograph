@@ -35,8 +35,8 @@
      (organizations-table organizations))])
 
 (defn landing-page [_]
-  (fn []
-    (rf/dispatch [::org-events/fetch-organizations])
+  (rf/dispatch [::org-events/fetch-organizations])
+  (fn [_]
     (let [organizations @(rf/subscribe [::subs/organizations])]
       [pages/with-user-header
        [:> antd/PageHeader {:title "Organizations"
