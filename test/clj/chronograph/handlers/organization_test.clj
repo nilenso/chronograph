@@ -215,14 +215,3 @@
                                          :user   user
                                          :body   {:email "test@emailcom"}})
                    (select-keys [:status :body]))))))))
-
-(deftest invited-test
-  (testing "Returns a 200 with a list of invited organizations"
-    (let [{user-id-1 :users/id} (factories/create-user)
-          {org-id :organizations/id :as org1} (factories/create-organization user-id-1)
-          {email     :users/email} (factories/create-user)]
-      (invite/find-or-create! db/datasource org-id email)
-      (is (= {:status 200
-              :body   [org1]}
-             (-> (organization/invited {:user #:users{:email email}})
-                 (select-keys [:status :body])))))))

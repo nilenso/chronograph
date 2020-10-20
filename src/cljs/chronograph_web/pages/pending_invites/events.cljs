@@ -7,9 +7,9 @@
 (rf/reg-event-fx
   ::reject-invite
   (fn [{:keys [db]} [_ id]]
-    {:http-xhrio (http/delete (str "/api/organizations/invited/" (pending-invites-db/slug-by-id db id))
-                              {:on-success [::reject-invite-succeeded id]
-                               :on-failure [::reject-invite-failed]})}))
+    {:http-xhrio (http/post {:uri        (str "/api/invitations/" (pending-invites-db/slug-by-id db id) "/reject")
+                             :on-success [::reject-invite-succeeded id]
+                             :on-failure [::reject-invite-failed]})}))
 
 (rf/reg-event-db
   ::reject-invite-failed
@@ -26,7 +26,7 @@
 (rf/reg-event-fx
   ::accept-invite
   (fn [{:keys [db]} [_ id]]
-    {:http-xhrio (http/post {:uri (str "/api/organizations/invited/" (pending-invites-db/slug-by-id db id))
+    {:http-xhrio (http/post {:uri (str "/api/invitations/" (pending-invites-db/slug-by-id db id) "/accept")
                              :on-success [::accept-invite-succeeded id]
                              :on-failure [::accept-invite-failed]})}))
 
@@ -46,7 +46,7 @@
 (rf/reg-event-fx
   ::fetch-invited-orgs
   (fn [_ _]
-    {:http-xhrio (http/get {:uri "/api/organizations/invited"
+    {:http-xhrio (http/get {:uri "/api/invitations"
                             :on-success [::fetch-invited-orgs-success]
                             :on-failure [::fetch-invited-orgs-failed]})}))
 
