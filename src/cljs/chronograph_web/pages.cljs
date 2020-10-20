@@ -71,4 +71,3 @@
         [:> antd/Layout
          [organization-sider]
          (into [:> antd/Layout.Content] children)]]])))
-
