@@ -1,26 +1,15 @@
 (ns chronograph-web.pages.organization.db
-  (:require [chronograph-web.db :as db]))
-
-(defn get-from-add-member-form
-  [db form-key]
-  (db/get-in-page-state db [:add-member-form form-key]))
-
-(defn set-in-add-member-form
-  [db form-key value]
-  (db/set-in-page-state db [:add-member-form form-key] value))
+  (:require [chronograph-web.db :as db]
+            [chronograph-web.db.organization :as org-db]))
 
 (defn slug
   [db]
   (get-in db [:page :route-params :slug]))
 
-(defn org-by-slug
-  [db slug]
-  (get-in db [:organizations slug]))
-
 (defn current-org
   [db]
   (let [org-slug (slug db)]
-    (org-by-slug db org-slug)))
+    (org-db/org-by-slug db org-slug)))
 
 (defn add-invited-member
   [db {:keys [organization-id] :as member}]

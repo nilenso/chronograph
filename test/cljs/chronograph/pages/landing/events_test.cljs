@@ -1,32 +1,31 @@
-(ns chronograph.pages.pending-invites.events-test
+(ns chronograph.pages.landing.events-test
   (:require [cljs.test :refer-macros [deftest is testing run-tests use-fixtures]]
             [chronograph.fixtures :as fixtures]
             [day8.re-frame.test :as rf-test]
             [chronograph.test-utils :as tu]
             [re-frame.core :as rf]
             [re-frame.db :as db]
-            [chronograph-web.pages.pending-invites.events :as invites-events]
-            [chronograph-web.pages.pending-invites.subscriptions :as invites-subs]
+            [chronograph-web.pages.landing.events :as landing-events]
+            [chronograph-web.pages.landing.subscriptions :as landing-subs]
             [chronograph-web.subscriptions :as subs]
             [chronograph-web.effects]))
 
 (use-fixtures :once fixtures/check-specs)
 
-(deftest pending-invites-page-test
+(deftest landing-page-test
   (testing "When invited orgs are fetched, db should contain them"
     (let [invited-orgs [{:id 1 :slug "slug1" :name "org1"}
                         {:id 2 :slug "slug2" :name "org2"}
                         {:id 3 :slug "slug3" :name "org3"}]]
       (rf-test/run-test-sync
        (tu/initialize-db!)
-       (tu/set-token "/pending-invites")
        (rf/reg-fx :http-xhrio
-         (fn [_]
-           (rf/dispatch [::invites-events/fetch-invited-orgs-success
-                         invited-orgs])))
-       (rf/dispatch [::invites-events/fetch-invited-orgs])
+                  (fn [_]
+                    (rf/dispatch [::landing-events/fetch-invited-orgs-success
+                                  invited-orgs])))
+       (rf/dispatch [::landing-events/fetch-invited-orgs])
        (is (= invited-orgs
-              @(rf/subscribe [::invites-subs/invites]))))))
+              @(rf/subscribe [::landing-subs/invites]))))))
 
   (testing "When invite is rejected, it should be removed from db"
     (rf-test/run-test-sync
@@ -35,14 +34,14 @@
                                                    2 {:id 2 :slug "slug2" :name "org2"}
                                                    3 {:id 3 :slug "slug3" :name "org3"}})
      (rf/reg-fx :http-xhrio
-       (fn [_]
-         (rf/dispatch [::invites-events/reject-invite-succeeded 2])))
-     (rf/dispatch [::invites-events/reject-invite 2])
+                (fn [_]
+                  (rf/dispatch [::landing-events/reject-invite-succeeded 2])))
+     (rf/dispatch [::landing-events/reject-invite 2])
      (is (= [{:id 1 :slug "slug1" :name "org1"}
              {:id 3 :slug "slug3" :name "org3"}]
-            @(rf/subscribe [::invites-subs/invites])))))
+            @(rf/subscribe [::landing-subs/invites])))))
 
-  (testing "When invite is accepted, it should be removed from db and user is sent to organization detail page"
+  (testing "When invite is accepted"
     (rf-test/run-test-sync
      (tu/stub-routing)
      (tu/initialize-db!)
@@ -50,11 +49,16 @@
                                                             2 {:id 2 :slug "slug2" :name "org2"}
                                                             3 {:id 3 :slug "slug3" :name "org3"}})
      (rf/reg-fx :http-xhrio
-       (fn [_]
-         (rf/dispatch [::invites-events/accept-invite-succeeded 2])))
-     (rf/dispatch [::invites-events/accept-invite 2])
+                (fn [_]
+                  (rf/dispatch [::landing-events/accept-invite-succeeded 2])))
+     (rf/dispatch [::landing-events/accept-invite 2])
      (is (= [{:id 1 :slug "slug1" :name "org1"}
              {:id 3 :slug "slug3" :name "org3"}]
-            @(rf/subscribe [::invites-subs/invites])))
-     (is (= {:route-params {:slug "slug2"}, :handler :organization-show}
-            @(rf/subscribe [::subs/current-page]))))))
+            @(rf/subscribe [::landing-subs/invites]))
+         "it should be removed from the pending invites map in the app db.")
+     (is (= {:id 2 :slug "slug2" :name "org2"}
+            @(rf/subscribe [::subs/organization "slug2"]))
+         "it should be added to the organizations map in the app db.")
+     (is (= {:handler :root}
+            @(rf/subscribe [::subs/current-page]))
+         "the user remains on the landing page."))))
