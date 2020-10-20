@@ -51,12 +51,12 @@
                                         middleware/wrap-authenticated)}})
 
 (def invited-org-routes
-  {:get        (-> organization/invited
-                   middleware/wrap-authenticated)
-   ["/" :slug] {:post   (-> invite/accept
-                            middleware/wrap-authenticated)
-                :delete (-> invite/reject
-                            middleware/wrap-authenticated)}})
+  {:get                  (-> invite/invited-orgs
+                             middleware/wrap-authenticated)
+   ["/" :slug "/accept"] {:post (-> invite/accept
+                                    middleware/wrap-authenticated)}
+   ["/" :slug "/reject"] {:post (-> invite/reject
+                                    middleware/wrap-authenticated)}})
 
 (def routes
   ["/" [["" (fn [_] (-> (response/resource-response "public/index.html")
@@ -65,11 +65,11 @@
         ["api/" [["users/me" {:get (-> user/me
                                        middleware/wrap-authenticated)}]
                  ["timers/" timer-routes]
+                 ["invitations" invited-org-routes]
                  ["organizations/" {:get              (-> organization/index
                                                           middleware/wrap-authenticated)
                                     :post             (-> organization/create
                                                           middleware/wrap-authenticated)
-                                    "invited"         invited-org-routes
                                     ["" :slug]        {:get       (-> organization/find-one
                                                                       middleware/wrap-authenticated)
                                                        "/members" {:get  (-> organization/show-members
