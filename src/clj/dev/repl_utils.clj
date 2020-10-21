@@ -7,7 +7,7 @@
             [migratus.core :as migratus]
             [next.jdbc :refer [with-transaction]]
             [chronograph.db.core :as db]
-            [chronograph.domain.user :as user]
+            [chronograph.domain.user :as domain-user] ; do NOT alias as user, else lein repl barfs
             [chronograph.domain.organization :as organization]
             [chronograph.domain.invite :as invite]))
 
@@ -42,11 +42,11 @@
   [email-id-to-invite]
   (with-transaction [tx db/datasource]
     (let [uuid (str (java.util.UUID/randomUUID))
-          owner (user/find-or-create-google-user! tx
-                                                  uuid
-                                                  (str "Some User " uuid)
-                                                  "some-email@nilenso.org"
-                                                  "http://my.photo.org/foo.jpg")
+          owner (domain-user/find-or-create-google-user! tx
+                                                         uuid
+                                                         (str "Some User " uuid)
+                                                         "some-email@nilenso.org"
+                                                         "http://my.photo.org/foo.jpg")
           org (organization/create! tx
                                     #:organizations{:name (str "A test organization " uuid)
                                                     :slug (str "test-org-" uuid)}
