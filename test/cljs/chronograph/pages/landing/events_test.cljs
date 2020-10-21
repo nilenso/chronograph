@@ -20,9 +20,9 @@
       (rf-test/run-test-sync
        (tu/initialize-db!)
        (rf/reg-fx :http-xhrio
-                  (fn [_]
-                    (rf/dispatch [::landing-events/fetch-invited-orgs-success
-                                  invited-orgs])))
+         (fn [_]
+           (rf/dispatch [::landing-events/fetch-invited-orgs-success
+                         invited-orgs])))
        (rf/dispatch [::landing-events/fetch-invited-orgs])
        (is (= invited-orgs
               @(rf/subscribe [::landing-subs/invites]))))))
@@ -34,8 +34,8 @@
                                                    2 {:id 2 :slug "slug2" :name "org2"}
                                                    3 {:id 3 :slug "slug3" :name "org3"}})
      (rf/reg-fx :http-xhrio
-                (fn [_]
-                  (rf/dispatch [::landing-events/reject-invite-succeeded 2])))
+       (fn [_]
+         (rf/dispatch [::landing-events/reject-invite-succeeded 2])))
      (rf/dispatch [::landing-events/reject-invite 2])
      (is (= [{:id 1 :slug "slug1" :name "org1"}
              {:id 3 :slug "slug3" :name "org3"}]
@@ -49,8 +49,8 @@
                                                             2 {:id 2 :slug "slug2" :name "org2"}
                                                             3 {:id 3 :slug "slug3" :name "org3"}})
      (rf/reg-fx :http-xhrio
-                (fn [_]
-                  (rf/dispatch [::landing-events/accept-invite-succeeded 2])))
+       (fn [_]
+         (rf/dispatch [::landing-events/accept-invite-succeeded 2])))
      (rf/dispatch [::landing-events/accept-invite 2])
      (is (= [{:id 1 :slug "slug1" :name "org1"}
              {:id 3 :slug "slug3" :name "org3"}]

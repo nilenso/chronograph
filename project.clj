@@ -31,6 +31,7 @@
                                              [day8.re-frame/http-fx "0.2.1"]
                                              [kibu/pushy "0.3.8"]
                                              [bidi "2.1.6"]
+                                             [medley "1.3.0"]
 
                                              ;; dev dependencies
                                              [org.clojure/clojure "1.10.1"]
