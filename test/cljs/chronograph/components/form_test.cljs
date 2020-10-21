@@ -31,19 +31,19 @@
                                                               :request-builder (constantly {})})]
          (is (= {:value       "baz"
                  :placeholder "Foobar"}
-                (dissoc (get-input-attributes :foobar) :on-change))
+                (dissoc (get-input-attributes :foobar) :onChange))
              "The value of the input should be set to its initial value"))))
 
     (testing "When only an input key is passed"
       (rf-test/run-test-sync
        (let [{::form/keys [get-input-attributes]} (form/form {:form-key            ::form-key
                                                               :request-builder (constantly {})})
-             {:keys [on-change]} (get-input-attributes :foobar)]
-         (on-change (event-with-value "new-value"))
+             {:keys [onChange]} (get-input-attributes :foobar)]
+         (onChange (event-with-value "new-value"))
          (is (= {:value       "new-value"
                  :placeholder "Foobar"}
-                (dissoc (get-input-attributes :foobar) :on-change))
-             "The value of the input should change after calling on-change"))))
+                (dissoc (get-input-attributes :foobar) :onChange))
+             "The value of the input should change after calling onChange"))))
 
     (testing "When additional attributes are passed"
       (rf-test/run-test-sync
@@ -54,7 +54,7 @@
                  :baz         "quux"
                  :class       "bar"}
                 (dissoc (get-input-attributes :foobar {:baz       "quux"
-                                                       :class "bar"}) :on-change))
+                                                       :class "bar"}) :onChange))
              "The supplied attributes should be present in the returned attributes"))))
 
     (testing "When additional attributes and a spec are passed"
@@ -70,7 +70,7 @@
                                                 {:baz   "quux"
                                                  :value "value"
                                                  :class "bar"}
-                                                int?) :on-change))
+                                                int?) :onChange))
                "The form-error class should be set"))))))
 
   (testing "Submit attributes builder"
@@ -78,9 +78,9 @@
       (rf-test/run-test-sync
        (let [{::form/keys [get-submit-attributes]} (form/form {:form-key    ::form-key
                                                                :request-builder (constantly {})})
-             {:keys [on-click]} (get-submit-attributes)]
+             {:keys [onClick]} (get-submit-attributes)]
          (rf/reg-fx :http-xhrio (constantly nil))
-         (on-click nil)
+         (onClick nil)
          (is (:disabled (get-submit-attributes))))))))
 
 (deftest form-submission-test
@@ -95,10 +95,10 @@
                                                                                 :params     form-params
                                                                                 :on-success [::foo-event "bar"]
                                                                                 :on-failure [::baz-event "quux"]})})
-           {:keys [on-change]} (get-input-attributes :foobar)
-           {:keys [on-click]} (get-submit-attributes)]
-       (on-change (event-with-value "new-value"))
-       (on-click nil)
+           {:keys [onChange]} (get-input-attributes :foobar)
+           {:keys [onClick]} (get-submit-attributes)]
+       (onChange (event-with-value "new-value"))
+       (onClick nil)
        (is (= {:uri        "/api/foo"
                :method     :post
                :params     {:foobar "new-value"}
@@ -113,11 +113,11 @@
                          get-input-attributes]} (form/form {:form-key            ::form-key
                                                             :request-builder (constantly
                                                                               {:on-success [::foo-event "bar"]})})
-           {:keys [on-change]} (get-input-attributes :foobar)
-           {:keys [on-click]} (get-submit-attributes)]
-       (on-change (event-with-value "new-value"))
+           {:keys [onChange]} (get-input-attributes :foobar)
+           {:keys [onClick]} (get-submit-attributes)]
+       (onChange (event-with-value "new-value"))
        (tu/stub-xhrio {:fake "response"} true)
-       (on-click nil)
+       (onClick nil)
        (is (= [::foo-event "bar" {:fake "response"}]
               @dispatched-event)
            "The on-success event should be dispatched with the received response"))))
@@ -129,12 +129,11 @@
                          get-input-attributes]} (form/form {:form-key            ::form-key
                                                             :request-builder (constantly
                                                                               {:on-failure [::baz-event "quux"]})})
-           {:keys [on-change]} (get-input-attributes :foobar)
-           {:keys [on-click]} (get-submit-attributes)]
-       (on-change (event-with-value "new-value"))
+           {:keys [onChange]} (get-input-attributes :foobar)
+           {:keys [onClick]} (get-submit-attributes)]
+       (onChange (event-with-value "new-value"))
        (tu/stub-xhrio {:fake "response"} false)
-       (on-click nil)
+       (onClick nil)
        (is (= [::baz-event "quux" {:fake "response"}]
               @dispatched-event)
            "The on-failure event should be dispatched with the received response")))))
-
