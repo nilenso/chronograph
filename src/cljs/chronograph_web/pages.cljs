@@ -32,10 +32,9 @@
   (fn [_]
     (let [children (r/children (r/current-component))
           user-info @(rf/subscribe [::subs/user-info])]
-      [:<>
-       [:> antd/Layout
-        [user-header user-info]
-        (into [:> antd/Layout.Content {:style {:padding "0 50px"}}] children)]])))
+      [:> antd/Layout
+       [user-header user-info]
+       (into [:> antd/Layout.Content {:style {:padding "0 50px"}}] children)])))
 
 ;; Unused code. But, should be useful soon.
 (defn- organization-select-menu []

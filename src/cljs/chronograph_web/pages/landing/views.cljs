@@ -9,40 +9,41 @@
             ["@ant-design/icons" :as icons]))
 
 (defn- organizations-table [organizations]
-  [antd/table {:rowKey     "id"
-               :columns    [{:title     "Name"
-                             :dataIndex "name"
-                             :key       "name"
-                             :render    (fn [org-name {:keys [slug] :as _org}]
-                                          [:a
-                                           {:href (str "/organizations/" slug)}
-                                           org-name])}
-                            {:title     "Role"
-                             :dataIndex "role"
-                             :key       "role"}]
-               :dataSource (->> organizations
-                                vals
-                                (map #(assoc % :role "Unknown")))}])
+  (when (not-empty organizations)
+    [:<>
+     [antd/title {:level 4} "My Organizations"]
+     [antd/table {:rowKey     "id"
+                  :columns    [{:title     "Name"
+                                :dataIndex "name"
+                                :key       "name"
+                                :render    (fn [org-name {:keys [slug] :as _org}]
+                                             [:a
+                                              {:href (str "/organizations/" slug)}
+                                              org-name])}
+                               {:title     "Role"
+                                :dataIndex "role"
+                                :key       "role"}]
+                  :dataSource (->> organizations
+                                   vals
+                                   (map #(assoc % :role "Unknown")))}]]))
 
 (defn- invited-organizations-list
   [organizations]
   (when (not-empty organizations)
-    [:div
-     [antd/title {:level 3} "Invitations"]
+    [:<>
+     [antd/title {:level 4} "My Invitations"]
      [antd/list {:renderItem (fn [{:keys [name id] :as _org}]
-                               [antd/list-item
-                                [antd/space
+                               [antd/list-item {}
+                                [antd/space {:split [antd/divider {:type "vertical"}]}
                                  name
-                                 [antd/button {:onClick #(rf/dispatch [::landing-events/reject-invite id])}
-                                  "reject"]
-                                 [antd/button {:onClick #(rf/dispatch [::landing-events/accept-invite id])}
-                                  "accept"]]])
+                                 [antd/button {:onClick #(rf/dispatch [::landing-events/accept-invite id])
+                                               :type    "link"}
+                                  "Accept"]
+                                 [antd/button {:onClick #(rf/dispatch [::landing-events/reject-invite id])
+                                               :danger  true
+                                               :type    "link"}
+                                  "Decline"]]])
                  :dataSource organizations}]]))
-
-(defn organizations-list [organizations]
-  [:div
-   (when (not-empty organizations)
-     (organizations-table organizations))])
 
 (defn landing-page [_]
   (rf/dispatch [::org-events/fetch-organizations])
@@ -51,13 +52,14 @@
     (let [organizations         @(rf/subscribe [::subs/organizations])
           invited-organizations @(rf/subscribe [::landing-subs/invites])]
       [pages/with-user-header
-       [antd/page-header {:title      "Organizations"
-                          :extra      [antd/button
+       [antd/page-header {:extra      [antd/button
                                        {:type "primary"
                                         :icon icons/PlusOutlined
                                         :href "/organizations/new"}
                                        "Create"]
-                          :breadcrumb {:routes [{:path           "organizations"
-                                                 :breadcrumbName "Organizations"}]}}
+                          :breadcrumb {:routes [{:path           ""
+                                                 :breadcrumbName "Home"}]}}
         [invited-organizations-list invited-organizations]
-        [organizations-list organizations]]])))
+        (when (not-empty invited-organizations)
+          [antd/divider])
+        [organizations-table organizations]]])))

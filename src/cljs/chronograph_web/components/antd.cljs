@@ -5,13 +5,11 @@
             [medley.core :as medley]
             [reagent.core :as r]))
 
-(defn button
-  [attributes text]
-  [:> antd/Button
-   (medley/update-existing attributes
-                           :icon
-                           r/create-element)
-   text])
+(defn- split-attributes
+  [args]
+  (if (map? (first args))
+    [(first args) (rest args)]
+    [{} args]))
 
 (defn- transform-render-fn
   [render-fn]
@@ -21,19 +19,41 @@
     ;; into JS. Hence we use js->clj
     (r/as-element (apply render-fn (map #(js->clj % :keywordize-keys true) args)))))
 
-(defn list
-  [attributes]
-  [:> antd/List (medley/update-existing attributes
-                                        :renderItem
-                                        transform-render-fn)])
+(defn- antd-wrapper
+  "Wraps an antd component given the raw React component
+   and a function to transform its attributes."
+  ([component]
+   (antd-wrapper component identity))
+  ([component attr-fn]
+   (fn [& args]
+     (let [[attributes children] (split-attributes args)]
+       (into [:> component (attr-fn attributes)]
+             children)))))
 
-(defn list-item
-  [& children]
-  (into [:> antd/List.Item] children))
+(def row (antd-wrapper antd/Row))
+(def col (antd-wrapper antd/Col))
 
-(defn space
-  [& children]
-  (into [:> antd/Space] children))
+(def button (antd-wrapper antd/Button
+                          #(medley/update-existing %
+                                                   :icon
+                                                   r/create-element)))
+
+(def list (antd-wrapper antd/List
+                        #(medley/update-existing %
+                                                 :renderItem
+                                                 transform-render-fn)))
+
+(def list-item (antd-wrapper antd/List.Item
+                             #(medley/update-existing %
+                                                      :actions
+                                                      (partial map r/as-element))))
+
+(def space (antd-wrapper antd/Space
+                         #(medley/update-existing %
+                                                  :split
+                                                  r/as-element)))
+
+(def divider (antd-wrapper antd/Divider))
 
 (defn- update-table-columns
   [columns]
@@ -43,17 +63,12 @@
                                  transform-render-fn))
        columns))
 
-(defn table
-  [attributes]
-  [:> antd/Table (update attributes :columns update-table-columns)])
+(def table (antd-wrapper antd/Table
+                         #(update % :columns update-table-columns)))
 
-(defn page-header
-  [attributes & children]
-  (into [:> antd/PageHeader (medley/update-existing attributes
-                                                    :extra
-                                                    r/as-element)]
-        children))
+(def page-header (antd-wrapper antd/PageHeader
+                               #(medley/update-existing %
+                                                        :extra
+                                                        r/as-element)))
 
-(defn title
-  [& children]
-  (into [:> antd/Typography.Title] children))
+(def title (antd-wrapper antd/Typography.Title))
