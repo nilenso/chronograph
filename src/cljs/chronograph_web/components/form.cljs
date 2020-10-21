@@ -60,6 +60,11 @@
                  [:forms form-key child]
                  [:forms form-key]))))
 
+(rf/reg-sub ::submitting?
+  (fn [db [_ form-key]]
+    (= (get-in db [:forms form-key :status])
+       :submitting)))
+
 ;; Attribute builders and form function
 
 (defn sentence-case [s]
@@ -69,13 +74,14 @@
 
 (defn- submit-attributes
   [status form-key request-builder]
-  {:type     :button
-   :disabled (= @status
-                :submitting)
-   :onClick (fn [_]
+  (merge
+   {:type     "primary"
+    :onClick (fn [_]
                (rf/dispatch [::submit-button-clicked
                              form-key
-                             request-builder]))})
+                             request-builder]))}
+   (when (= @status :submitting)
+     {:loading true})))
 
 (defn- input-attributes-builder
   ([form-key params input-key]
@@ -87,8 +93,8 @@
      (merge {:placeholder (sentence-case input-key)}
             attributes
             {:onChange #(rf/dispatch [::update form-key input-key (-> %
-                                                                       .-currentTarget
-                                                                       .-value)])
+                                                                      .-currentTarget
+                                                                      .-value)])
              :value     value}
             (when (and spec
                        (not (s/valid? spec value)))
@@ -100,4 +106,5 @@
         status (rf/subscribe [::form form-key :status])]
     (rf/dispatch [::initialize form-key initial-values])
     {::get-submit-attributes #(submit-attributes status form-key request-builder)
-     ::get-input-attributes  (partial input-attributes-builder form-key params)}))
+     ::get-input-attributes  (partial input-attributes-builder form-key params)
+     ::submitting?-state (rf/subscribe [::submitting? form-key])}))

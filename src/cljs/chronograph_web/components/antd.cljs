@@ -33,6 +33,7 @@
 (def row (antd-wrapper antd/Row))
 (def col (antd-wrapper antd/Col))
 
+(def input (antd-wrapper antd/Input))
 (def button (antd-wrapper antd/Button
                           #(medley/update-existing %
                                                    :icon
