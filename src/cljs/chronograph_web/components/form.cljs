@@ -72,7 +72,7 @@
   {:type     :button
    :disabled (= @status
                 :submitting)
-   :on-click (fn [_]
+   :onClick (fn [_]
                (rf/dispatch [::submit-button-clicked
                              form-key
                              request-builder]))})
@@ -86,7 +86,7 @@
    (let [value (get @params input-key)]
      (merge {:placeholder (sentence-case input-key)}
             attributes
-            {:on-change #(rf/dispatch [::update form-key input-key (-> %
+            {:onChange #(rf/dispatch [::update form-key input-key (-> %
                                                                        .-currentTarget
                                                                        .-value)])
              :value     value}
