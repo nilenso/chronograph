@@ -1,4 +1,4 @@
-(ns chronograph-web.pages.create-organization.db
+(ns chronograph-web.pages.landing.db
   (:require [chronograph-web.db.organization :as org-db]))
 
 (defn add-to-organizations

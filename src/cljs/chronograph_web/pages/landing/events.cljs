@@ -2,7 +2,11 @@
   (:require [re-frame.core :as rf]
             [chronograph-web.db :as db]
             [chronograph-web.db.organization-invites :as org-invites-db]
+            [chronograph-web.pages.landing.db :as landing-db]
             [chronograph-web.http :as http]))
+
+(defn- organization-url [slug]
+  (str "/organizations/" slug))
 
 (rf/reg-event-fx
   ::reject-invite
@@ -58,3 +62,26 @@
   ::fetch-invited-orgs-failed
   (fn [db _]
     (db/report-error db ::error-fetch-invited-orgs-failed)))
+
+(rf/reg-event-db
+  ::show-create-org-form
+  (fn [db _]
+    (db/set-in-page-state db [:show-create-org-form] true)))
+
+(rf/reg-event-db
+  ::hide-create-org-form
+  (fn [db _]
+    (db/set-in-page-state db [:show-create-org-form] false)))
+
+(rf/reg-event-fx
+  ::create-organization-succeeded
+  (fn [{:keys [db]} [_ {:keys [slug] :as response}]]
+    {:history-token (organization-url slug)
+     :db            (-> db
+                        (landing-db/add-to-organizations response)
+                        (db/remove-error ::error-create-organization-failed))}))
+
+(rf/reg-event-db
+  ::create-organization-failed
+  (fn [db _]
+    (db/report-error db ::error-create-organization-failed)))

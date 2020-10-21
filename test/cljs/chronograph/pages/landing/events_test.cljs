@@ -3,6 +3,7 @@
             [chronograph.fixtures :as fixtures]
             [day8.re-frame.test :as rf-test]
             [chronograph.test-utils :as tu]
+            [chronograph.specs]
             [re-frame.core :as rf]
             [re-frame.db :as db]
             [chronograph-web.pages.landing.events :as landing-events]
@@ -62,3 +63,34 @@
      (is (= {:handler :root}
             @(rf/subscribe [::subs/current-page]))
          "the user remains on the landing page."))))
+
+(deftest create-organization-form-submit-test
+  (testing "when the organization is created successfully"
+    (rf-test/run-test-sync
+     (tu/initialize-db!)
+     (tu/stub-routing)
+     (let [name "Name"
+           slug "slug"
+           id 83
+           organization {:id id :name name :slug slug}]
+       (rf/dispatch [::landing-events/create-organization-succeeded
+                     organization])
+       (is (= {:route-params {:slug slug}
+               :handler      :organization-show}
+              @(rf/subscribe [::subs/current-page]))
+           "the user should be routed to the organization-show page")
+       (is (= @(rf/subscribe [::subs/organization slug])
+              {:name "Name"
+               :slug "slug"
+               :id 83})
+           "should be able to lookup the organization by slug from the app-db"))))
+
+  (testing "when organization creation fails"
+    (rf-test/run-test-sync
+     (tu/initialize-db!)
+     (let [slug "slug"]
+       (rf/dispatch [::landing-events/create-organization-failed])
+       (is (nil? @(rf/subscribe [::subs/organization slug])))
+       (is (contains? @(rf/subscribe [::subs/page-errors])
+                      ::landing-events/error-create-organization-failed)
+           "the page error is updated")))))

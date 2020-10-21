@@ -48,7 +48,7 @@
                                                          "some-email@nilenso.org"
                                                          "http://my.photo.org/foo.jpg")
           org (organization/create! tx
-                                    #:organizations{:name (str "A test organization " uuid)
+                                    #:organizations{:name (str "A test organization " uuid uuid)
                                                     :slug (str "test-org-" uuid)}
                                     (:users/id owner))]
       (invite/find-or-create! tx (:organizations/id org) email-id-to-invite))))

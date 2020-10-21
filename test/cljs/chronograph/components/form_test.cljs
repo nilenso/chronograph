@@ -81,7 +81,7 @@
              {:keys [onClick]} (get-submit-attributes)]
          (rf/reg-fx :http-xhrio (constantly nil))
          (onClick nil)
-         (is (:disabled (get-submit-attributes))))))))
+         (is (:loading (get-submit-attributes))))))))
 
 (deftest form-submission-test
   (testing "The built request should be supplied to the http-xhrio effect"
