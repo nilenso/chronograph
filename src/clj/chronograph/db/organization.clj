@@ -1,6 +1,5 @@
 (ns chronograph.db.organization
-  (:require [chronograph.db.core :as db]
-            [next.jdbc.sql :as sql]))
+  (:require [chronograph.db.core :as db]))
 
 (defn create! [tx {:organizations/keys [name slug]}]
   (db/create! :organizations
@@ -15,20 +14,18 @@
   (db/find-by :organizations tx attributes))
 
 (defn by-ids [tx ids]
-  (sql/query tx
-             ["SELECT * FROM organizations where id = ANY(?)" (int-array ids)]
-             db/sql-opts))
+  (db/query tx
+            ["SELECT * FROM organizations where id = ANY(?)" (int-array ids)]))
 
 (defn user-organizations [tx user-id]
-  (sql/query tx
-             ["SELECT organizations.* FROM organizations
+  (db/query tx
+            ["SELECT organizations.* FROM organizations
                INNER JOIN acls
                ON organizations.id = acls.organization_id
                where acls.user_id = ?" user-id]))
 
 (defn invited-organizations [tx email]
-  (sql/query tx
-             ["SELECT organizations.* FROM organizations, invites
+  (db/query tx
+            ["SELECT organizations.* FROM organizations, invites
                WHERE invites.organization_id = organizations.id
-               AND invites.email = ?" email]
-             db/sql-opts))
+               AND invites.email = ?" email]))
