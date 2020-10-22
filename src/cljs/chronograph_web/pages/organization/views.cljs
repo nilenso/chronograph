@@ -44,15 +44,14 @@
 (defn update-task-form
   [{:keys [id] :as task}]
   (let [slug @(rf/subscribe [::org-subs/org-slug])
-        {::form/keys [get-input-attributes get-submit-attributes]}
+        {::form/keys [get-input-attributes get-submit-attributes submitting?-state]}
         (form/form {:form-key [::update-task id]
                     :initial-values task
                     :request-builder (fn [task]
                                        (http/put {:uri (str (tasks-uri slug) id)
                                                   :params {:updates task}
                                                   :on-success [::org-events/update-task-success id]
-                                                  :on-failure [::org-events/update-task-failure id]}))})
-        status (rf/subscribe [::form/form [::update-task id :status] nil])]
+                                                  :on-failure [::org-events/update-task-failure id]}))})]
     (fn [_task]
       [:form
        [:div [:input (get-input-attributes :name nil :tasks/name)]]
@@ -60,7 +59,7 @@
        [:button (get-submit-attributes) "Save"]
        [:button {:type     :button
                  :name     :cancel
-                 :disabled (= @status :submitting)
+                 :disabled @submitting?-state
                  :on-click (fn [] (rf/dispatch [::org-events/hide-update-task-form id]))}
         "Cancel"]])))
 

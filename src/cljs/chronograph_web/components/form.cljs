@@ -82,7 +82,7 @@
                              form-key
                              request-builder]))}
    (when (= @status :submitting)
-     {:loading true})))
+     {:loading "true"})))
 
 (defn- input-attributes-builder
   ([form-key params input-key]
