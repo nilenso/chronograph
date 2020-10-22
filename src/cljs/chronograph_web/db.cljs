@@ -59,3 +59,7 @@
 (defn get-errors
   [db]
   (get-in-page-state db [:errors]))
+
+(defn clear-errors
+  [db]
+  (set-in-page-state db [:errors] #{}))

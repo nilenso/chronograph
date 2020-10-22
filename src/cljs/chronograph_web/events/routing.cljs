@@ -1,7 +1,10 @@
 (ns chronograph-web.events.routing
-  (:require [re-frame.core :as rf]))
+  (:require [re-frame.core :as rf]
+            [chronograph-web.db :as db]))
 
 (rf/reg-event-db
   ::pushy-dispatch
   (fn [db [_ route]]
-    (assoc db :page route)))
+    (-> db
+        (assoc :page route)
+        (db/clear-errors))))

@@ -1,9 +1,10 @@
 (ns chronograph-web.pages.organization.events
   (:require [re-frame.core :as rf]
             [chronograph-web.http :as http]
-            [chronograph-web.pages.organization.db :as org-db]
+            [chronograph-web.pages.organization.db :as page-db]
             [chronograph-web.db :as db]
-            [chronograph.utils.data :as datautils]))
+            [chronograph.utils.data :as datautils]
+            [chronograph-web.db.organization :as org-db]))
 
 (def ^:private get-organization-uri
   "/api/organizations/")
@@ -33,14 +34,16 @@
   ::fetch-members-succeeded
   (fn [db [_ {:keys [invited joined]}]]
     (-> db
-        (org-db/add-invited-members invited)
-        (org-db/add-joined-members joined))))
+        (page-db/add-invited-members invited)
+        (page-db/add-joined-members joined)
+        (db/remove-error ::error-fetch-members-failed))))
 
 (rf/reg-event-db
   ::fetch-organization-success
-  (fn [db [_ {:keys [slug] :as organization}]]
-    (assoc-in db
-              [:organizations slug] organization)))
+  (fn [db [_ organization]]
+    (-> db
+        (db/remove-error ::error-org-not-found)
+        (org-db/add-org organization))))
 
 (rf/reg-event-db
   ::fetch-organization-fail
@@ -51,7 +54,7 @@
   ::invite-member-succeeded
   (fn [db [_ member]]
     (-> db
-        (org-db/add-invited-member member)
+        (page-db/add-invited-member member)
         (db/remove-error ::error-invite-member-failed))))
 
 (rf/reg-event-db
@@ -74,10 +77,9 @@
 (rf/reg-event-db
   ::fetch-tasks-success
   (fn [db [_ tasks]]
-    (update db
-            :tasks
-            merge
-            (datautils/normalize-by :id tasks))))
+    (-> db
+        (update :tasks merge (datautils/normalize-by :id tasks))
+        (db/remove-error ::error-fetch-tasks-failed))))
 
 (rf/reg-event-db
   ::fetch-tasks-failure
@@ -92,7 +94,7 @@
 (rf/reg-event-fx
   ::archive-task
   (fn [{:keys [db]} [_ task-id]]
-    (let [slug        (org-db/slug db)
+    (let [slug        (page-db/slug db)
           archive-url (str (tasks-uri slug) task-id "/archive")]
       {:http-xhrio (http/put {:uri        archive-url
                               :on-success [::archive-task-success slug task-id]
@@ -129,7 +131,7 @@
              (assoc-in [:tasks task-id :is-updating] false)
              (update-in [:update-task] dissoc task-id)
              (db/remove-error ::error-update-task-failed))
-     :fx [[:dispatch [::fetch-tasks (org-db/slug db)]]]}))
+     :fx [[:dispatch [::fetch-tasks (page-db/slug db)]]]}))
 
 (rf/reg-event-db
   ::update-task-failure
