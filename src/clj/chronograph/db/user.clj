@@ -1,6 +1,5 @@
 (ns chronograph.db.user
-  (:require [next.jdbc.sql :as sql]
-            [chronograph.db.core :as db]))
+  (:require [chronograph.db.core :as db]))
 
 (defn create! [tx {:users/keys [name
                                 email
@@ -19,16 +18,14 @@
               attributes))
 
 (defn find-by-google-id [tx google-id]
-  (first (sql/query tx
-                    ["SELECT u.* FROM users u
+  (first (db/query tx
+                   ["SELECT u.* FROM users u
                      INNER JOIN google_profiles gp ON u.google_profiles_id=gp.id
-                     AND gp.google_id=?" google-id]
-                    db/sql-opts)))
+                     AND gp.google_id=?" google-id])))
 
 (defn find-by-org-id
   [tx organization-id]
-  (sql/query tx
-             ["SELECT users.* FROM users, acls
+  (db/query tx
+            ["SELECT users.* FROM users, acls
                 WHERE users.id = acls.user_id
-                AND acls.organization_id=?" organization-id]
-             db/sql-opts))
+                AND acls.organization_id=?" organization-id]))

@@ -34,12 +34,11 @@
 
 (defn find-all-for-timer
   [tx timer-id]
-  (sql/query tx
-             ["SELECT id, timer_id, started_at, stopped_at
+  (db/query tx
+            ["SELECT id, timer_id, started_at, stopped_at
                FROM time_spans
                WHERE timer_id = ?"
-              timer-id]
-             db/sql-opts))
+             timer-id]))
 
 (defn find-running-span-for-user-by-timer-id
   [tx user-id timer-id]
