@@ -214,4 +214,17 @@
                (-> (organization/invite {:params {:slug slug}
                                          :user   user
                                          :body   {:email "test@emailcom"}})
+                   (select-keys [:status :body])))))))
+
+  (testing "Should return 409 if the user already belongs to the org"
+    (tu/with-fixtures [fixtures/clear-db]
+      (let [{user-id :users/id
+             email :users/email
+             :as user} (factories/create-user)
+            {slug :organizations/slug} (factories/create-organization user-id)]
+        (is (= {:status 409
+                :body   {:error "User already invited"}}
+               (-> (organization/invite {:params {:slug slug}
+                                         :user   user
+                                         :body   {:email email}})
                    (select-keys [:status :body]))))))))

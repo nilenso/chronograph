@@ -7,6 +7,9 @@
 (defn find-by-id [tx user-id]
   (user-db/find-by tx {:users/id user-id}))
 
+(defn find-by-email [tx email]
+  (user-db/find-by tx {:users/email email}))
+
 (defn find-or-create-google-user!
   [tx google-id name email photo-url]
   (if-let [google-user (find-by-google-id tx google-id)]

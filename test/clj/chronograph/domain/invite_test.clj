@@ -29,7 +29,15 @@
         (is (= invite
                (invite/find-or-create! db/datasource organization-id "test@email.com")))
         (is (= [invite]
-               (db-invite/find-by-org-id db/datasource organization-id)))))))
+               (db-invite/find-by-org-id db/datasource organization-id))))))
+  (testing "It returns error value if the user already belongs to the organization"
+    (let [{user-id :users/id
+           email :users/email} (factories/create-user)
+          {organization-id :organizations/id} (factories/create-organization user-id)]
+      (is (= ::invite/error-user-belongs-to-org
+             (invite/find-or-create! db/datasource
+                                     organization-id
+                                     email))))))
 
 (deftest find-by-org-id-test
   (testing "Can retrieve all created invites given an org ID"
