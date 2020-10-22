@@ -3,10 +3,8 @@
             [chronograph-web.db :as db]
             [chronograph-web.db.organization-invites :as org-invites-db]
             [chronograph-web.pages.landing.db :as landing-db]
-            [chronograph-web.http :as http]))
-
-(defn- organization-url [slug]
-  (str "/organizations/" slug))
+            [chronograph-web.http :as http]
+            [chronograph-web.routes :as routes]))
 
 (rf/reg-event-fx
   ::reject-invite
@@ -76,7 +74,7 @@
 (rf/reg-event-fx
   ::create-organization-succeeded
   (fn [{:keys [db]} [_ {:keys [slug] :as response}]]
-    {:history-token (organization-url slug)
+    {:history-token (routes/path-for :organization-show :slug slug)
      :db            (-> db
                         (landing-db/add-to-organizations response)
                         (db/remove-error ::error-create-organization-failed))}))

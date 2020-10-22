@@ -8,7 +8,12 @@
             [chronograph-web.pages.landing.events :as landing-events]
             [chronograph-web.pages.landing.subscriptions :as landing-subs]
             [chronograph-web.components.antd :as antd]
-            ["@ant-design/icons" :as icons]))
+            ["@ant-design/icons" :as icons]
+            [chronograph-web.routes :as routes]))
+
+(defn- organizations-root-url []
+  (str js/location.origin
+       (routes/path-for :organization-show :slug "")))
 
 (defn create-organization-form
   []
@@ -28,7 +33,7 @@
        [antd/space {:direction "vertical"}
         [antd/input (get-input-attributes :name {:type :text :autoFocus true} :organizations/name)]
         [antd/input (get-input-attributes :slug
-                                          {:addonBefore "https://chronograph.amongdragons.com/organizations/"
+                                          {:addonBefore (organizations-root-url)
                                            :placeholder "e.g. my-org-name-42"}
                                           :organizations/slug)]
         [antd/space
