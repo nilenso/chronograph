@@ -76,7 +76,8 @@
   [status form-key request-builder]
   (merge
    {:type     "primary"
-    :onClick (fn [_]
+    :onClick (fn [e]
+               (.preventDefault e)
                (rf/dispatch [::submit-button-clicked
                              form-key
                              request-builder]))}

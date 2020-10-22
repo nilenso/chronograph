@@ -9,6 +9,8 @@
   [v]
   (clj->js {:currentTarget {:value v}}))
 
+(def fake-event (clj->js {:preventDefault (constantly nil)}))
+
 (deftest sentence-case-test
   (testing "it returns hypenated strings in sentence case"
     (is (= "Sentence case" (form/sentence-case "sentence-case"))))
@@ -80,7 +82,7 @@
                                                                :request-builder (constantly {})})
              {:keys [onClick]} (get-submit-attributes)]
          (rf/reg-fx :http-xhrio (constantly nil))
-         (onClick nil)
+         (onClick fake-event)
          (is (:loading (get-submit-attributes))))))))
 
 (deftest form-submission-test
@@ -98,7 +100,7 @@
            {:keys [onChange]} (get-input-attributes :foobar)
            {:keys [onClick]} (get-submit-attributes)]
        (onChange (event-with-value "new-value"))
-       (onClick nil)
+       (onClick fake-event)
        (is (= {:uri        "/api/foo"
                :method     :post
                :params     {:foobar "new-value"}
@@ -117,7 +119,7 @@
            {:keys [onClick]} (get-submit-attributes)]
        (onChange (event-with-value "new-value"))
        (tu/stub-xhrio {:fake "response"} true)
-       (onClick nil)
+       (onClick fake-event)
        (is (= [::foo-event "bar" {:fake "response"}]
               @dispatched-event)
            "The on-success event should be dispatched with the received response"))))
@@ -133,7 +135,7 @@
            {:keys [onClick]} (get-submit-attributes)]
        (onChange (event-with-value "new-value"))
        (tu/stub-xhrio {:fake "response"} false)
-       (onClick nil)
+       (onClick fake-event)
        (is (= [::baz-event "quux" {:fake "response"}]
               @dispatched-event)
            "The on-failure event should be dispatched with the received response")))))

@@ -129,7 +129,6 @@
   (fn [{:keys [db]} [_ task-id]]
     {:db (-> db
              (assoc-in [:tasks task-id :is-updating] false)
-             (update-in [:update-task] dissoc task-id)
              (db/remove-error ::error-update-task-failed))
      :fx [[:dispatch [::fetch-tasks (page-db/slug db)]]]}))
 
