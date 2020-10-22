@@ -8,7 +8,8 @@
             [chronograph-web.subscriptions :as subs]
             [chronograph.test-utils :as tu]
             [chronograph.fixtures :as fixtures]
-            [chronograph-web.db :as db]))
+            [chronograph-web.db :as db]
+            [chronograph-web.routes :as routes]))
 
 (use-fixtures :once fixtures/check-specs)
 
@@ -26,7 +27,7 @@
          (fn [_]
            (rf/dispatch [::org-events/fetch-organization-success
                          organization])))
-       (tu/set-token (str "/organizations/" slug))
+       (tu/set-token (routes/path-for :organization-show :slug slug))
        (rf/dispatch [::org-events/fetch-organization slug])
        (is (= {:id         42
                :name       "A Test Org"
@@ -43,7 +44,7 @@
        (rf/reg-fx :http-xhrio
          (fn [_]
            (rf/dispatch [::org-events/fetch-organization-fail])))
-       (tu/set-token (str "/organizations/" slug))
+       (tu/set-token (routes/path-for :organization-show :slug slug))
        (rf/dispatch [::org-events/fetch-organization slug])
        (is (contains? @(rf/subscribe [::subs/page-errors]) ::org-events/error-org-not-found)
            "The reported error should be in the DB")))))
@@ -58,7 +59,7 @@
                          :slug       slug
                          :created-at "2020-09-14T14:16:06.402873Z"
                          :updated-at "2020-09-14T14:16:06.402873Z"}]
-       (tu/set-token (str "/organizations/" slug))
+       (tu/set-token (routes/path-for :organization-show :slug slug))
        (rf/dispatch [::org-events/fetch-organization-success
                      organization])
        (rf/reg-fx :http-xhrio
@@ -97,7 +98,7 @@
   (testing "When the invite member form succeeds"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (tu/set-token "/organizations/test-slug")
+     (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
      (rf/dispatch [::org-events/fetch-organization-success
                    {:id   1
                     :name "A Test Org"
@@ -130,7 +131,7 @@
   (testing "When fetch tasks succeeds"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (tu/set-token "/organizations/test-slug")
+     (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
      (rf/dispatch [::org-events/fetch-organization-success
                    {:id   1
                     :name "A Test Org"
@@ -165,7 +166,7 @@
   (testing "When fetch task fails"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (tu/set-token "/organizations/test-slug")
+     (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
      (rf/reg-fx :http-xhrio
        (fn [_]
          (rf/dispatch [::org-events/fetch-tasks-failure])))
@@ -191,7 +192,7 @@
   (testing "When updating a task succeeds"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (tu/set-token "/organizations/test-slug")
+     (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
      (rf/dispatch [::org-events/fetch-organization-success
                    {:id   1
                     :name "A Test Org"
@@ -234,7 +235,7 @@
   (testing "When updating a task fails"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (tu/set-token "/organizations/test-slug")
+     (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
 
      (rf/dispatch [::org-events/update-task-failure 2])
 
@@ -246,7 +247,7 @@
   (testing "When the update form is shown or hidden for a task, the flag should be set accordingly"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (tu/set-token "/organizations/test-slug")
+     (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
      (rf/dispatch [::org-events/fetch-organization-success
                    {:id   1
                     :name "A Test Org"

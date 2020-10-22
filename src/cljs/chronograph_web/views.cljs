@@ -1,7 +1,8 @@
 (ns chronograph-web.views
   (:require [re-frame.core :as rf]
-            [chronograph-web.routes :as routes]
             [chronograph-web.subscriptions :as subs]
+            [chronograph-web.pages.landing.views :refer [landing-page]]
+            [chronograph-web.pages.organization.views :refer [organization-page]]
             [chronograph-web.components.common :as components]))
 
 (defn login-route []
@@ -18,9 +19,12 @@
    [:h2 "Please sign in to continue"]
    [signin-button]])
 
+(def authenticated-view {:root              landing-page
+                         :organization-show organization-page})
+
 (defn authenticated-page []
   (if-let [{:keys [handler route-params]} @(rf/subscribe [::subs/current-page])]
-    [(routes/authenticated-view handler) route-params]
+    [(authenticated-view handler) route-params]
     [:div "Page not found"]))
 
 (defn root []
