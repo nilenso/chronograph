@@ -263,11 +263,11 @@
                   :organization-id 1
                   :archived-at     nil}]
        (rf/dispatch [::org-events/fetch-tasks-success [task1 task2]])
+
        (rf/dispatch [::org-events/show-update-task-form 2])
-       (is (= [task1
-               (assoc task2 :is-updating true)]
-              @(rf/subscribe [::org-subs/tasks])))
+       (is (not @(rf/subscribe [::org-subs/show-update-task-form? 1])))
+       (is @(rf/subscribe [::org-subs/show-update-task-form? 2]))
+
        (rf/dispatch [::org-events/hide-update-task-form 2])
-       (is (= [task1
-               (assoc task2 :is-updating false)]
-              @(rf/subscribe [::org-subs/tasks])))))))
+       (is (not @(rf/subscribe [::org-subs/show-update-task-form? 1])))
+       (is (not @(rf/subscribe [::org-subs/show-update-task-form? 2])))))))

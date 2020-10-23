@@ -46,3 +46,11 @@
 (defn get-joined-members
   [db]
   (get-in db [:joined-members (current-org-id db)]))
+
+(defn set-show-update-task-form
+  [db task-id show?]
+  (db/set-in-page-state db [:show-update-task-form? task-id] show?))
+
+(defn show-update-task-form?
+  [db task-id]
+  (db/get-in-page-state db [:show-update-task-form? task-id]))
