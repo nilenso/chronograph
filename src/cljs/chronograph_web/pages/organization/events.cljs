@@ -116,13 +116,12 @@
 (rf/reg-event-db
   ::show-update-task-form
   (fn [db [_ task-id]]
-    (assoc-in db [:tasks task-id :is-updating] true)))
+    (page-db/set-show-update-task-form db task-id true)))
 
 (rf/reg-event-db
   ::hide-update-task-form
   (fn [db [_ task-id]]
-    (-> db
-        (assoc-in [:tasks task-id :is-updating] false))))
+    (page-db/set-show-update-task-form db task-id false)))
 
 (rf/reg-event-fx
   ::update-task-success

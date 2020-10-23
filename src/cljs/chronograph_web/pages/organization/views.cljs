@@ -60,35 +60,33 @@
        [:button {:type     :button
                  :name     :cancel
                  :disabled @submitting?-state
-                 :on-click (fn [] (rf/dispatch [::org-events/hide-update-task-form id]))}
+                 :on-click #(rf/dispatch [::org-events/hide-update-task-form id])}
         "Cancel"]])))
 
 (defn- archived?
   [{:keys [archived-at] :as _task}]
   archived-at)
 
-(defn task-list-element [{:keys [id name description is-updating] :as task}]
+(defn task-list-element [{:keys [id name description] :as task}]
   [:li {:key id}
    [:div
-    (cond
-      (true? is-updating)
+    (if @(rf/subscribe [::org-subs/show-update-task-form? id])
       [update-task-form task]
-
-      (archived? task)
-      [:p [:b name] " - " description]
-
-      :else [:div [:p [:b name] " - " description]
-             [:button {:on-click #(rf/dispatch [::org-events/archive-task id])}
-              "Archive"]
-             [:button {:on-click #(rf/dispatch [::org-events/show-update-task-form id])}
-              "Update"]])]])
+      [:div [:p [:b name] " - " description]
+       [:button {:on-click #(rf/dispatch [::org-events/archive-task id])}
+        "Archive"]
+       [:button {:on-click #(rf/dispatch [::org-events/show-update-task-form id])}
+        "Update"]])]])
 
 (defn task-list [tasks]
   [:div
    [:h3 "Tasks"]
    [:ul
-    (not-empty (map task-list-element
-                    (filter (complement archived?) tasks)))]])
+    (->> tasks
+         (filter (complement archived?))
+         (map task-list-element)
+         (doall)
+         (not-empty))]])
 
 (defn organization-page [{:keys [slug]}]
   (rf/dispatch [::org-events/fetch-organization slug])
