@@ -119,7 +119,15 @@
                          ::org-events/error-invite-member-failed))
          "Error state if any is cleared from the db")))
 
-  (testing "When the invite member form fails"
+  (testing "When the invite member form fails because the user is already in the organization"
+    (rf-test/run-test-sync
+     (tu/initialize-db!)
+     (rf/dispatch [::org-events/invite-member-failed {:status 409}])
+     (is (contains? @(rf/subscribe [::subs/page-errors])
+                    ::org-events/error-user-already-in-org)
+         "The reported error should be in the DB")))
+
+  (testing "When the invite member form fails for an unknown reason"
     (rf-test/run-test-sync
      (tu/initialize-db!)
      (rf/dispatch [::org-events/invite-member-failed])

@@ -7,15 +7,15 @@
             [chronograph-web.subscriptions :as subs]
             [chronograph-web.http :as http]))
 
-(defn- add-members-form []
+(defn- invite-member-form []
   (let [slug @(rf/subscribe [::org-subs/org-slug])
         {::form/keys [get-input-attributes get-submit-attributes]}
-        (form/form {:form-key ::add-member
+        (form/form {:form-key        ::add-member
                     :request-builder (fn [{:keys [email]}]
-                                       (http/post {:uri (str "/api/organizations/"
-                                                             slug
-                                                             "/members")
-                                                   :params {:email email}
+                                       (http/post {:uri        (str "/api/organizations/"
+                                                                    slug
+                                                                    "/members")
+                                                   :params     {:email email}
                                                    :on-success [::org-events/invite-member-succeeded]
                                                    :on-failure [::org-events/invite-member-failed]}))})]
     (fn []
@@ -45,11 +45,11 @@
   [{:keys [id] :as task}]
   (let [slug @(rf/subscribe [::org-subs/org-slug])
         {::form/keys [get-input-attributes get-submit-attributes submitting?-state]}
-        (form/form {:form-key [::update-task id]
-                    :initial-values task
+        (form/form {:form-key        [::update-task id]
+                    :initial-values  task
                     :request-builder (fn [task]
-                                       (http/put {:uri (str (tasks-uri slug) id)
-                                                  :params {:updates task}
+                                       (http/put {:uri        (str (tasks-uri slug) id)
+                                                  :params     {:updates task}
                                                   :on-success [::org-events/update-task-success id]
                                                   :on-failure [::org-events/update-task-failure id]}))})]
     (fn [_task]
@@ -103,9 +103,11 @@
          [:h1 name]
          [:div
           [:h2 "Add Members"]
-          [add-members-form]
-          (when (contains? errors ::org-events/error-invite-member-failed)
-            [:p "Failed to invite the member. Please try again."])]
+          [invite-member-form]
+          (cond
+            (contains? errors ::org-events/error-user-already-in-org) [:p "That user already belongs to this organization."]
+            (contains? errors ::org-events/error-invite-member-failed) [:p "Failed to invite the member. Please try again."]
+            :else nil)]
          [:div
           [:h2 "Members"]
           (if (contains? errors ::org-events/error-fetch-members-failed)

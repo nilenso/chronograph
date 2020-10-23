@@ -58,7 +58,7 @@
         (not (s/valid? :invites/email email)) (response/bad-request {:error "Invalid email"})
         :else                                 (let [invite-or-error (invite/find-or-create! tx org-id email)]
                                                 (if (= invite-or-error ::invite/error-user-belongs-to-org)
-                                                  (-> {:error "User already invited"}
+                                                  (-> {:error "User already belongs to this organization"}
                                                       response/response
                                                       (response/status 409))
                                                   (response/response invite-or-error)))))))

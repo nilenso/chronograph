@@ -223,7 +223,7 @@
              :as user} (factories/create-user)
             {slug :organizations/slug} (factories/create-organization user-id)]
         (is (= {:status 409
-                :body   {:error "User already invited"}}
+                :body   {:error "User already belongs to this organization"}}
                (-> (organization/invite {:params {:slug slug}
                                          :user   user
                                          :body   {:email email}})
