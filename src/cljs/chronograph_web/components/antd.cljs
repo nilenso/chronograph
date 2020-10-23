@@ -30,8 +30,28 @@
        (into [:> component (attr-fn attributes)]
              children)))))
 
+;; Layout
+
 (def row (antd-wrapper antd/Row))
 (def col (antd-wrapper antd/Col))
+
+(def layout (antd-wrapper antd/Layout))
+(def layout-header (antd-wrapper antd/Layout.Header))
+(def layout-content (antd-wrapper antd/Layout.Content))
+
+;; Menu
+
+(def menu (antd-wrapper antd/Menu))
+
+;; Call these two components like functions; don't put them in vectors
+;; like Hiccup.
+;; This is because the styling seems to break if an intermediary component
+;; is introduced.
+;; Ex: (menu-item {:key "1" :icon (r/create-element icons/SettingOutlined)} "Settings")
+(def menu-item (antd-wrapper antd/Menu.Item))
+(def menu-divider (antd-wrapper antd/Menu.Divider))
+
+;; Others
 
 (def input (antd-wrapper antd/Input))
 (def button (antd-wrapper antd/Button
@@ -73,3 +93,7 @@
                                                         r/as-element)))
 
 (def title (antd-wrapper antd/Typography.Title))
+
+(def dropdown (antd-wrapper antd/Dropdown))
+
+(def avatar (antd-wrapper antd/Avatar))
