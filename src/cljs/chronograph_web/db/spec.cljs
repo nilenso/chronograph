@@ -45,8 +45,8 @@
                                                                         :create-organization/form-params])))
 (s/def ::organization-invites (s/map-of :organizations/id :organizations/organization-un))
 
-(s/def ::page-state (s/keys :opt-un [:page-state/organization-show
-                                     :page-state/create-organization]))
+(s/def ::page-state (s/nilable (s/keys :opt-un [:page-state/organization-show
+                                                :page-state/create-organization])))
 
 (s/def ::db (s/keys :req-un [::user ::page]
                     :opt-un [::organizations

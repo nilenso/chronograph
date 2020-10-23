@@ -7,4 +7,4 @@
   (fn [db [_ route]]
     (-> db
         (assoc :page route)
-        (db/clear-errors))))
+        (db/clear-page-state))))

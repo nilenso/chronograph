@@ -44,6 +44,10 @@
          f
          args))
 
+(defn clear-page-state
+  [db]
+  (update db :page-state dissoc (current-page-name db)))
+
 ;; Error reporting functions
 ;; Use these functions to report and retrieve errors which
 ;; are specific to the current page.
