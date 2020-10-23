@@ -47,23 +47,3 @@
 (defn clear-page-state
   [db]
   (update db :page-state dissoc (current-page-name db)))
-
-;; Error reporting functions
-;; Use these functions to report and retrieve errors which
-;; are specific to the current page.
-
-(defn report-error
-  [db error]
-  (update-in-page-state db [:errors] conj-to-set error))
-
-(defn remove-error
-  [db error]
-  (update-in-page-state db [:errors] disj error))
-
-(defn get-errors
-  [db]
-  (get-in-page-state db [:errors]))
-
-(defn clear-errors
-  [db]
-  (set-in-page-state db [:errors] #{}))

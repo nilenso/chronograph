@@ -37,6 +37,15 @@
           (rf/dispatch (conj on-failure response)))))
     effect))
 
+(defn stub-effect
+  [effect-name]
+  (let [params (atom nil)]
+    (rf/reg-fx effect-name
+      (fn [& args]
+        (reset! params args)
+        nil))
+    params))
+
 (defn initialize-db! []
   (reset! re-frame.db/app-db db/default-db))
 

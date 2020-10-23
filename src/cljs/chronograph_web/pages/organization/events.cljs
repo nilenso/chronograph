@@ -2,9 +2,9 @@
   (:require [re-frame.core :as rf]
             [chronograph-web.http :as http]
             [chronograph-web.pages.organization.db :as page-db]
-            [chronograph-web.db :as db]
             [chronograph.utils.data :as datautils]
-            [chronograph-web.db.organization :as org-db]))
+            [chronograph-web.db.organization :as org-db]
+            [chronograph-web.config :as config]))
 
 (def ^:private get-organization-uri
   "/api/organizations/")
@@ -35,40 +35,40 @@
   (fn [db [_ {:keys [invited joined]}]]
     (-> db
         (page-db/add-invited-members invited)
-        (page-db/add-joined-members joined)
-        (db/remove-error ::error-fetch-members-failed))))
+        (page-db/add-joined-members joined))))
 
 (rf/reg-event-db
   ::fetch-organization-success
   (fn [db [_ organization]]
-    (-> db
-        (db/remove-error ::error-org-not-found)
-        (org-db/add-org organization))))
+    (org-db/add-org db organization)))
 
-(rf/reg-event-db
+(rf/reg-event-fx
   ::fetch-organization-fail
-  (fn [db _]
-    (db/report-error db ::error-org-not-found)))
+  (fn [_ _]
+    {:flash-error {:content (str "Oh no, something went wrong! "
+                                 (:frown config/emojis)
+                                 " Please refresh the page!")}}))
 
 (rf/reg-event-db
   ::invite-member-succeeded
   (fn [db [_ member]]
-    (-> db
-        (page-db/add-invited-member member)
-        (db/remove-error ::error-invite-member-failed)
-        (db/remove-error ::error-user-already-in-org))))
+    (page-db/add-invited-member db member)))
 
-(rf/reg-event-db
+(rf/reg-event-fx
   ::invite-member-failed
-  (fn [db [_ {:keys [status]}]]
+  (fn [_ [_ {:keys [status]}]]
     (if (= status 409)
-      (db/report-error db ::error-user-already-in-org)
-      (db/report-error db ::error-invite-member-failed))))
+      {:flash-error {:content "That user is already in the organization!"}}
+      {:flash-error {:content (str "Failed to send the invitation "
+                                   (:frown config/emojis)
+                                   " Please try again.")}})))
 
-(rf/reg-event-db
+(rf/reg-event-fx
   ::fetch-members-failed
-  (fn [db _]
-    (db/report-error db ::error-fetch-members-failed)))
+  (fn [_ _]
+    {:flash-error {:content (str "Oh no, something went wrong! "
+                                 (:frown config/emojis)
+                                 " Please refresh the page!")}}))
 
 (rf/reg-event-fx
   ::fetch-tasks
@@ -80,19 +80,21 @@
 (rf/reg-event-db
   ::fetch-tasks-success
   (fn [db [_ tasks]]
-    (-> db
-        (update :tasks merge (datautils/normalize-by :id tasks))
-        (db/remove-error ::error-fetch-tasks-failed))))
+    (update db :tasks merge (datautils/normalize-by :id tasks))))
 
-(rf/reg-event-db
+(rf/reg-event-fx
   ::fetch-tasks-failure
-  (fn [db [_ _]]
-    (db/report-error db ::error-fetch-tasks-failed)))
+  (fn [_ _]
+    {:flash-error {:content (str "Oh no, something went wrong! "
+                                 (:frown config/emojis)
+                                 " Please refresh the page!")}}))
 
-(rf/reg-event-db
+(rf/reg-event-fx
   ::create-task-failed
-  (fn [db _]
-    (db/report-error db ::error-creating-task-failed)))
+  (fn [_ _]
+    {:flash-error {:content (str "Failed to create the task "
+                                 (:frown config/emojis)
+                                 " Please try again.")}}))
 
 (rf/reg-event-fx
   ::archive-task
@@ -129,12 +131,12 @@
 (rf/reg-event-fx
   ::update-task-success
   (fn [{:keys [db]} [_ task-id]]
-    {:db (-> db
-             (assoc-in [:tasks task-id :is-updating] false)
-             (db/remove-error ::error-update-task-failed))
+    {:db (assoc-in db [:tasks task-id :is-updating] false)
      :fx [[:dispatch [::fetch-tasks (page-db/slug db)]]]}))
 
-(rf/reg-event-db
+(rf/reg-event-fx
   ::update-task-failure
-  (fn [db _]
-    (db/report-error db ::error-update-task-failed)))
+  (fn [_ _]
+    {:flash-error {:content (str "Failed to update the task "
+                                 (:frown config/emojis)
+                                 " Please try again.")}}))
