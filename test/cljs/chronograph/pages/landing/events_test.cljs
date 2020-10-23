@@ -88,9 +88,9 @@
   (testing "when organization creation fails"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (let [slug "slug"]
+     (let [slug "slug"
+           error-params (tu/stub-effect :flash-error)]
        (rf/dispatch [::landing-events/create-organization-failed])
        (is (nil? @(rf/subscribe [::subs/organization slug])))
-       (is (contains? @(rf/subscribe [::subs/page-errors])
-                      ::landing-events/error-create-organization-failed)
-           "the page error is updated")))))
+       (is (some? @error-params)
+           "An error should be flashed")))))

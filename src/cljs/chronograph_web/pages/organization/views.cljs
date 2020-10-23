@@ -93,34 +93,23 @@
   (rf/dispatch [::org-events/fetch-members slug])
   (rf/dispatch [::org-events/fetch-tasks slug])
   (fn [{:keys [slug]}]
-    (let [errors @(rf/subscribe [::subs/page-errors])
-          {:keys [name] :as organization} @(rf/subscribe [::subs/organization slug])]
-      (cond
-        (contains? errors ::org-events/error-org-not-found) [:h2 "Not found"]
-        (not name) [components/loading-spinner]
-        :else
+    (let [{:keys [name] :as organization} @(rf/subscribe [::subs/organization slug])]
+      (if (not name)
+        [components/loading-spinner]
         [:div
          [:h1 name]
          [:div
           [:h2 "Add Members"]
-          [invite-member-form]
-          (cond
-            (contains? errors ::org-events/error-user-already-in-org) [:p "That user already belongs to this organization."]
-            (contains? errors ::org-events/error-invite-member-failed) [:p "Failed to invite the member. Please try again."]
-            :else nil)]
+          [invite-member-form]]
          [:div
           [:h2 "Members"]
-          (if (contains? errors ::org-events/error-fetch-members-failed)
-            [:p "Failed to load members of the organization. Please refresh the page."]
-            [:ul
-             (for [member @(rf/subscribe [::org-subs/joined-members])]
-               ^{:key (str "joined-" (:id member))} [:li (:name member)])
-             (for [member @(rf/subscribe [::org-subs/invited-members])]
-               ^{:key (str "invited-" (:email member))} [:li (str (:email member) " (invited)")])])]
+          [:ul
+           (for [member @(rf/subscribe [::org-subs/joined-members])]
+             ^{:key (str "joined-" (:id member))} [:li (:name member)])
+           (for [member @(rf/subscribe [::org-subs/invited-members])]
+             ^{:key (str "invited-" (:email member))} [:li (str (:email member) " (invited)")])]]
          [:div
           [:h2 "Tasks"]
           [create-task-form organization]
-          (when (contains? errors ::org-events/error-creating-task-failed)
-            [:p "Failed to save the task. Please try again."])
           (when-let [tasks @(rf/subscribe [::org-subs/tasks])]
             [task-list tasks])]]))))

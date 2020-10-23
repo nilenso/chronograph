@@ -8,7 +8,6 @@
             [chronograph-web.subscriptions :as subs]
             [chronograph.test-utils :as tu]
             [chronograph.fixtures :as fixtures]
-            [chronograph-web.db :as db]
             [chronograph-web.routes :as routes]))
 
 (use-fixtures :once fixtures/check-specs)
@@ -40,14 +39,15 @@
   (testing "When the API call for fetch organization fails"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (let [slug "a-test-org"]
+     (let [slug "a-test-org"
+           error-params (tu/stub-effect :flash-error)]
        (rf/reg-fx :http-xhrio
          (fn [_]
            (rf/dispatch [::org-events/fetch-organization-fail])))
        (tu/set-token (routes/path-for :organization-show :slug slug))
        (rf/dispatch [::org-events/fetch-organization slug])
-       (is (contains? @(rf/subscribe [::subs/page-errors]) ::org-events/error-org-not-found)
-           "The reported error should be in the DB")))))
+       (is (some? @error-params)
+           "An error message should be flashed.")))))
 
 (deftest fetch-members-test
   (testing "When fetch members API calls succeed"
@@ -89,10 +89,10 @@
      (rf/reg-fx :http-xhrio
        (fn [_]
          (rf/dispatch [::org-events/fetch-members-failed])))
-     (rf/dispatch [::org-events/fetch-members ""])
-     (is (contains? @(rf/subscribe [::subs/page-errors])
-                    ::org-events/error-fetch-members-failed)
-         "The reported error should be in the DB"))))
+     (let [error-params (tu/stub-effect :flash-error)]
+       (rf/dispatch [::org-events/fetch-members ""])
+       (is (some? @error-params)
+           "An error message should be flashed.")))))
 
 (deftest invite-member-form-test
   (testing "When the invite member form succeeds"
@@ -103,9 +103,6 @@
                    {:id   1
                     :name "A Test Org"
                     :slug "test-slug"}])
-     (swap! re-frame.db/app-db
-            db/report-error
-            ::error-invite-member-failed)
      (rf/dispatch [::org-events/invite-member-succeeded
                    {:id              1
                     :organization-id 1
@@ -114,26 +111,23 @@
                :organization-id 1
                :email           "foo@bar.com"}}
             @(rf/subscribe [::org-subs/invited-members]))
-         "The invited member should be in the DB")
-     (is (not (contains? @(rf/subscribe [::subs/page-errors])
-                         ::org-events/error-invite-member-failed))
-         "Error state if any is cleared from the db")))
+         "The invited member should be in the DB")))
 
   (testing "When the invite member form fails because the user is already in the organization"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (rf/dispatch [::org-events/invite-member-failed {:status 409}])
-     (is (contains? @(rf/subscribe [::subs/page-errors])
-                    ::org-events/error-user-already-in-org)
-         "The reported error should be in the DB")))
+     (let [error-params (tu/stub-effect :flash-error)]
+       (rf/dispatch [::org-events/invite-member-failed {:status 409}])
+       (is (some? @error-params)
+           "An error message should be flashed."))))
 
   (testing "When the invite member form fails for an unknown reason"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (rf/dispatch [::org-events/invite-member-failed])
-     (is (contains? @(rf/subscribe [::subs/page-errors])
-                    ::org-events/error-invite-member-failed)
-         "The reported error should be in the DB"))))
+     (let [error-params (tu/stub-effect :flash-error)]
+       (rf/dispatch [::org-events/invite-member-failed])
+       (is (some? @error-params)
+           "An error message should be flashed.")))))
 
 (deftest fetch-tasks-test
   (testing "When fetch tasks succeeds"
@@ -178,23 +172,24 @@
      (rf/reg-fx :http-xhrio
        (fn [_]
          (rf/dispatch [::org-events/fetch-tasks-failure])))
-     (rf/dispatch [::org-events/fetch-tasks])
-     (is (empty? @(rf/subscribe [::org-subs/tasks]))
-         "There are no tasks for the organization in the db.")
-     (is (contains? @(rf/subscribe [::subs/page-errors])
-                    ::org-events/error-fetch-tasks-failed)
-         "The page error is added to the db."))))
+
+     (let [error-params (tu/stub-effect :flash-error)]
+       (rf/dispatch [::org-events/fetch-tasks])
+       (is (empty? @(rf/subscribe [::org-subs/tasks]))
+           "There are no tasks for the organization in the db.")
+       (is (some? @error-params)
+           "An error message should be flashed.")))))
 
 (deftest create-task-form-test
   (testing "When create task fails"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (rf/dispatch [::org-events/create-task-failed])
-     (is (empty? @(rf/subscribe [::org-subs/tasks]))
-         "There are no tasks for the organization in the db.")
-     (is (contains? @(rf/subscribe [::subs/page-errors])
-                    ::org-events/error-creating-task-failed)
-         "The page error is added to the db."))))
+     (let [error-params (tu/stub-effect :flash-error)]
+       (rf/dispatch [::org-events/create-task-failed])
+       (is (empty? @(rf/subscribe [::org-subs/tasks]))
+           "There are no tasks for the organization in the db.")
+       (is (some? @error-params)
+           "An error message should be flashed.")))))
 
 (deftest update-task-form-test
   (testing "When updating a task succeeds"
@@ -235,21 +230,16 @@
 
        (is (= updated-tasks
               @(rf/subscribe [::org-subs/tasks]))
-           "The tasks in the DB should be updated")
-       (is (not (contains? @(rf/subscribe [::subs/page-errors])
-                           ::error-update-task-failed))
-           "The update error is removed, if any"))))
+           "The tasks in the DB should be updated"))))
 
   (testing "When updating a task fails"
     (rf-test/run-test-sync
      (tu/initialize-db!)
      (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
-
-     (rf/dispatch [::org-events/update-task-failure 2])
-
-     (is (contains? @(rf/subscribe [::subs/page-errors])
-                    ::org-events/error-update-task-failed)
-         "The update error should be reported"))))
+     (let [error-params (tu/stub-effect :flash-error)]
+       (rf/dispatch [::org-events/update-task-failure 2])
+       (is (some? @error-params)
+           "An error message should be flashed.")))))
 
 (deftest show-and-hide-update-task-form-test
   (testing "When the update form is shown or hidden for a task, the flag should be set accordingly"

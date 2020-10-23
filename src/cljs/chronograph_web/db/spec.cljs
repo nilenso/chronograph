@@ -24,16 +24,9 @@
 (s/def ::joined-members (s/map-of :organizations/id (set-of :users/user-un)))
 (s/def ::tasks (s/map-of :tasks/id :tasks/task-un))
 
-(s/def :page-state/errors (s/nilable set?))
-
-(defn page-state-map
-  [a-spec]
-  (s/merge (s/keys :opt-un [:page-state/errors])
-           a-spec))
-
 (s/def :organization-show/email (s/nilable string?))
 (s/def :organization-show/add-member-form (s/keys :opt-un [:organization-show/email]))
-(s/def :page-state/organization-show (page-state-map (s/keys :opt-un [:organization-show/add-member-form])))
+(s/def :page-state/organization-show (s/keys :opt-un [:organization-show/add-member-form]))
 
 (s/def :create-organization/status #{:editing :creating :created :failed})
 
@@ -41,8 +34,8 @@
 (s/def :create-organization/slug (s/nilable string?))
 (s/def :create-organization/form-params (s/keys :opt-un [:create-organization/name
                                                          :create-organization/slug]))
-(s/def :page-state/create-organization (page-state-map (s/keys :opt-un [:create-organization/status
-                                                                        :create-organization/form-params])))
+(s/def :page-state/create-organization (s/keys :opt-un [:create-organization/status
+                                                        :create-organization/form-params]))
 (s/def ::organization-invites (s/map-of :organizations/id :organizations/organization-un))
 
 (s/def ::page-state (s/nilable (s/keys :opt-un [:page-state/organization-show

@@ -24,12 +24,9 @@
                                                    :params {:name name
                                                             :slug slug}
                                                    :on-success [::landing-events/create-organization-succeeded]
-                                                   :on-failure [::landing-events/create-organization-failed]}))})
-        page-error (rf/subscribe [::subs/page-errors])]
+                                                   :on-failure [::landing-events/create-organization-failed]}))})]
     (fn []
       [:form {:style {:padding-bottom "8px"}}
-       (when (contains? @page-error ::landing-events/error-create-organization-failed)
-         [:div "Error creating the organization"])
        [antd/space {:direction "vertical"}
         [antd/input (get-input-attributes :name {:type :text :autoFocus true} :organizations/name)]
         [antd/input (get-input-attributes :slug

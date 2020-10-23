@@ -4,7 +4,8 @@
             [chronograph-web.db.organization-invites :as org-invites-db]
             [chronograph-web.pages.landing.db :as landing-db]
             [chronograph-web.http :as http]
-            [chronograph-web.routes :as routes]))
+            [chronograph-web.routes :as routes]
+            [chronograph-web.config :as config]))
 
 (rf/reg-event-fx
   ::reject-invite
@@ -13,16 +14,17 @@
                              :on-success [::reject-invite-succeeded id]
                              :on-failure [::reject-invite-failed]})}))
 
-(rf/reg-event-db
+(rf/reg-event-fx
   ::reject-invite-failed
-  (fn [db _]
-    (db/report-error db ::error-reject-invite-failed)))
+  (fn [_ _]
+    {:flash-error {:content (str "Failed to reject the invite "
+                                 (:frown config/emojis)
+                                 " Please try again.")}}))
 
 (rf/reg-event-db
   ::reject-invite-succeeded
   (fn [db [_ id]]
     (-> db
-        (db/remove-error ::error-reject-invite-failed)
         (org-invites-db/remove-invite id))))
 
 (rf/reg-event-fx
@@ -36,13 +38,14 @@
   ::accept-invite-succeeded
   (fn [{:keys [db]} [_ id]]
     {:db            (-> db
-                        (db/remove-error ::error-accept-invite-failed)
                         (org-invites-db/move-accepted-org-to-organizations id))}))
 
-(rf/reg-event-db
+(rf/reg-event-fx
   ::accept-invite-failed
-  (fn [db _]
-    (db/report-error db ::error-accept-invite-failed)))
+  (fn [_ _]
+    {:flash-error {:content (str "Failed to accept the invite "
+                                 (:frown config/emojis)
+                                 " Please try again.")}}))
 
 (rf/reg-event-fx
   ::fetch-invited-orgs
@@ -56,10 +59,12 @@
   (fn [db [_ invited-orgs]]
     (org-invites-db/add-invited-orgs db invited-orgs)))
 
-(rf/reg-event-db
+(rf/reg-event-fx
   ::fetch-invited-orgs-failed
-  (fn [db _]
-    (db/report-error db ::error-fetch-invited-orgs-failed)))
+  (fn [_ _]
+    {:flash-error {:content (str "Oh no, something went wrong! "
+                                 (:frown config/emojis)
+                                 " Please refresh the page!")}}))
 
 (rf/reg-event-db
   ::show-create-org-form
@@ -75,11 +80,11 @@
   ::create-organization-succeeded
   (fn [{:keys [db]} [_ {:keys [slug] :as response}]]
     {:history-token (routes/path-for :organization-show :slug slug)
-     :db            (-> db
-                        (landing-db/add-to-organizations response)
-                        (db/remove-error ::error-create-organization-failed))}))
+     :db            (landing-db/add-to-organizations db response)}))
 
-(rf/reg-event-db
+(rf/reg-event-fx
   ::create-organization-failed
-  (fn [db _]
-    (db/report-error db ::error-create-organization-failed)))
+  (fn [_ _]
+    {:flash-error {:content (str "Failed to create the organization "
+                                 (:frown config/emojis)
+                                 " Please try again.")}}))
