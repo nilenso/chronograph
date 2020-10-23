@@ -55,12 +55,15 @@
   (fn [db [_ member]]
     (-> db
         (page-db/add-invited-member member)
-        (db/remove-error ::error-invite-member-failed))))
+        (db/remove-error ::error-invite-member-failed)
+        (db/remove-error ::error-user-already-in-org))))
 
 (rf/reg-event-db
   ::invite-member-failed
-  (fn [db _]
-    (db/report-error db ::error-invite-member-failed)))
+  (fn [db [_ {:keys [status]}]]
+    (if (= status 409)
+      (db/report-error db ::error-user-already-in-org)
+      (db/report-error db ::error-invite-member-failed))))
 
 (rf/reg-event-db
   ::fetch-members-failed
