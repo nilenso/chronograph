@@ -19,7 +19,7 @@
 
 (s/def ::page (s/keys :req-un [:page/handler]
                       :opt-un [:page/route-params]))
-(s/def ::organizations (s/map-of :organizations/slug :organizations/organization-un))
+(s/def ::organizations (s/map-of :organizations/slug :organizations/organization-with-role))
 (s/def ::invited-members (s/map-of :organizations/id (set-of :invites/invite-un)))
 (s/def ::joined-members (s/map-of :organizations/id (set-of :users/user-un)))
 (s/def ::tasks (s/map-of :tasks/id :tasks/task-un))

@@ -20,6 +20,7 @@
            organization {:id         42
                          :name       "A Test Org"
                          :slug       slug
+                         :role       "member"
                          :created-at "2020-09-14T14:16:06.402873Z"
                          :updated-at "2020-09-14T14:16:06.402873Z"}]
        (rf/reg-fx :http-xhrio
@@ -31,6 +32,7 @@
        (is (= {:id         42
                :name       "A Test Org"
                :slug       "a-test-org"
+               :role       "member"
                :created-at "2020-09-14T14:16:06.402873Z"
                :updated-at "2020-09-14T14:16:06.402873Z"}
               @(rf/subscribe [::subs/organization slug]))
@@ -57,6 +59,7 @@
            organization {:id         42
                          :name       "A Test Org"
                          :slug       slug
+                         :role       "member"
                          :created-at "2020-09-14T14:16:06.402873Z"
                          :updated-at "2020-09-14T14:16:06.402873Z"}]
        (tu/set-token (routes/path-for :organization-show :slug slug))
@@ -102,7 +105,8 @@
      (rf/dispatch [::org-events/fetch-organization-success
                    {:id   1
                     :name "A Test Org"
-                    :slug "test-slug"}])
+                    :slug "test-slug"
+                    :role "member"}])
      (rf/dispatch [::org-events/invite-member-succeeded
                    {:id              1
                     :organization-id 1
@@ -137,7 +141,8 @@
      (rf/dispatch [::org-events/fetch-organization-success
                    {:id   1
                     :name "A Test Org"
-                    :slug "test-slug"}])
+                    :slug "test-slug"
+                    :role "member"}])
      (rf/reg-fx :http-xhrio
        (fn [_]
          (rf/dispatch [::org-events/fetch-tasks-success
@@ -199,7 +204,8 @@
      (rf/dispatch [::org-events/fetch-organization-success
                    {:id   1
                     :name "A Test Org"
-                    :slug "test-slug"}])
+                    :slug "test-slug"
+                    :role "admin"}])
      (rf/dispatch [::org-events/fetch-tasks-success
                    [{:id              1
                      :name            "A task",
@@ -249,7 +255,8 @@
      (rf/dispatch [::org-events/fetch-organization-success
                    {:id   1
                     :name "A Test Org"
-                    :slug "test-slug"}])
+                    :slug "test-slug"
+                    :role "member"}])
      (let [task1 {:id              1
                   :name            "A task",
                   :description     "A Description"
