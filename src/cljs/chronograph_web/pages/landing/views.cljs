@@ -9,7 +9,8 @@
             [chronograph-web.pages.landing.subscriptions :as landing-subs]
             [chronograph-web.components.antd :as antd]
             ["@ant-design/icons" :as icons]
-            [chronograph-web.routes :as routes]))
+            [chronograph-web.routes :as routes]
+            ["react-transition-group/CSSTransitionGroup" :as CSSTransitionGroup]))
 
 (defn- organizations-root-url []
   (str js/location.origin
@@ -51,8 +52,11 @@
                                    :icon icons/PlusOutlined
                                    :onClick #(rf/dispatch [::landing-events/show-create-org-form])}
                                   "Add New"])]]
-       (when show-create-org-form?
-         [create-organization-form])
+       [:> CSSTransitionGroup {:transitionName         "height"
+                               :transitionEnterTimeout 200
+                               :transitionLeaveTimeout 200}
+        (when show-create-org-form?
+          [create-organization-form])]
        [antd/table {:rowKey     "id"
                     :columns    [{:title     "Name"
                                   :dataIndex "name"

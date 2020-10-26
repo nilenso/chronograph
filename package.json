@@ -23,12 +23,13 @@
     "xmlhttprequest": "^1.8.0"
   },
   "dependencies": {
-    "antd": "^4.7.0",
     "@ant-design/icons": "4.0.0",
+    "antd": "^4.7.0",
     "highlight.js": "9.18.1",
     "react": "16.13.0",
     "react-day-picker": "^7.4.8",
     "react-dom": "16.13.0",
-    "react-highlight.js": "1.0.7"
+    "react-highlight.js": "1.0.7",
+    "react-transition-group": "1.x"
   }
 }
