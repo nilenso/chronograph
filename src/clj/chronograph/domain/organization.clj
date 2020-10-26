@@ -11,7 +11,8 @@
     (acl/create! tx {:acls/user-id owner-id
                      :acls/organization-id id
                      :acls/role acl/admin})
-    organization))
+    (assoc organization
+           :acls/role acl/admin)))
 
 (defn find-if-authorized
   [tx slug user-id]
@@ -19,13 +20,10 @@
               :as organization} (db-organization/find-by
                                  tx
                                  {:organizations/slug slug})]
-    (when (acl/belongs-to-org? tx user-id id)
-      organization)))
+    (when-let [role (acl/role tx user-id id)]
+      (assoc organization :acls/role role))))
 
 (def find-by db-organization/find-by)
-
-(defn find-by-slug [tx slug]
-  (db-organization/find-by tx {:organizations/slug slug}))
 
 (def members db-user/find-by-org-id)
 

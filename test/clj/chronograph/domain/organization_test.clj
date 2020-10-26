@@ -25,8 +25,13 @@
 (deftest create-organization-sets-admin-test
   (testing "Creating an organization sets the creator as the admin"
     (let [{user-id :users/id} (factories/create-user)
-          {organization-id :organizations/id} (factories/create-organization user-id)]
-      (is (true? (acl/admin? db/datasource user-id organization-id))))))
+          {organization-id :organizations/id
+           role            :acls/role} (organization/create! db/datasource
+                                                             #:organizations{:name "foo"
+                                                                             :slug "test"}
+                                                             user-id)]
+      (is (true? (acl/admin? db/datasource user-id organization-id)))
+      (is (= acl/admin role)))))
 
 (deftest find-one-organization-test
   (testing "when users try to look up organization information"
@@ -86,13 +91,6 @@
             (is (= #{(:organizations/id organization1)}
                    (set (map :organizations/id user-organizations))))))))))
 
-(deftest find-by-slug-test
-  (testing "it looks up organizations by slug"
-    (let [{user-one :users/id} (factories/create-user)
-          org (factories/create-organization user-one)]
-      (is (= org
-             (organization/find-by-slug db/datasource (:organizations/slug org)))))))
-
 (deftest members-test
   (testing "it finds all members of an organization, whether admin or member"
     (let [{user-id-1 :users/id :as user1} (factories/create-user)
@@ -122,5 +120,7 @@
       (factories/create-organization user-id-2) ; This should not show in up the invited orgs
       (invite/find-or-create! db/datasource org-id email)
       (invite/find-or-create! db/datasource org-id-2 email)
-      (is (= #{org1 org2}
+      (is (= (->> [org1 org2]
+                  (map #(dissoc % :acls/role))
+                  set)
              (set (organization/find-invited db/datasource email)))))))

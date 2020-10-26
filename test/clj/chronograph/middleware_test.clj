@@ -76,7 +76,7 @@
 
     (testing "It adds the organization for the organization slug in params to the request"
       (let [request {:params {:slug (:organizations/slug organization)}}]
-        (is (= organization
+        (is (= (dissoc organization :acls/role)
                (-> ((middleware/wrap-current-organization fake-handler) request)
                    :request
                    :organization)))))

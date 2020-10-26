@@ -31,7 +31,8 @@
           response (organization/create {:body {:name "foo" :slug "bar"}
                                          :user user})]
       (is (= 200 (:status response)))
-      (is (s/valid? :organizations/organization
+      (is (s/valid? (s/merge :organizations/organization
+                             (s/keys :req [:acls/role]))
                     (:body response)))
       (is (acl/admin? db/datasource
                       (:users/id user)

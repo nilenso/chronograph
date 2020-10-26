@@ -18,7 +18,7 @@
           {email :users/email} (factories/create-user)]
       (invite/find-or-create! db/datasource org-id email)
       (is (= {:status 200
-              :body   [org1]}
+              :body   [(dissoc org1 :acls/role)]}
              (-> (invite-handlers/invited-orgs {:user #:users{:email email}})
                  (select-keys [:status :body])))))))
 
