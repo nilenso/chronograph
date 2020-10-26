@@ -8,7 +8,7 @@
             ["@ant-design/icons" :as icons]))
 
 (defn- header-logo []
-  [:> icons/ClockCircleOutlined {:style {:color "wheat" :fontSize "32px"}}])
+  [:> icons/ClockCircleOutlined {:style {:fontSize "32px"}}])
 
 (defn- user-menu []
   [antd/menu {:mode "inline"}
@@ -18,7 +18,7 @@
 
 (defn- user-dropdown [name photo-url]
   [antd/dropdown {:overlay (r/as-element [user-menu])}
-   [:span {:style {:color "wheat"}}
+   [:span
     [antd/space
      [antd/avatar {:size "large"
                    :src  photo-url}]

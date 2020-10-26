@@ -36,7 +36,9 @@
 (def col (antd-wrapper antd/Col))
 
 (def layout (antd-wrapper antd/Layout))
-(def layout-header (antd-wrapper antd/Layout.Header))
+(def layout-header (antd-wrapper antd/Layout.Header
+                                 #(assoc % :style {:background-color "white"
+                                                   :border-bottom    "1px solid #d9d9d9"})))
 (def layout-content (antd-wrapper antd/Layout.Content))
 
 ;; Menu
