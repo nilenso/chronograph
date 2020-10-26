@@ -12,17 +12,18 @@
 
 (defn- user-menu []
   [antd/menu {:mode "inline"}
-   (antd/menu-item {:key "1" :icon (r/create-element icons/SettingOutlined)} "Settings")
+   (antd/menu-item {:key "1" :icon icons/SettingOutlined} "Settings")
    (antd/menu-divider {:key "2"})
-   (antd/menu-item {:key "3" :icon (r/create-element icons/LogoutOutlined)} "Logout")])
+   (antd/menu-item {:key "3" :icon icons/LogoutOutlined} "Logout")])
 
 (defn- user-dropdown [name photo-url]
-  [antd/dropdown {:overlay (r/as-element [user-menu])}
+  [antd/dropdown {:overlay [user-menu]}
    [:span
-    [antd/space
+    [antd/space {:style {:cursor "pointer"}}
      [antd/avatar {:size "large"
                    :src  photo-url}]
-     name]]])
+     name
+     [:> icons/DownOutlined]]]])
 
 (defn- user-header [{:keys [name photo-url]}]
   [antd/layout-header
