@@ -34,4 +34,4 @@
   (db-organization/invited-organizations tx email))
 
 (defn for-user [tx user]
-  (db-organization/user-organizations tx (:users/id user)))
+  (db-organization/user-organizations-with-role tx (:users/id user)))

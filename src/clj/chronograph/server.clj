@@ -58,6 +58,18 @@
    ["/" :slug "/reject"] {:post (-> invite/reject
                                     middleware/wrap-authenticated)}})
 
+(def organizations-routes {:get              (-> organization/index
+                                                 middleware/wrap-authenticated)
+                           :post             (-> organization/create
+                                                 middleware/wrap-authenticated)
+                           ["" :slug]        {:get       (-> organization/find-one
+                                                             middleware/wrap-authenticated)
+                                              "/members" {:get  (-> organization/show-members
+                                                                    middleware/wrap-authenticated)
+                                                          :post (-> organization/invite
+                                                                    middleware/wrap-authenticated)}}
+                           [:slug "/tasks/"] task-routes})
+
 (def routes
   ["/" [["" (fn [_] (-> (response/resource-response "public/index.html")
                         (response/content-type "text/html")))]
@@ -66,17 +78,7 @@
                                        middleware/wrap-authenticated)}]
                  ["timers/" timer-routes]
                  ["invitations" invited-org-routes]
-                 ["organizations/" {:get              (-> organization/index
-                                                          middleware/wrap-authenticated)
-                                    :post             (-> organization/create
-                                                          middleware/wrap-authenticated)
-                                    ["" :slug]        {:get       (-> organization/find-one
-                                                                      middleware/wrap-authenticated)
-                                                       "/members" {:get  (-> organization/show-members
-                                                                             middleware/wrap-authenticated)
-                                                                   :post (-> organization/invite
-                                                                             middleware/wrap-authenticated)}}
-                                    [:slug "/tasks/"] task-routes}]]]
+                 ["organizations/" organizations-routes]]]
         [true (fn [_] (-> (response/resource-response "public/index.html")
                           (response/content-type "text/html")))]]])
 

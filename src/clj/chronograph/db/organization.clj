@@ -17,9 +17,9 @@
   (db/query tx
             ["SELECT * FROM organizations where id = ANY(?)" (int-array ids)]))
 
-(defn user-organizations [tx user-id]
+(defn user-organizations-with-role [tx user-id]
   (db/query tx
-            ["SELECT organizations.* FROM organizations
+            ["SELECT organizations.*, acls.role FROM organizations
                INNER JOIN acls
                ON organizations.id = acls.organization_id
                where acls.user_id = ?" user-id]))
