@@ -49,8 +49,11 @@
 ;; like Hiccup.
 ;; This is because the styling seems to break if an intermediary component
 ;; is introduced.
-;; Ex: (menu-item {:key "1" :icon (r/create-element icons/SettingOutlined)} "Settings")
-(def menu-item (antd-wrapper antd/Menu.Item))
+;; Ex: (menu-item {:key "1" :icon icons/SettingOutlined} "Settings")
+(def menu-item (antd-wrapper antd/Menu.Item
+                             #(medley/update-existing %
+                                                      :icon
+                                                      r/create-element)))
 (def menu-divider (antd-wrapper antd/Menu.Divider))
 
 ;; Others
@@ -96,6 +99,9 @@
 
 (def title (antd-wrapper antd/Typography.Title))
 
-(def dropdown (antd-wrapper antd/Dropdown))
+(def dropdown (antd-wrapper antd/Dropdown
+                            #(medley/update-existing %
+                                                     :overlay
+                                                     r/as-element)))
 
 (def avatar (antd-wrapper antd/Avatar))
