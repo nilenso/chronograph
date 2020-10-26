@@ -1,0 +1,19 @@
+.height-enter {
+  max-height: 0;
+  overflow: hidden;
+}
+
+.height-enter.height-enter-active {
+  max-height: 150px;
+  transition: max-height 200ms ease-in;
+}
+
+.height-leave {
+  max-height: 150px;
+}
+
+.height-leave.height-leave-active {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 200ms ease-out;
+}
