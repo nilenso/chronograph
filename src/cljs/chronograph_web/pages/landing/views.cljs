@@ -43,34 +43,33 @@
 
 (defn- organizations-table [organizations]
   (let [show-create-org-form? @(rf/subscribe [::landing-subs/show-create-org-form?])]
-    (when (not-empty organizations)
-      [:<>
-       [antd/title {:level 4} [antd/space "My Organizations"
-                               (when-not show-create-org-form?
-                                 [antd/button
-                                  {:type "primary"
-                                   :icon icons/PlusOutlined
-                                   :onClick #(rf/dispatch [::landing-events/show-create-org-form])}
-                                  "Add New"])]]
-       [:> CSSTransitionGroup {:transitionName         "height"
-                               :transitionEnterTimeout 200
-                               :transitionLeaveTimeout 200}
-        (when show-create-org-form?
-          [create-organization-form])]
-       [antd/table {:rowKey     "id"
-                    :columns    [{:title     "Name"
-                                  :dataIndex "name"
-                                  :key       "name"
-                                  :render    (fn [org-name {:keys [slug] :as _org}]
-                                               [:a
-                                                {:href (str "/organizations/" slug)}
-                                                org-name])}
-                                 {:title     "Role"
-                                  :dataIndex "role"
-                                  :key       "role"}]
-                    :dataSource (->> organizations
-                                     vals
-                                     (map #(assoc % :role "Unknown")))}]])))
+    [:<>
+     [antd/title {:level 4} [antd/space "My Organizations"
+                             (when-not show-create-org-form?
+                               [antd/button
+                                {:type "primary"
+                                 :icon icons/PlusOutlined
+                                 :onClick #(rf/dispatch [::landing-events/show-create-org-form])}
+                                "Add New"])]]
+     [:> CSSTransitionGroup {:transitionName         "height"
+                             :transitionEnterTimeout 200
+                             :transitionLeaveTimeout 200}
+      (when show-create-org-form?
+        [create-organization-form])]
+     [antd/table {:rowKey     "id"
+                  :columns    [{:title     "Name"
+                                :dataIndex "name"
+                                :key       "name"
+                                :render    (fn [org-name {:keys [slug] :as _org}]
+                                             [:a
+                                              {:href (str "/organizations/" slug)}
+                                              org-name])}
+                               {:title     "Role"
+                                :dataIndex "role"
+                                :key       "role"}]
+                  :dataSource (->> organizations
+                                   vals
+                                   (map #(assoc % :role "Unknown")))}]]))
 
 (defn- invited-organizations-list
   [organizations]
