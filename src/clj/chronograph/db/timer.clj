@@ -4,17 +4,8 @@
             [chronograph.utils.time :as time]
             [next.jdbc :as jdbc]))
 
-(defn create!
-  [tx user-id task-id note]
-  (let [now (time/now)]
-    (sql/insert! tx
-                 :timers
-                 {:user-id user-id
-                  :task-id task-id
-                  :note note
-                  :created-at now
-                  :updated-at now}
-                 db/sql-opts)))
+(defn create! [tx attrs]
+  (db/create! :timers tx attrs))
 
 (defn delete!
   "Given a timer ID, delete all of its time_spans and then delete the timer.

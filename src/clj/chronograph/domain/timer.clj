@@ -7,15 +7,13 @@
 (defn create!
   "Create a timer for a task IFF the user and the task, both belong to
   the given organization. If the note is nil, write an empty string into the DB."
-  [tx organization-id user-id task-id note]
+  [tx organization-id {:timers/keys [user-id task-id] :as timer}]
   (when (and (acl/belongs-to-org? tx user-id organization-id)
              (= organization-id
                 (:tasks/organization-id
                  (task/find-by-id tx task-id))))
-    (db-timer/create! tx
-                      user-id
-                      task-id
-                      (or note ""))))
+    (db-timer/create! tx (-> timer
+                             (update :timers/note #(or % ""))))))
 
 (defn delete!
   "Given a timer ID for a user, delete it if it exists and also delete

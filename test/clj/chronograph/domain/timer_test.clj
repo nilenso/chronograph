@@ -7,7 +7,8 @@
             [chronograph.db.core :as db]
             [clojure.spec.alpha :as s]
             [chronograph.db.time-span :as db-time-span]
-            [chronograph.utils.time :as time]))
+            [chronograph.utils.time :as time])
+  (:import [java.time LocalDate]))
 
 (defn- setup-org-users-tasks!
   []
@@ -34,6 +35,7 @@
 (use-fixtures :once fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)
 
+(def default-local-date (LocalDate/parse "2020-01-14"))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Create Timer Tests
@@ -49,46 +51,56 @@
       (is (s/valid? :timers/timer
                     (timer/create! db/datasource
                                    organization-id
-                                   user-id
-                                   task-id
-                                   nil))
+                                   #:timers{:user-id user-id
+                                            :task-id task-id
+                                            :recorded-for default-local-date}))
           "without a note, returns a valid timer.")
       (is (s/valid? :timers/timer
                     (timer/create! db/datasource
                                    organization-id
-                                   user-id
-                                   task-id
-                                   "A valid note."))
+                                   #:timers{:user-id user-id
+                                            :task-id task-id
+                                            :note "A valid note."
+                                            :recorded-for default-local-date}))
           "with a note, returns a valid timer.")
       (is (apply = ((juxt :timers/created-at :timers/updated-at)
                     (timer/create! db/datasource
                                    organization-id
-                                   user-id
-                                   task-id
-                                   "A valid note.")))
+                                   #:timers{:user-id user-id
+                                            :task-id task-id
+                                            :note "A valid note."
+                                            :recorded-for default-local-date})))
           "Has created_at = updated_at when just created.")
       (let [timer (timer/create! db/datasource
                                  organization-id
-                                 user-id
-                                 task-id
-                                 "A valid note.")]
-        (is (= (assoc timer
-                      :time-spans [])
-               (timer/find-for-user-by-timer-id db/datasource
-                                                user-id
-                                                (:timers/id timer)))
+                                 #:timers{:user-id user-id
+                                          :task-id task-id
+                                          :note "A valid note."
+                                          :recorded-for default-local-date})]
+        (is (= (-> #:timers{:user-id user-id
+                            :task-id task-id
+                            :id (:timers/id timer)
+                            :note "A valid note."
+                            :recorded-for default-local-date}
+                   (assoc :time-spans []))
+               (-> (timer/find-for-user-by-timer-id db/datasource
+                                                    user-id
+                                                    (:timers/id timer))
+                   (dissoc :timers/created-at :timers/updated-at)))
             "Create followed immediately by timer fetch, succeeds."))
       (is (every? (partial s/valid? :timers/timer)
                   (into (repeatedly 3 (fn [] (timer/create! db/datasource
                                                             organization-id
-                                                            user-id
-                                                            task-id
-                                                            "A sample note.")))
+                                                            #:timers{:user-id user-id
+                                                                     :task-id task-id
+                                                                     :note "A sample note."
+                                                                     :recorded-for default-local-date})))
                         (repeatedly 3 (fn [] (timer/create! db/datasource
                                                             organization-id
-                                                            user-id
-                                                            task-id
-                                                            "A sample note.")))))
+                                                            #:timers{:user-id user-id
+                                                                     :task-id task-id
+                                                                     :note "A sample note."
+                                                                     :recorded-for default-local-date})))))
           "lets a user create multiple timers for multiple tasks."))))
 
 (deftest create-timer-disallowed-test
@@ -102,21 +114,24 @@
                               (:users/id (factories/create-user))))]
       (is (nil? (timer/create! db/datasource
                                organization-id
-                               user-id
-                               (:tasks/id task-of-other-org)
-                               "A valid note."))
+                               #:timers{:user-id user-id
+                                        :task-id (:tasks/id task-of-other-org)
+                                        :note "A valid note."
+                                        :recorded-for default-local-date}))
           "the task belongs to another organization.")
       (is (nil? (timer/create! db/datasource
                                organization-id
-                               Long/MAX_VALUE
-                               task-id
-                               "A sample note."))
+                               #:timers{:user-id Long/MAX_VALUE
+                                        :task-id task-id
+                                        :note "A sample note."
+                                        :recorded-for default-local-date}))
           "the user does not exist.")
       (is (nil? (timer/create! db/datasource
                                organization-id
-                               user-id
-                               Long/MAX_VALUE
-                               "A sample note."))
+                               #:timers{:user-id user-id
+                                        :task-id Long/MAX_VALUE
+                                        :note "A sample note."
+                                        :recorded-for default-local-date}))
           "the task does not exist."))))
 
 
@@ -130,11 +145,10 @@
     (let [test-context (setup-org-users-tasks!)
           user-id (:user-2-id test-context)
           organization-id (:organization-id test-context)
-          {timer-id :timers/id :as timer} (timer/create! db/datasource
-                                                         organization-id
-                                                         user-id
-                                                         (:task-id-1 test-context)
-                                                         "A sample note.")]
+          {timer-id :timers/id :as timer} (factories/create-timer organization-id
+                                                                  #:timers{:user-id user-id
+                                                                           :task-id (:task-id-1 test-context)
+                                                                           :note "A sample note."})]
       (is (nil? (timer/delete! db/datasource
                                user-id
                                (java.util.UUID/randomUUID)))
@@ -154,11 +168,10 @@
     (let [test-context (setup-org-users-tasks!)
           user-id (:user-2-id test-context)
           organization-id (:organization-id test-context)
-          {timer-id :timers/id} (timer/create! db/datasource
-                                               organization-id
-                                               user-id
-                                               (:task-id-1 test-context)
-                                               "A sample note.")]
+          {timer-id :timers/id} (factories/create-timer organization-id
+                                                        #:timers{:user-id user-id
+                                                                 :task-id (:task-id-1 test-context)
+                                                                 :note "A sample note."})]
       ;; first set up 3 time spans for the timer
       (dotimes [_ 3]
         (timer/start! db/datasource
@@ -190,16 +203,14 @@
           user-2-id (:user-2-id test-context)
           task-id (:task-id-1 test-context)
           organization-id (:organization-id test-context)
-          timer-by-user-1 (timer/create! db/datasource
-                                         organization-id
-                                         user-1-id
-                                         task-id
-                                         "A note by user-1.")
-          timer-by-user-2 (timer/create! db/datasource
-                                         organization-id
-                                         user-2-id
-                                         task-id
-                                         "A note by user-2.")]
+          timer-by-user-1 (factories/create-timer organization-id
+                                                  #:timers{:user-id user-1-id
+                                                           :task-id task-id
+                                                           :note "A note by user-1."})
+          timer-by-user-2 (factories/create-timer organization-id
+                                                  #:timers{:user-id user-2-id
+                                                           :task-id task-id
+                                                           :note "A note by user-2."})]
       (is (nil? (timer/delete! db/datasource
                                user-2-id
                                (:timers/id timer-by-user-1)))
@@ -221,11 +232,10 @@
       (let [test-context (setup-org-users-tasks!)
             user-id (:user-2-id test-context)
             organization-id (:organization-id test-context)
-            {timer-id :timers/id :as timer} (timer/create! db/datasource
-                                                           organization-id
-                                                           user-id
-                                                           (:task-id-1 test-context)
-                                                           "A sample note.")
+            {timer-id :timers/id :as timer} (factories/create-timer organization-id
+                                                                    #:timers{:user-id user-id
+                                                                             :task-id (:task-id-1 test-context)
+                                                                             :note "A sample note."})
             revised-note (str "Revised note " (rand))]
         (is (= (assoc timer
                       :timers/note
@@ -248,16 +258,14 @@
           user-2-id (:user-2-id test-context)
           task-id (:task-id-1 test-context)
           organization-id (:organization-id test-context)
-          unstarted-timer-by-user-1 (timer/create! db/datasource
-                                                   organization-id
-                                                   user-1-id
-                                                   task-id
-                                                   "A note by user-1.")
-          unstarted-timer-by-user-2 (timer/create! db/datasource
-                                                   organization-id
-                                                   user-2-id
-                                                   task-id
-                                                   "A note by user-2.")]
+          unstarted-timer-by-user-1 (factories/create-timer organization-id
+                                                            #:timers{:user-id user-1-id
+                                                                     :task-id task-id
+                                                                     :note "A note by user-1."})
+          unstarted-timer-by-user-2 (factories/create-timer organization-id
+                                                            #:timers{:user-id user-2-id
+                                                                     :task-id task-id
+                                                                     :note "A note by user-2."})]
       (is (nil? (timer/update-note! db/datasource
                                     user-2-id
                                     (:timers/id unstarted-timer-by-user-1)
@@ -280,11 +288,10 @@
     (let [test-context (setup-org-users-tasks!)
           user-id (:user-2-id test-context)
           organization-id (:organization-id test-context)
-          timer (timer/create! db/datasource
-                               organization-id
-                               user-id
-                               (:task-id-1 test-context)
-                               "A sample note.")]
+          timer (factories/create-timer organization-id
+                                        #:timers{:user-id user-id
+                                                 :task-id (:task-id-1 test-context)
+                                                 :note "A sample note."})]
       (is (s/valid? :time-spans/time-span
                     (timer/start! db/datasource
                                   user-id
@@ -302,16 +309,14 @@
           user-2-id (:user-2-id test-context)
           task-id (:task-id-1 test-context)
           organization-id (:organization-id test-context)
-          unstarted-timer-by-user-1 (timer/create! db/datasource
-                                                   organization-id
-                                                   user-1-id
-                                                   task-id
-                                                   "A note by user-1.")
-          unstarted-timer-by-user-2 (timer/create! db/datasource
-                                                   organization-id
-                                                   user-2-id
-                                                   task-id
-                                                   "A note by user-2.")]
+          unstarted-timer-by-user-1 (factories/create-timer organization-id
+                                                            #:timers{:user-id user-1-id
+                                                                     :task-id task-id
+                                                                     :note "A note by user-1."})
+          unstarted-timer-by-user-2 (factories/create-timer organization-id
+                                                            #:timers{:user-id user-2-id
+                                                                     :task-id task-id
+                                                                     :note "A note by user-2."})]
       (is (nil? (timer/start! db/datasource
                               user-2-id
                               (:timers/id unstarted-timer-by-user-1)))
@@ -334,11 +339,10 @@
           organization-id (:organization-id test-context)]
       (is (nil? (timer/stop! db/datasource
                              user-id
-                             (:timers/id (timer/create! db/datasource
-                                                        organization-id
-                                                        user-id
-                                                        (:task-id-1 test-context)
-                                                        "A sample note."))))
+                             (:timers/id (factories/create-timer organization-id
+                                                                 #:timers{:user-id user-id
+                                                                          :task-id (:task-id-1 test-context)
+                                                                          :note "A sample note."}))))
           "does nothing. An un-started timer remains un-started."))))
 
 (deftest stop-running-timer-test
@@ -346,11 +350,10 @@
     (let [test-context (setup-org-users-tasks!)
           user-id (:user-2-id test-context)
           organization-id (:organization-id test-context)
-          timer (let [timer (timer/create! db/datasource
-                                           organization-id
-                                           user-id
-                                           (:task-id-1 test-context)
-                                           "A sample note.")]
+          timer (let [timer (factories/create-timer organization-id
+                                                    #:timers{:user-id user-id
+                                                             :task-id (:task-id-1 test-context)
+                                                             :note "A sample note."})]
                   (timer/start! db/datasource
                                 user-id
                                 (:timers/id timer))
@@ -372,20 +375,18 @@
           user-2-id (:user-2-id test-context)
           task-id (:task-id-1 test-context)
           organization-id (:organization-id test-context)
-          running-timer-by-user-1 (let [timer (timer/create! db/datasource
-                                                             organization-id
-                                                             user-1-id
-                                                             task-id
-                                                             "A note by user-1.")]
+          running-timer-by-user-1 (let [timer (factories/create-timer organization-id
+                                                                      #:timers{:user-id user-1-id
+                                                                               :task-id task-id
+                                                                               :note "A note by user-1."})]
                                     (timer/start! db/datasource
                                                   user-1-id
                                                   (:timers/id timer))
                                     timer)
-          running-timer-by-user-2 (let [timer (timer/create! db/datasource
-                                                             organization-id
-                                                             user-2-id
-                                                             task-id
-                                                             "A note by user-1.")]
+          running-timer-by-user-2 (let [timer (factories/create-timer organization-id
+                                                                      #:timers{:user-id user-2-id
+                                                                               :task-id task-id
+                                                                               :note "A note by user-1."})]
                                     (timer/start! db/datasource
                                                   user-2-id
                                                   (:timers/id timer))
@@ -410,11 +411,10 @@
     (let [test-context (setup-org-users-tasks!)
           user-id (:user-2-id test-context)
           organization-id (:organization-id test-context)
-          {timer-id :timers/id} (timer/create! db/datasource
-                                               organization-id
-                                               user-id
-                                               (:task-id-1 test-context)
-                                               "A sample note.")
+          {timer-id :timers/id} (factories/create-timer organization-id
+                                                        #:timers{:user-id user-id
+                                                                 :task-id (:task-id-1 test-context)
+                                                                 :note "A sample note."})
           timer (timer/find-for-user-by-timer-id db/datasource
                                                  user-id
                                                  timer-id)]
@@ -432,11 +432,10 @@
             user-id (:user-2-id test-context)
             organization-id (:organization-id test-context)
             {timer-id :timers/id
-             :as timer} (timer/create! db/datasource
-                                       organization-id
-                                       user-id
-                                       (:task-id-1 test-context)
-                                       "A sample note.")
+             :as timer} (factories/create-timer organization-id
+                                                #:timers{:user-id user-id
+                                                         :task-id (:task-id-1 test-context)
+                                                         :note "A sample note."})
             time-spans (doall
                         (repeatedly 3
                                     (fn []
@@ -465,11 +464,10 @@
           user-id (:user-2-id test-context)
           organization-id (:organization-id test-context)]
       (dotimes [_ 3]
-        (->> (timer/create! db/datasource
-                            organization-id
-                            user-id
-                            (:task-id-1 test-context)
-                            "A sample note.")
+        (->> (factories/create-timer organization-id
+                                     #:timers{:user-id user-id
+                                              :task-id (:task-id-1 test-context)
+                                              :note "A sample note."})
              :timers/id
              (timer/start! db/datasource user-id)
              :time-spans/timer-id
@@ -495,16 +493,14 @@
           organization-id (:organization-id test-context)
           task-id-timed-by-user-1 (:task-id-1 test-context)
           task-id-timed-by-user-2 (:task-id-2 test-context)
-          timer-for-task-timed-by-user-1 (timer/create! db/datasource
-                                                        organization-id
-                                                        user-1-id
-                                                        task-id-timed-by-user-1
-                                                        "A note by user-1.")
-          timer-for-task-timed-by-user-2 (timer/create! db/datasource
-                                                        organization-id
-                                                        user-2-id
-                                                        task-id-timed-by-user-2
-                                                        "A note by user-2.")]
+          timer-for-task-timed-by-user-1 (factories/create-timer organization-id
+                                                                 #:timers{:user-id user-1-id
+                                                                          :task-id task-id-timed-by-user-1
+                                                                          :note "A note by user-1."})
+          timer-for-task-timed-by-user-2 (factories/create-timer organization-id
+                                                                 #:timers{:user-id user-2-id
+                                                                          :task-id task-id-timed-by-user-2
+                                                                          :note "A note by user-2."})]
       (is (nil? (timer/find-for-user-by-timer-id db/datasource
                                                  user-2-id
                                                  (:timers/id timer-for-task-timed-by-user-1)))

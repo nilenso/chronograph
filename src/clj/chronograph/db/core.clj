@@ -10,6 +10,11 @@
 
 (jdbc-date-time/read-as-instant)
 
+(extend-protocol jdbc-result-set/ReadableColumn
+  java.sql.Date
+  (read-column-by-label [^java.sql.Date v _] (.toLocalDate v))
+  (read-column-by-index [^java.sql.Date v _1 _2] (.toLocalDate v)))
+
 (defstate datasource
   :start (jdbc/get-datasource (:db-spec config/config))
   :stop nil)

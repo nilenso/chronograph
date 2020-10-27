@@ -1,0 +1,1 @@
+ALTER TABLE timers ADD COLUMN recorded_for DATE NOT NULL;

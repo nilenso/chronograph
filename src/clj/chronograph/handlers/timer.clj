@@ -6,11 +6,12 @@
             [chronograph.utils.coercions :as coerce]
             [ring.util.response :as response]
             [clojure.spec.alpha :as s]
-            [chronograph.domain.acl :as acl]))
+            [chronograph.domain.acl :as acl])
+  (:import [java.time LocalDate]))
 
 (defn create
   "Authorized users may create a timer for the give task id."
-  [{{:keys [task-id note] :as body} :body
+  [{{:keys [task-id note recorded-for] :as body} :body
     {user-id :users/id} :user
     {organization-id :organizations/id} :organization
     :as _request}]
@@ -30,9 +31,10 @@
 
       :else (-> (timer/create! tx
                                organization-id
-                               user-id
-                               task-id
-                               note)
+                               #:timers{:user-id user-id
+                                        :task-id task-id
+                                        :recorded-for (LocalDate/parse recorded-for)
+                                        :note note})
                 response/response))))
 
 (defn delete
