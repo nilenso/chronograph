@@ -11,6 +11,11 @@
   (let [org-slug (slug db)]
     (org-db/org-by-slug db org-slug)))
 
+(defn user-is-admin?
+  [db]
+  (= "admin"
+     (:role (current-org db))))
+
 (defn add-invited-member
   [db {:keys [organization-id] :as member}]
   (db/add-to-set-in db

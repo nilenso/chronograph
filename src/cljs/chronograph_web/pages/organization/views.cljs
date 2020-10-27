@@ -20,14 +20,17 @@
                                                    :on-failure [::org-events/invite-member-failed]}))})]
     (fn []
       [:div
-       [:input (get-input-attributes :email)]
-       [:button (get-submit-attributes) "Invite"]])))
+       [:h2 "Add Members"]
+       [:div
+        [:input (get-input-attributes :email)]
+        [:button (get-submit-attributes) "Invite"]]])))
 
 (defn- tasks-uri [slug]
   (str "/api/organizations/" slug "/tasks/"))
 
-(defn create-task-form [{:keys [slug] :as _organization}]
-  (let [{::form/keys [get-input-attributes get-submit-attributes]}
+(defn create-task-form []
+  (let [slug @(rf/subscribe [::org-subs/org-slug])
+        {::form/keys [get-input-attributes get-submit-attributes]}
         (form/form {:form-key        ::create-task
                     :request-builder (fn [{:keys [name description]}]
                                        (http/post {:uri        (tasks-uri slug)
@@ -73,14 +76,15 @@
     (if @(rf/subscribe [::org-subs/show-update-task-form? id])
       [update-task-form task]
       [:div [:p [:b name] " - " description]
-       [:button {:on-click #(rf/dispatch [::org-events/archive-task id])}
-        "Archive"]
-       [:button {:on-click #(rf/dispatch [::org-events/show-update-task-form id])}
-        "Update"]])]])
+       (when @(rf/subscribe [::org-subs/user-is-admin?])
+         [:<>
+          [:button {:on-click #(rf/dispatch [::org-events/archive-task id])}
+           "Archive"]
+          [:button {:on-click #(rf/dispatch [::org-events/show-update-task-form id])}
+           "Update"]])])]])
 
 (defn task-list [tasks]
   [:div
-   [:h3 "Tasks"]
    [:ul
     (->> tasks
          (filter (complement archived?))
@@ -88,28 +92,30 @@
          (doall)
          (not-empty))]])
 
-(defn organization-page [{:keys [slug]}]
-  (rf/dispatch [::org-events/fetch-organization slug])
-  (rf/dispatch [::org-events/fetch-members slug])
-  (rf/dispatch [::org-events/fetch-tasks slug])
+(defn tasks-section []
+  [:div
+   [:h2 "Tasks"]
+   (when @(rf/subscribe [::org-subs/user-is-admin?])
+     [create-task-form])
+   (when-let [tasks @(rf/subscribe [::org-subs/tasks])]
+     [task-list tasks])])
+
+(defn organization-page [_]
+  (rf/dispatch [::org-events/organization-page-mounted])
   (fn [{:keys [slug]}]
-    (let [{:keys [name] :as organization} @(rf/subscribe [::subs/organization slug])]
-      (if (not name)
+    (let [{:keys [name]} @(rf/subscribe [::subs/organization slug])]
+      (if-not name
         [components/loading-spinner]
         [:div
          [:h1 name]
-         [:div
-          [:h2 "Add Members"]
-          [invite-member-form]]
-         [:div
-          [:h2 "Members"]
-          [:ul
-           (for [member @(rf/subscribe [::org-subs/joined-members])]
-             ^{:key (str "joined-" (:id member))} [:li (:name member)])
-           (for [member @(rf/subscribe [::org-subs/invited-members])]
-             ^{:key (str "invited-" (:email member))} [:li (str (:email member) " (invited)")])]]
-         [:div
-          [:h2 "Tasks"]
-          [create-task-form organization]
-          (when-let [tasks @(rf/subscribe [::org-subs/tasks])]
-            [task-list tasks])]]))))
+         (when @(rf/subscribe [::org-subs/user-is-admin?])
+           [invite-member-form])
+         (when @(rf/subscribe [::org-subs/user-is-admin?])
+           [:div
+            [:h2 "Members"]
+            [:ul
+             (for [member @(rf/subscribe [::org-subs/joined-members])]
+               ^{:key (str "joined-" (:id member))} [:li (:name member)])
+             (for [member @(rf/subscribe [::org-subs/invited-members])]
+               ^{:key (str "invited-" (:email member))} [:li (str (:email member) " (invited)")])]])
+         [tasks-section]]))))

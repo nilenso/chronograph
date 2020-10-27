@@ -33,3 +33,8 @@
   ::show-update-task-form?
   (fn [db [_ id]]
     (page-db/show-update-task-form? db id)))
+
+(rf/reg-sub
+  ::user-is-admin?
+  (fn [db _]
+    (page-db/user-is-admin? db)))
