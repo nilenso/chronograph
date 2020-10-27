@@ -105,15 +105,21 @@
 ;; Timers - DB
 
 
+(defn- local-date? [v]
+  #?(:clj   (instance? java.time.LocalDate v)
+     :cljs (string? v)))
+
 (s/def :timers/id uuid?)
 (s/def :timers/user-id :users/id)
 (s/def :timers/task-id :tasks/id)
+(s/def :timers/recorded-for local-date?)
 (s/def :timers/note string?)
 
-(s/def :timers/timer (s/keys :req [:timers/id :timers/user-id :timers/task-id]
+(s/def :timers/timer (s/keys :req [:timers/id :timers/user-id :timers/task-id :timers/recorded-for]
                              :opt [:timers/note]))
 
-(s/def :handlers.timer/create-request-body (s/keys :req-un [:timers/task-id]
+(s/def :handlers.timer/recorded-for string?)
+(s/def :handlers.timer/create-request-body (s/keys :req-un [:timers/task-id :handlers.timer/recorded-for]
                                                    :opt-un [:timers/note]))
 
 

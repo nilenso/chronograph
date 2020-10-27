@@ -34,10 +34,13 @@
 (use-fixtures :once fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)
 
+(def default-recorded-for "2020-01-14")
+
 (deftest create-timer-test
   (let [test-context (setup-org-users-tasks!)]
     (testing "when a timer is created without a note"
-      (let [response (handler-timer/create {:body {:task-id (:task-id-1 test-context)}
+      (let [response (handler-timer/create {:body {:task-id (:task-id-1 test-context)
+                                                   :recorded-for default-recorded-for}
                                             :user {:users/id (:user-2-id test-context)}
                                             :organization (:organization test-context)})]
         (is (= 200 (:status response))
@@ -52,7 +55,8 @@
     (testing "when a timer is created with a note"
       (let [note "A sample note."
             response (handler-timer/create {:body {:task-id (:task-id-1 test-context)
-                                                   :note note}
+                                                   :note note
+                                                   :recorded-for default-recorded-for}
                                             :user {:users/id (:user-2-id test-context)}
                                             :organization (:organization test-context)})]
         (is (= 200 (:status response))
@@ -69,7 +73,8 @@
               :headers {}
               :body {:error "Invalid Task ID or Note."}}
              (handler-timer/create {:body {:task-id "foo"
-                                           :note 42}
+                                           :note 42
+                                           :recorded-for default-recorded-for}
                                     :user {:users/id (:user-2-id test-context)}
                                     :organization (:organization test-context)}))
           "the request fails with an HTTP error."))
@@ -79,7 +84,8 @@
               :headers {}
               :body {:error "Task does not exist."}}
              (handler-timer/create {:body {:task-id Long/MAX_VALUE
-                                           :note "A valid note."}
+                                           :note "A valid note."
+                                           :recorded-for default-recorded-for}
                                     :user {:users/id (:user-2-id test-context)}
                                     :organization (:organization test-context)}))
           "the request fails with an HTTP error."))
@@ -89,7 +95,8 @@
               :headers {}
               :body {:error "Forbidden."}}
              (handler-timer/create {:body {:task-id Long/MAX_VALUE
-                                           :note "A valid note."}
+                                           :note "A valid note."
+                                           :recorded-for default-recorded-for}
                                     :user {:users/id (:user-2-id test-context)}
                                     :organization (factories/create-organization
                                                    (:users/id
@@ -232,11 +239,10 @@
           user-2-id (:user-2-id test-context)
           task-id (:task-id-1 test-context)
           _timers (dotimes [_ 3]
-                    (->> (timer/create! db/datasource
-                                        (:organization-id test-context)
-                                        user-2-id
-                                        task-id
-                                        "A lovely timer.")
+                    (->> (factories/create-timer (:organization-id test-context)
+                                                 #:timers{:user-id user-2-id
+                                                          :task-id task-id
+                                                          :note "A lovely timer."})
                          :timers/id
                          (timer/start! db/datasource user-2-id)))
           response (handler-timer/find-for-user-task {:params {:task-id task-id}

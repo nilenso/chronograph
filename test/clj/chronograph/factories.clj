@@ -7,7 +7,8 @@
             [chronograph.domain.task :as task]
             [chronograph.domain.organization :as organization]
             [next.jdbc :refer [with-transaction]]
-            [chronograph.domain.timer :as timer]))
+            [chronograph.domain.timer :as timer])
+  (:import [java.time LocalDate]))
 
 (defn create-user []
   (let [{:keys [users/name users/email users/photo-url]} (gen/generate (s/gen :users/user))]
@@ -42,10 +43,18 @@
                   :acls/role role})))
 
 (defn create-timer
-  [organization-id user-id task-id]
-  (with-transaction [tx db/datasource]
-    (timer/create! tx
-                   organization-id
-                   user-id
-                   task-id
-                   (gen/generate (s/gen :timers/note)))))
+  ([organization-id timer]
+   (with-transaction [tx db/datasource]
+     (timer/create! tx
+                    organization-id
+                    (merge #:timers{:recorded-for (LocalDate/parse "2020-01-14")
+                                    :note (gen/generate (s/gen :timers/note))}
+                           timer))))
+  ([organization-id user-id task-id]
+   (with-transaction [tx db/datasource]
+     (timer/create! tx
+                    organization-id
+                    #:timers{:user-id user-id
+                             :task-id task-id
+                             :recorded-for (LocalDate/parse "2020-01-14")
+                             :note (gen/generate (s/gen :timers/note))}))))
