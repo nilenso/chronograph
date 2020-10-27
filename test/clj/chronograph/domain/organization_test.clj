@@ -6,7 +6,8 @@
             [clojure.test :refer :all]
             [next.jdbc :refer [with-transaction]]
             [chronograph.domain.organization :as organization]
-            [chronograph.domain.invite :as invite])
+            [chronograph.domain.invite :as invite]
+            [chronograph.test-utils :as tu])
   (:import [org.postgresql.util PSQLException]))
 
 (use-fixtures :once fixtures/config fixtures/datasource)
@@ -24,8 +25,13 @@
 (deftest create-organization-sets-admin-test
   (testing "Creating an organization sets the creator as the admin"
     (let [{user-id :users/id} (factories/create-user)
-          {organization-id :organizations/id} (factories/create-organization user-id)]
-      (is (true? (acl/admin? db/datasource user-id organization-id))))))
+          {organization-id :organizations/id
+           role            :acls/role} (organization/create! db/datasource
+                                                             #:organizations{:name "foo"
+                                                                             :slug "test"}
+                                                             user-id)]
+      (is (true? (acl/admin? db/datasource user-id organization-id)))
+      (is (= acl/admin role)))))
 
 (deftest find-one-organization-test
   (testing "when users try to look up organization information"
@@ -55,33 +61,35 @@
             "find-one returns nil when the user does not exist")))))
 
 (deftest for-user-test
-  (testing "Returns the list of organizations a user belongs to"
-    (let [user (factories/create-user)
-          organization1 (factories/create-organization (:users/id user))
-          organization2 (factories/create-organization (:users/id user))]
-      (with-transaction [tx db/datasource]
-        (let [user-organizations (organization/for-user tx user)]
-          (is (= 2 (count user-organizations)))
-          (is (= #{(:organizations/id organization1)
-                   (:organizations/id organization2)}
-                 (set (map :organizations/id user-organizations))))))))
-  (testing "Does not return organizations to which the user does not belong"
-    (let [user (factories/create-user)
-          other-user (factories/create-user)
-          organization1 (factories/create-organization (:users/id user))
-          _organization2 (factories/create-organization (:users/id other-user))]
-      (with-transaction [tx db/datasource]
-        (let [user-organizations (organization/for-user tx user)]
-          (is (= 1 (count user-organizations)))
-          (is (= #{(:organizations/id organization1)}
-                 (set (map :organizations/id user-organizations)))))))))
+  (testing "Returns the list of organizations a user belongs to, along with roles"
+    (tu/with-fixtures [fixtures/clear-db]
+      (let [user          (factories/create-user)
+            organization1 (factories/create-organization (:users/id user))
+            organization2 (factories/create-organization (:users/id user))
+            {org-id-3 :organizations/id :as organization3} (factories/create-user-and-organization)]
+        (acl/create! db/datasource #:acls{:user-id         (:users/id user)
+                                          :organization-id org-id-3
+                                          :role            acl/member})
+        (with-transaction [tx db/datasource]
+          (let [user-organizations (organization/for-user tx user)]
+            (is (= #{(assoc organization1
+                            :acls/role acl/admin)
+                     (assoc organization2
+                            :acls/role acl/admin)
+                     (assoc organization3
+                            :acls/role acl/member)}
+                   (set user-organizations))))))))
 
-(deftest find-by-slug-test
-  (testing "it looks up organizations by slug"
-    (let [{user-one :users/id} (factories/create-user)
-          org (factories/create-organization user-one)]
-      (is (= org
-             (organization/find-by-slug db/datasource (:organizations/slug org)))))))
+  (testing "Does not return organizations to which the user does not belong"
+    (tu/with-fixtures [fixtures/clear-db]
+      (let [user           (factories/create-user)
+            other-user     (factories/create-user)
+            organization1  (factories/create-organization (:users/id user))
+            _organization2 (factories/create-organization (:users/id other-user))]
+        (with-transaction [tx db/datasource]
+          (let [user-organizations (organization/for-user tx user)]
+            (is (= #{(:organizations/id organization1)}
+                   (set (map :organizations/id user-organizations))))))))))
 
 (deftest members-test
   (testing "it finds all members of an organization, whether admin or member"
@@ -112,5 +120,7 @@
       (factories/create-organization user-id-2) ; This should not show in up the invited orgs
       (invite/find-or-create! db/datasource org-id email)
       (invite/find-or-create! db/datasource org-id-2 email)
-      (is (= #{org1 org2}
+      (is (= (->> [org1 org2]
+                  (map #(dissoc % :acls/role))
+                  set)
              (set (organization/find-invited db/datasource email)))))))

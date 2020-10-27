@@ -71,7 +71,10 @@
 
 (s/def :acls/acl (s/keys :req [:acls/user-id :acls/organization-id :acls/role]))
 
-
+(s/def :organizations/organization-with-role (s/keys :req-un [:organizations/id
+                                                              :organizations/name
+                                                              :organizations/slug
+                                                              :acls/role]))
 ;; Tasks
 
 

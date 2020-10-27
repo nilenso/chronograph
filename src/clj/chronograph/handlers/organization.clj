@@ -50,10 +50,11 @@
     {:keys [email]} :body
     :as _request}]
   (jdbc/with-transaction [tx db/datasource]
-    (let [{org-id :organizations/id} (organization/find-by-slug tx slug)]
+    (let [{org-id :organizations/id
+           role   :acls/role} (organization/find-if-authorized tx slug user-id)]
       (cond
         (not org-id)                          (response/not-found {:error "Not found"})
-        (not (acl/admin? tx user-id org-id))  (-> (response/response {:error "Forbidden"})
+        (not= acl/admin role)                 (-> (response/response {:error "Forbidden"})
                                                   (response/status 403))
         (not (s/valid? :invites/email email)) (response/bad-request {:error "Invalid email"})
         :else                                 (let [invite-or-error (invite/find-or-create! tx org-id email)]
@@ -68,10 +69,11 @@
     {user-id :users/id} :user
     :as _request}]
   (jdbc/with-transaction [tx db/datasource]
-    (let [{:organizations/keys [id]} (organization/find-by-slug tx slug)]
+    (let [{:organizations/keys [id]
+           role                :acls/role} (organization/find-if-authorized tx slug user-id)]
       (cond
         (not id)                         (response/not-found {:error "Not found"})
-        (not (acl/admin? tx user-id id)) (-> (response/response {:error "Forbidden"})
+        (not= acl/admin role)            (-> (response/response {:error "Forbidden"})
                                              (response/status 403))
         :else                            (response/response {:joined (organization/members tx id)
                                                              :invited (invite/find-by-org-id tx id)})))))

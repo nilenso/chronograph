@@ -37,10 +37,13 @@
         (page-db/add-invited-members invited)
         (page-db/add-joined-members joined))))
 
-(rf/reg-event-db
+(rf/reg-event-fx
   ::fetch-organization-success
-  (fn [db [_ organization]]
-    (org-db/add-org db organization)))
+  (fn [{:keys [db]} [_ organization]]
+    (let [new-db (org-db/add-org db organization)]
+      {:db new-db
+       :fx [(when (page-db/user-is-admin? new-db)
+              [:dispatch [::fetch-members (page-db/slug new-db)]])]})))
 
 (rf/reg-event-fx
   ::fetch-organization-fail
@@ -48,6 +51,12 @@
     {:flash-error {:content (str "Oh no, something went wrong! "
                                  (:frown config/emojis)
                                  " Please refresh the page!")}}))
+
+(rf/reg-event-fx
+  ::organization-page-mounted
+  (fn [{:keys [db]} _]
+    {:fx [[:dispatch [::fetch-organization (page-db/slug db)]]
+          [:dispatch [::fetch-tasks (page-db/slug db)]]]}))
 
 (rf/reg-event-db
   ::invite-member-succeeded

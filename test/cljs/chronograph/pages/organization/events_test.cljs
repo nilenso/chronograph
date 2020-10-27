@@ -12,29 +12,74 @@
 
 (use-fixtures :once fixtures/check-specs)
 
-(deftest fetch-organization-test
-  (testing "When the API call for fetch organization succeeds"
+(deftest organization-page-mounted-test
+  (testing "When the org page is mounted, the organization and tasks should be fetched"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (let [slug         "a-test-org"
-           organization {:id         42
-                         :name       "A Test Org"
-                         :slug       slug
-                         :created-at "2020-09-14T14:16:06.402873Z"
-                         :updated-at "2020-09-14T14:16:06.402873Z"}]
-       (rf/reg-fx :http-xhrio
-         (fn [_]
-           (rf/dispatch [::org-events/fetch-organization-success
-                         organization])))
-       (tu/set-token (routes/path-for :organization-show :slug slug))
-       (rf/dispatch [::org-events/fetch-organization slug])
-       (is (= {:id         42
-               :name       "A Test Org"
-               :slug       "a-test-org"
-               :created-at "2020-09-14T14:16:06.402873Z"
-               :updated-at "2020-09-14T14:16:06.402873Z"}
-              @(rf/subscribe [::subs/organization slug]))
-           "The fetched organization should be in the DB"))))
+     (let [fetch-org-event   (tu/stub-event ::org-events/fetch-organization)
+           fetch-tasks-event (tu/stub-event ::org-events/fetch-tasks)]
+       (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
+       (rf/dispatch [::org-events/organization-page-mounted])
+       (is (= [::org-events/fetch-organization "test-slug"]
+              @fetch-org-event))
+       (is (= [::org-events/fetch-tasks "test-slug"]
+              @fetch-tasks-event))))))
+
+(deftest fetch-organization-test
+  (testing "When the API call for fetch organization succeeds"
+    (testing "When the user is a member of the organization"
+      (rf-test/run-test-sync
+       (tu/initialize-db!)
+       (let [slug             "a-test-org"
+             organization     {:id         42
+                               :name       "A Test Org"
+                               :slug       slug
+                               :role       "member"
+                               :created-at "2020-09-14T14:16:06.402873Z"
+                               :updated-at "2020-09-14T14:16:06.402873Z"}
+             dispatched-event (tu/stub-event ::org-events/fetch-members)]
+         (rf/reg-fx :http-xhrio
+           (fn [_]
+             (rf/dispatch [::org-events/fetch-organization-success
+                           organization])))
+         (tu/set-token (routes/path-for :organization-show :slug slug))
+         (rf/dispatch [::org-events/fetch-organization slug])
+         (is (= {:id         42
+                 :name       "A Test Org"
+                 :slug       "a-test-org"
+                 :role       "member"
+                 :created-at "2020-09-14T14:16:06.402873Z"
+                 :updated-at "2020-09-14T14:16:06.402873Z"}
+                @(rf/subscribe [::subs/organization slug]))
+             "The fetched organization should be in the DB")
+         (is (= nil
+                @dispatched-event)
+             "The members should not be fetched"))))
+
+    (testing "When the user is an admin of the organization"
+      (rf-test/run-test-sync
+       (tu/initialize-db!)
+       (let [slug             "a-test-org"
+             organization     {:id   42
+                               :name "A Test Org"
+                               :slug slug
+                               :role "admin"}
+             dispatched-event (tu/stub-event ::org-events/fetch-members)]
+         (rf/reg-fx :http-xhrio
+           (fn [_]
+             (rf/dispatch [::org-events/fetch-organization-success
+                           organization])))
+         (tu/set-token (routes/path-for :organization-show :slug slug))
+         (rf/dispatch [::org-events/fetch-organization slug])
+         (is (= {:id   42
+                 :name "A Test Org"
+                 :slug slug
+                 :role "admin"}
+                @(rf/subscribe [::subs/organization slug]))
+             "The fetched organization should be in the DB")
+         (is (= [::org-events/fetch-members slug]
+                @dispatched-event)
+             "The members should be fetched")))))
 
   (testing "When the API call for fetch organization fails"
     (rf-test/run-test-sync
@@ -57,6 +102,7 @@
            organization {:id         42
                          :name       "A Test Org"
                          :slug       slug
+                         :role       "member"
                          :created-at "2020-09-14T14:16:06.402873Z"
                          :updated-at "2020-09-14T14:16:06.402873Z"}]
        (tu/set-token (routes/path-for :organization-show :slug slug))
@@ -102,7 +148,8 @@
      (rf/dispatch [::org-events/fetch-organization-success
                    {:id   1
                     :name "A Test Org"
-                    :slug "test-slug"}])
+                    :slug "test-slug"
+                    :role "member"}])
      (rf/dispatch [::org-events/invite-member-succeeded
                    {:id              1
                     :organization-id 1
@@ -137,7 +184,8 @@
      (rf/dispatch [::org-events/fetch-organization-success
                    {:id   1
                     :name "A Test Org"
-                    :slug "test-slug"}])
+                    :slug "test-slug"
+                    :role "member"}])
      (rf/reg-fx :http-xhrio
        (fn [_]
          (rf/dispatch [::org-events/fetch-tasks-success
@@ -199,7 +247,8 @@
      (rf/dispatch [::org-events/fetch-organization-success
                    {:id   1
                     :name "A Test Org"
-                    :slug "test-slug"}])
+                    :slug "test-slug"
+                    :role "admin"}])
      (rf/dispatch [::org-events/fetch-tasks-success
                    [{:id              1
                      :name            "A task",
@@ -249,7 +298,8 @@
      (rf/dispatch [::org-events/fetch-organization-success
                    {:id   1
                     :name "A Test Org"
-                    :slug "test-slug"}])
+                    :slug "test-slug"
+                    :role "member"}])
      (let [task1 {:id              1
                   :name            "A task",
                   :description     "A Description"

@@ -19,11 +19,11 @@
 (defn stub-event
   [event-name]
   (let [dispatched-event (atom nil)]
-    (rf/reg-event-db
+    (rf/reg-event-fx
       event-name
-      (fn [db event]
+      (fn [_ event]
         (reset! dispatched-event event)
-        db))
+        {}))
     dispatched-event))
 
 (defn stub-xhrio

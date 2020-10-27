@@ -1,5 +1,6 @@
 (ns chronograph.pages.landing.events-test
   (:require [cljs.test :refer-macros [deftest is testing run-tests use-fixtures]]
+            [chronograph-web.events.organization :as org-events]
             [chronograph.fixtures :as fixtures]
             [day8.re-frame.test :as rf-test]
             [chronograph.test-utils :as tu]
@@ -52,27 +53,30 @@
      (rf/reg-fx :http-xhrio
        (fn [_]
          (rf/dispatch [::landing-events/accept-invite-succeeded 2])))
-     (rf/dispatch [::landing-events/accept-invite 2])
-     (is (= [{:id 1 :slug "slug1" :name "org1"}
-             {:id 3 :slug "slug3" :name "org3"}]
-            @(rf/subscribe [::landing-subs/invites]))
-         "it should be removed from the pending invites map in the app db.")
-     (is (= {:id 2 :slug "slug2" :name "org2"}
-            @(rf/subscribe [::subs/organization "slug2"]))
-         "it should be added to the organizations map in the app db.")
-     (is (= {:handler :root}
-            @(rf/subscribe [::subs/current-page]))
-         "the user remains on the landing page."))))
+
+     (let [dispatched-event (tu/stub-event ::org-events/fetch-organizations)]
+       (rf/dispatch [::landing-events/accept-invite 2])
+       (is (= [{:id 1 :slug "slug1" :name "org1"}
+               {:id 3 :slug "slug3" :name "org3"}]
+              @(rf/subscribe [::landing-subs/invites]))
+           "it should be removed from the pending invites map in the app db.")
+       (is (= [::org-events/fetch-organizations]
+              @dispatched-event)
+           "it should trigger a re-fetch of organizations")
+       (is (= {:handler :root}
+              @(rf/subscribe [::subs/current-page]))
+           "the user remains on the landing page.")))))
 
 (deftest create-organization-form-submit-test
   (testing "when the organization is created successfully"
     (rf-test/run-test-sync
      (tu/initialize-db!)
      (tu/stub-routing)
-     (let [name "Name"
-           slug "slug"
-           id 83
-           organization {:id id :name name :slug slug}]
+     (let [slug         "slug"
+           organization {:id   83
+                         :name "Name"
+                         :slug slug
+                         :role "member"}]
        (rf/dispatch [::landing-events/create-organization-succeeded
                      organization])
        (is (= {:route-params {:slug slug}
@@ -82,7 +86,8 @@
        (is (= @(rf/subscribe [::subs/organization slug])
               {:name "Name"
                :slug "slug"
-               :id 83})
+               :id   83
+               :role "member"})
            "should be able to lookup the organization by slug from the app-db"))))
 
   (testing "when organization creation fails"

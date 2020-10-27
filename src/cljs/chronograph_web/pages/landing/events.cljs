@@ -1,5 +1,6 @@
 (ns chronograph-web.pages.landing.events
   (:require [re-frame.core :as rf]
+            [chronograph-web.events.organization :as org-events]
             [chronograph-web.db :as db]
             [chronograph-web.db.organization-invites :as org-invites-db]
             [chronograph-web.pages.landing.db :as landing-db]
@@ -37,8 +38,8 @@
 (rf/reg-event-fx
   ::accept-invite-succeeded
   (fn [{:keys [db]} [_ id]]
-    {:db            (-> db
-                        (org-invites-db/move-accepted-org-to-organizations id))}))
+    {:db (org-invites-db/remove-invite db id)
+     :fx [[:dispatch [::org-events/fetch-organizations]]]}))
 
 (rf/reg-event-fx
   ::accept-invite-failed
