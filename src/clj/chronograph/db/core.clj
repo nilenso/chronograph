@@ -6,14 +6,51 @@
             [next.jdbc.sql :as sql]
             [chronograph.config :as config]
             [chronograph.utils.time :as time]
-            [camel-snake-kebab.core :as csk]))
+            [camel-snake-kebab.core :as csk]
+            [next.jdbc.prepare :as prepare]
+            [cheshire.core :as cheshire])
+  (:import (org.postgresql.util PGobject)
+           (java.sql Date PreparedStatement)
+           (clojure.lang IPersistentVector Sequential)))
 
 (jdbc-date-time/read-as-instant)
 
+(defn ->jsonb
+  "Transforms Clojure data to a PGobject that contains the data as
+  JSON."
+  [x]
+  (doto (PGobject.)
+    (.setType "jsonb")
+    (.setValue (cheshire/generate-string x))))
+
+(defn <-pgobject
+  "Transform PGobject to Clojure data."
+  [^PGobject v]
+  (let [value (.getValue v)]
+    (case (.getType v)
+      "jsonb" (when value
+                (cheshire/parse-string value true))
+      value)))
+
+(extend-protocol prepare/SettableParameter
+  IPersistentVector
+  (set-parameter [v ^PreparedStatement s i]
+    (.setObject s i (->jsonb v)))
+
+  Sequential
+  (set-parameter [v ^PreparedStatement s i]
+    (.setObject s i (->jsonb v))))
+
 (extend-protocol jdbc-result-set/ReadableColumn
-  java.sql.Date
-  (read-column-by-label [^java.sql.Date v _] (.toLocalDate v))
-  (read-column-by-index [^java.sql.Date v _1 _2] (.toLocalDate v)))
+  Date
+  (read-column-by-label [^Date v _] (.toLocalDate v))
+  (read-column-by-index [^Date v _1 _2] (.toLocalDate v))
+
+  PGobject
+  (read-column-by-label [^PGobject v _]
+    (<-pgobject v))
+  (read-column-by-index [^PGobject v _2 _3]
+    (<-pgobject v)))
 
 (defstate datasource
   :start (jdbc/get-datasource (:db-spec config/config))
