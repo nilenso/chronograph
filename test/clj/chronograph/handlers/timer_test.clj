@@ -177,9 +177,9 @@
       (is (= 200
              (:status response))
           "the request succeeds")
-      (is (s/valid? :time-spans/time-span
+      (is (s/valid? :timers/timer
                     (:body response))
-          "the body is a valid time span that was just started")
+          "the body is the timer that was just started")
       (is (= {:status 400,
               :headers {},
               :body {:error "Timer is already started."}}
@@ -213,9 +213,9 @@
       (is (= 200
              (:status response))
           "the request succeeds")
-      (is (s/valid? :time-spans/time-span
+      (is (s/valid? :timers/timer
                     (:body response))
-          "the body is a valid time span that was just stopped")
+          "the body is the timer that was just stopped")
       (is (= {:status 400,
               :headers {},
               :body {:error "Timer is already stopped."}}
@@ -245,17 +245,17 @@
                                                           :note "A lovely timer."})
                          :timers/id
                          (timer/start! db/datasource user-2-id)))
-          response (handler-timer/find-for-user-task {:params {:task-id task-id}
-                                                      :user {:users/id user-2-id}})]
+          response (handler-timer/find-by-user-and-task {:params {:task-id task-id}
+                                                         :user   {:users/id user-2-id}})]
       (is (= 200
              (:status response))
           "the request succeeds for an existing timer")
-      (is (s/valid? :domain.timer/find-for-user-retval
+      (is (s/valid? (s/coll-of :timers/timer)
                     (:body response))
-          "the body of is a collection of timer objects, each with timer and time span information")
+          "the body of is a collection of timer objects")
       (is (= {:status 404
               :headers {}
               :body {:error "Timers not found."}}
-             (handler-timer/find-for-user-task {:params {:task-id Long/MAX_VALUE}
-                                                :user {:users/id user-2-id}}))
+             (handler-timer/find-by-user-and-task {:params {:task-id Long/MAX_VALUE}
+                                                   :user   {:users/id user-2-id}}))
           "fails with HTTP error when timers do not exist"))))

@@ -1,11 +1,16 @@
 (ns chronograph.specs
   (:require [clojure.string :as string]
             [clojure.spec.alpha :as s]
-            [clojure.spec.gen.alpha :as gen]))
+            [clojure.spec.gen.alpha :as gen])
+  #?(:clj (:import [java.time Instant])))
 
 (def non-empty-string?
   (s/and string? (comp not string/blank?)))
 
+(defn instant?
+  [v]
+  #_{:clj-kondo/ignore [:unresolved-symbol]}
+  (instance? Instant v))
 
 ;; Users
 
@@ -115,39 +120,30 @@
 (s/def :timers/recorded-for local-date?)
 (s/def :timers/note string?)
 
-(s/def :timers/timer (s/keys :req [:timers/id :timers/user-id :timers/task-id :timers/recorded-for]
+(s/def :timers.time-span/started-at instant?)
+(s/def :timers.time-span/stopped-at (s/nilable instant?))
+
+(defn- stopped-at-after-started-at?
+  [{:keys [^Instant stopped-at ^Instant started-at]}]
+  (or (nil? stopped-at)
+      (= stopped-at started-at)
+      (.isAfter stopped-at started-at)))
+
+(s/def :timers/time-span (s/and (s/keys :req-un [:timers.time-span/started-at
+                                                 :timers.time-span/stopped-at])
+                                stopped-at-after-started-at?))
+(s/def :timers/time-spans (s/coll-of :timers/time-span))
+
+(s/def :timers/timer (s/keys :req [:timers/id
+                                   :timers/user-id
+                                   :timers/task-id
+                                   :timers/recorded-for
+                                   :timers/time-spans]
                              :opt [:timers/note]))
 
+;; Timers - Handler
 (s/def :handlers.timer/recorded-for string?)
 (s/def :handlers.timer/create-request-body (s/keys :req-un [:timers/task-id :handlers.timer/recorded-for]
                                                    :opt-un [:timers/note]))
-
-
-;; Time Spans - DB
-
-
-(s/def :time-spans/id uuid?)
-(s/def :time-spans/timer-id :timers/id)
-(s/def :time-spans/started-at inst?)
-(s/def :time-spans/stopped-at (s/or :running nil?
-                                    :stopped inst?))
-
-(s/def :time-spans/time-span (s/keys :req [:time-spans/id
-                                           :time-spans/timer-id
-                                           :time-spans/started-at
-                                           :time-spans/stopped-at]))
-
-
-;; Timers - Handler and Domain
-
-
-(s/def :domain.timer/time-spans (s/coll-of :time-spans/time-span))
-(s/def :domain.timer/find-by-id-retval (s/keys :req [:timers/id
-                                                     :timers/user-id
-                                                     :timers/task-id
-                                                     :timers/note]
-                                               :req-un [:domain.timer/time-spans]))
-(s/def :domain.timer/find-for-user-retval (s/coll-of :domain.timer/find-by-id-retval))
-
 (s/def :handlers.timer/create-request-body (s/keys :req-un [:timers/task-id]
                                                    :opt-un [:timers/note]))

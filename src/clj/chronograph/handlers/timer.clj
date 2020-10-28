@@ -67,7 +67,7 @@
         (response/bad-request
          {:error "Invalid Timer ID or Note."})
 
-        (empty? (timer/find-for-user-by-timer-id tx user-id timer-id))
+        (empty? (timer/find-by-user-and-id tx user-id timer-id))
         (response/bad-request
          {:error "Timer does not exist."})
 
@@ -82,16 +82,16 @@
   (let [timer-id (coerce/str-to-uuid timer-id)]
     (jdbc/with-transaction [tx db/datasource]
       (cond
-        (not (s/valid? :timers/id timer-id))
-        (response/bad-request
-         {:error "Invalid Timer ID."})
+        (not (s/valid? :timers/id timer-id)) (response/bad-request
+                                              {:error "Invalid Timer ID."})
 
-        (empty? (timer/find-for-user-by-timer-id tx user-id timer-id))
-        (response/bad-request
-         {:error "Timer does not exist."})
+        (empty? (timer/find-by-user-and-id tx
+                                           user-id
+                                           timer-id)) (response/bad-request
+                                                       {:error "Timer does not exist."})
 
-        :else (if-let [time-span (timer/start! tx user-id timer-id)]
-                (-> time-span
+        :else (if-let [started-timer (timer/start! tx user-id timer-id)]
+                (-> started-timer
                     response/response)
                 (response/bad-request
                  {:error "Timer is already started."}))))))
@@ -104,21 +104,21 @@
   (let [timer-id (coerce/str-to-uuid timer-id)]
     (jdbc/with-transaction [tx db/datasource]
       (cond
-        (not (s/valid? :timers/id timer-id))
-        (response/bad-request
-         {:error "Invalid Timer ID."})
+        (not (s/valid? :timers/id timer-id)) (response/bad-request
+                                              {:error "Invalid Timer ID."})
 
-        (empty? (timer/find-for-user-by-timer-id tx user-id timer-id))
-        (response/bad-request
-         {:error "Timer does not exist."})
+        (empty? (timer/find-by-user-and-id tx
+                                           user-id
+                                           timer-id)) (response/bad-request
+                                                       {:error "Timer does not exist."})
 
-        :else (if-let [time-span (timer/stop! tx user-id timer-id)]
-                (-> time-span
+        :else (if-let [stopped-timer (timer/stop! tx user-id timer-id)]
+                (-> stopped-timer
                     response/response)
                 (response/bad-request
                  {:error "Timer is already stopped."}))))))
 
-(defn find-for-user-task
+(defn find-by-user-and-task
   "Authorised users may look up all timers for any task they own."
   [{{:keys [task-id]} :params
     {user-id :users/id} :user
@@ -127,7 +127,7 @@
     (if (not (s/valid? :timers/task-id task-id))
       (response/bad-request
        {:error "Invalid Task ID."})
-      (if-let [timer (timer/find-for-user-task tx user-id task-id)]
+      (if-let [timer (timer/find-by-user-and-task tx user-id task-id)]
         (-> timer
             response/response)
         (response/not-found

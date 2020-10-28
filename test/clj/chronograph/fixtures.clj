@@ -4,7 +4,8 @@
             [mount.core :as mount]
             [chronograph.db.core :as db]
             [next.jdbc :as jdbc]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log]
+            [chronograph.utils.json]))
 
 (defn config [f]
   (mount/stop #'config/config)
@@ -27,7 +28,6 @@
   (jdbc/execute! db/datasource ["TRUNCATE TABLE organizations CASCADE"])
   (jdbc/execute! db/datasource ["TRUNCATE TABLE invites CASCADE"])
   (jdbc/execute! db/datasource ["TRUNCATE TABLE tasks CASCADE"])
-  (jdbc/execute! db/datasource ["TRUNCATE TABLE time_spans CASCADE"])
   (jdbc/execute! db/datasource ["TRUNCATE TABLE timers CASCADE"]))
 
 (defn clear-db [f]
