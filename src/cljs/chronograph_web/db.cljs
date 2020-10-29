@@ -1,6 +1,6 @@
 (ns chronograph-web.db)
 
-(def default-db {:user {:signin-state :fetching-profile}
+(def default-db {:user {:signin-state :fetching-data}
                  :page {:handler :root}})
 
 (defn normalize-by

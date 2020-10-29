@@ -1,9 +1,12 @@
 (ns chronograph.components.form-test
-  (:require [cljs.test :refer-macros [deftest is testing run-tests]]
+  (:require [cljs.test :refer-macros [deftest is testing run-tests use-fixtures]]
             [day8.re-frame.test :as rf-test]
             [chronograph-web.components.form :as form]
             [chronograph.test-utils :as tu]
-            [re-frame.core :as rf]))
+            [re-frame.core :as rf]
+            [chronograph.fixtures :as fixtures]))
+
+(use-fixtures :once fixtures/silence-logging)
 
 (defn- event-with-value
   [v]

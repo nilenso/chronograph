@@ -5,7 +5,8 @@
             [chronograph-web.pages.organization.subscriptions :as org-subs]
             [chronograph-web.components.common :as components]
             [chronograph-web.subscriptions :as subs]
-            [chronograph-web.http :as http]))
+            [chronograph-web.http :as http]
+            [chronograph-web.page-container.views :as page-container]))
 
 (defn- invite-member-form []
   (let [slug @(rf/subscribe [::org-subs/org-slug])
@@ -29,16 +30,16 @@
   (str "/api/organizations/" slug "/tasks/"))
 
 (defn create-task-form []
-  (let [slug @(rf/subscribe [::org-subs/org-slug])
-        {::form/keys [get-input-attributes get-submit-attributes]}
+  (let [{::form/keys [get-input-attributes get-submit-attributes]}
         (form/form {:form-key        ::create-task
                     :request-builder (fn [{:keys [name description]}]
-                                       (http/post {:uri        (tasks-uri slug)
-                                                   :params     {:name        name
-                                                                :description description}
-                                                   :on-success [::org-events/fetch-tasks slug]
-                                                   :on-failure [::org-events/create-task-failed]}))})]
-    (fn [_organization]
+                                       (let [slug @(rf/subscribe [::org-subs/org-slug])]
+                                         (http/post {:uri        (tasks-uri slug)
+                                                     :params     {:name        name
+                                                                  :description description}
+                                                     :on-success [::org-events/fetch-tasks slug]
+                                                     :on-failure [::org-events/create-task-failed]})))})]
+    (fn []
       [:form
        [:div [:input (get-input-attributes :name nil :tasks/name)]]
        [:div [:input (get-input-attributes :description nil :tasks/description)]]
@@ -106,16 +107,17 @@
     (let [{:keys [name]} @(rf/subscribe [::subs/organization slug])]
       (if-not name
         [components/loading-spinner]
-        [:div
-         [:h1 name]
-         (when @(rf/subscribe [::org-subs/user-is-admin?])
-           [invite-member-form])
-         (when @(rf/subscribe [::org-subs/user-is-admin?])
-           [:div
-            [:h2 "Members"]
-            [:ul
-             (for [member @(rf/subscribe [::org-subs/joined-members])]
-               ^{:key (str "joined-" (:id member))} [:li (:name member)])
-             (for [member @(rf/subscribe [::org-subs/invited-members])]
-               ^{:key (str "invited-" (:email member))} [:li (str (:email member) " (invited)")])]])
-         [tasks-section]]))))
+        [page-container/org-scoped-page-container
+         [:div
+          [:h1 name]
+          (when @(rf/subscribe [::org-subs/user-is-admin?])
+            [invite-member-form])
+          (when @(rf/subscribe [::org-subs/user-is-admin?])
+            [:div
+             [:h2 "Members"]
+             [:ul
+              (for [member @(rf/subscribe [::org-subs/joined-members])]
+                ^{:key (str "joined-" (:id member))} [:li (:name member)])
+              (for [member @(rf/subscribe [::org-subs/invited-members])]
+                ^{:key (str "invited-" (:email member))} [:li (str (:email member) " (invited)")])]])
+          [tasks-section]]]))))

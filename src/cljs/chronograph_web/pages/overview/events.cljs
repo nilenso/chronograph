@@ -1,11 +1,8 @@
-(ns chronograph-web.pages.landing.events
+(ns chronograph-web.pages.overview.events
   (:require [re-frame.core :as rf]
             [chronograph-web.events.organization :as org-events]
-            [chronograph-web.db :as db]
             [chronograph-web.db.organization-invites :as org-invites-db]
-            [chronograph-web.pages.landing.db :as landing-db]
             [chronograph-web.http :as http]
-            [chronograph-web.routes :as routes]
             [chronograph-web.config :as config]))
 
 (rf/reg-event-fx
@@ -67,25 +64,4 @@
                                  (:frown config/emojis)
                                  " Please refresh the page!")}}))
 
-(rf/reg-event-db
-  ::show-create-org-form
-  (fn [db _]
-    (db/set-in-page-state db [:show-create-org-form] true)))
 
-(rf/reg-event-db
-  ::hide-create-org-form
-  (fn [db _]
-    (db/set-in-page-state db [:show-create-org-form] false)))
-
-(rf/reg-event-fx
-  ::create-organization-succeeded
-  (fn [{:keys [db]} [_ {:keys [slug] :as response}]]
-    {:history-token (routes/path-for :organization-show :slug slug)
-     :db            (landing-db/add-to-organizations db response)}))
-
-(rf/reg-event-fx
-  ::create-organization-failed
-  (fn [_ _]
-    {:flash-error {:content (str "Failed to create the organization "
-                                 (:frown config/emojis)
-                                 " Please try again.")}}))
