@@ -106,9 +106,15 @@
 
 (def title (antd-wrapper antd/Typography.Title))
 
-(def dropdown (antd-wrapper antd/Dropdown
-                            #(medley/update-existing %
-                                                     :overlay
-                                                     r/as-element)))
+(defn dropdown
+  [& args]
+  (let [[attributes children] (split-attributes args)]
+    [:> antd/Dropdown (medley/update-existing attributes
+                                              :overlay
+                                              r/as-element)
+     (into [:span {:style (case (:trigger attributes)
+                            "click" {:cursor "pointer"}
+                            {:cursor "default"})}]
+           children)]))
 
 (def avatar (antd-wrapper antd/Avatar))

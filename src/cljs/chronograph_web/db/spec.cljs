@@ -6,7 +6,7 @@
   (s/and (s/coll-of a-spec)
          set?))
 
-(s/def ::signin-state #{:signed-in :signed-out :fetching-profile})
+(s/def ::signin-state #{:signed-in :signed-out :fetching-data})
 
 (s/def ::user (s/or :signed-in (s/and (s/merge (s/keys :req-un [::signin-state])
                                                :users/user-un)

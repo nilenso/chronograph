@@ -5,9 +5,10 @@
             [pushy.core :as pushy]
             [chronograph-web.events.routing :as routing-events]))
 
-(def routes ["/" {"" :root
-                  "organizations/" {"new" :organization-new
-                                    [:slug] :organization-show}}])
+(def routes ["/" {""                 :root
+                  "organizations/"   [[[:slug "/overview"] :overview]
+                                      [[:slug "/admin"] :organization-show]]
+                  "new-organization" :new-organization}])
 
 (defn set-page! [match]
   (rf/dispatch [::routing-events/pushy-dispatch match]))

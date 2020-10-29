@@ -1,4 +1,4 @@
-(ns chronograph.pages.landing.events-test
+(ns chronograph.pages.overview.events-test
   (:require [cljs.test :refer-macros [deftest is testing run-tests use-fixtures]]
             [chronograph-web.events.organization :as org-events]
             [chronograph.fixtures :as fixtures]
@@ -7,12 +7,12 @@
             [chronograph.specs]
             [re-frame.core :as rf]
             [re-frame.db :as db]
-            [chronograph-web.pages.landing.events :as landing-events]
-            [chronograph-web.pages.landing.subscriptions :as landing-subs]
+            [chronograph-web.pages.overview.events :as overview-events]
+            [chronograph-web.pages.overview.subscriptions :as overview-subs]
             [chronograph-web.subscriptions :as subs]
             [chronograph-web.effects]))
 
-(use-fixtures :once fixtures/check-specs)
+(use-fixtures :once fixtures/silence-logging fixtures/check-specs)
 
 (deftest landing-page-test
   (testing "When invited orgs are fetched, db should contain them"
@@ -23,11 +23,11 @@
        (tu/initialize-db!)
        (rf/reg-fx :http-xhrio
          (fn [_]
-           (rf/dispatch [::landing-events/fetch-invited-orgs-success
+           (rf/dispatch [::overview-events/fetch-invited-orgs-success
                          invited-orgs])))
-       (rf/dispatch [::landing-events/fetch-invited-orgs])
+       (rf/dispatch [::overview-events/fetch-invited-orgs])
        (is (= invited-orgs
-              @(rf/subscribe [::landing-subs/invites]))))))
+              @(rf/subscribe [::overview-subs/invites]))))))
 
   (testing "When invite is rejected, it should be removed from db"
     (rf-test/run-test-sync
@@ -37,11 +37,11 @@
                                                    3 {:id 3 :slug "slug3" :name "org3"}})
      (rf/reg-fx :http-xhrio
        (fn [_]
-         (rf/dispatch [::landing-events/reject-invite-succeeded 2])))
-     (rf/dispatch [::landing-events/reject-invite 2])
+         (rf/dispatch [::overview-events/reject-invite-succeeded 2])))
+     (rf/dispatch [::overview-events/reject-invite 2])
      (is (= [{:id 1 :slug "slug1" :name "org1"}
              {:id 3 :slug "slug3" :name "org3"}]
-            @(rf/subscribe [::landing-subs/invites])))))
+            @(rf/subscribe [::overview-subs/invites])))))
 
   (testing "When invite is accepted"
     (rf-test/run-test-sync
@@ -52,13 +52,13 @@
                                                             3 {:id 3 :slug "slug3" :name "org3"}})
      (rf/reg-fx :http-xhrio
        (fn [_]
-         (rf/dispatch [::landing-events/accept-invite-succeeded 2])))
+         (rf/dispatch [::overview-events/accept-invite-succeeded 2])))
 
      (let [dispatched-event (tu/stub-event ::org-events/fetch-organizations)]
-       (rf/dispatch [::landing-events/accept-invite 2])
+       (rf/dispatch [::overview-events/accept-invite 2])
        (is (= [{:id 1 :slug "slug1" :name "org1"}
                {:id 3 :slug "slug3" :name "org3"}]
-              @(rf/subscribe [::landing-subs/invites]))
+              @(rf/subscribe [::overview-subs/invites]))
            "it should be removed from the pending invites map in the app db.")
        (is (= [::org-events/fetch-organizations]
               @dispatched-event)
@@ -67,35 +67,4 @@
               @(rf/subscribe [::subs/current-page]))
            "the user remains on the landing page.")))))
 
-(deftest create-organization-form-submit-test
-  (testing "when the organization is created successfully"
-    (rf-test/run-test-sync
-     (tu/initialize-db!)
-     (tu/stub-routing)
-     (let [slug         "slug"
-           organization {:id   83
-                         :name "Name"
-                         :slug slug
-                         :role "member"}]
-       (rf/dispatch [::landing-events/create-organization-succeeded
-                     organization])
-       (is (= {:route-params {:slug slug}
-               :handler      :organization-show}
-              @(rf/subscribe [::subs/current-page]))
-           "the user should be routed to the organization-show page")
-       (is (= @(rf/subscribe [::subs/organization slug])
-              {:name "Name"
-               :slug "slug"
-               :id   83
-               :role "member"})
-           "should be able to lookup the organization by slug from the app-db"))))
 
-  (testing "when organization creation fails"
-    (rf-test/run-test-sync
-     (tu/initialize-db!)
-     (let [slug "slug"
-           error-params (tu/stub-effect :flash-error)]
-       (rf/dispatch [::landing-events/create-organization-failed])
-       (is (nil? @(rf/subscribe [::subs/organization slug])))
-       (is (some? @error-params)
-           "An error should be flashed")))))
