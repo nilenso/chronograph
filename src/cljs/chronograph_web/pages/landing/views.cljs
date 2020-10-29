@@ -4,7 +4,6 @@
             [chronograph-web.components.form :as form]
             [chronograph-web.http :as http]
             [chronograph-web.subscriptions :as subs]
-            [chronograph-web.pages :as pages]
             [chronograph-web.pages.landing.events :as landing-events]
             [chronograph-web.pages.landing.subscriptions :as landing-subs]
             [chronograph-web.components.antd :as antd]
@@ -32,7 +31,7 @@
         [antd/input (get-input-attributes :name {:type :text :autoFocus true} :organizations/name)]
         [antd/input (get-input-attributes :slug
                                           {:addonBefore (organizations-root-url)
-                                           :placeholder "e.g. my-org-name-42"}
+                                           `:placeholder "e.g. my-org-name-42"}
                                           :organizations/slug)]
         [antd/space
          [antd/button (get-submit-attributes) "Save"]
@@ -96,10 +95,9 @@
   (fn [_]
     (let [organizations         @(rf/subscribe [::subs/organizations])
           invited-organizations @(rf/subscribe [::landing-subs/invites])]
-      [pages/with-user-header
-       [antd/page-header {:breadcrumb {:routes [{:path           ""
-                                                 :breadcrumbName "Home"}]}}
-        [invited-organizations-list invited-organizations]
-        (when (not-empty invited-organizations)
-          [antd/divider])
-        [organizations-table organizations]]])))
+      [antd/page-header {:breadcrumb {:routes [{:path           ""
+                                                :breadcrumbName "Home"}]}}
+       [invited-organizations-list invited-organizations]
+       (when (not-empty invited-organizations)
+         [antd/divider])
+       [organizations-table organizations]])))
