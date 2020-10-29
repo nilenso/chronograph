@@ -37,15 +37,17 @@
 
 (def layout (antd-wrapper antd/Layout))
 (def layout-header (antd-wrapper antd/Layout.Header
-                                 #(assoc % :style {:background-color "white"
-                                                   :border-bottom    "1px solid #d9d9d9"})))
+                                 #(assoc % :style {:background-color "white"})))
 (def layout-content (antd-wrapper antd/Layout.Content))
+
+(def layout-sider (antd-wrapper antd/Layout.Sider
+                                #(assoc % :theme "light")))
 
 ;; Menu
 
 (def menu (antd-wrapper antd/Menu))
 
-;; Call these two components like functions; don't put them in vectors
+;; Call the following menu child components like functions; don't put them in vectors
 ;; like Hiccup.
 ;; This is because the styling seems to break if an intermediary component
 ;; is introduced.
@@ -55,6 +57,11 @@
                                                       :icon
                                                       r/create-element)))
 (def menu-divider (antd-wrapper antd/Menu.Divider))
+
+(def menu-submenu (antd-wrapper antd/Menu.SubMenu
+                                #(medley/update-existing %
+                                                         :icon
+                                                         r/create-element)))
 
 ;; Others
 

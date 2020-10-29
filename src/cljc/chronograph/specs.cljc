@@ -9,8 +9,8 @@
 
 (defn instant?
   [v]
-  #_{:clj-kondo/ignore [:unresolved-symbol]}
-  (instance? Instant v))
+  #?(:clj (instance? Instant v)
+     :cljs (inst? v)))
 
 ;; Users
 
