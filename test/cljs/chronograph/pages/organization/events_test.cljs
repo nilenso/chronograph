@@ -10,7 +10,7 @@
             [chronograph.fixtures :as fixtures]
             [chronograph-web.routes :as routes]))
 
-(use-fixtures :once fixtures/check-specs)
+(use-fixtures :once fixtures/silence-logging fixtures/check-specs)
 
 (deftest organization-page-mounted-test
   (testing "When the org page is mounted, the organization and tasks should be fetched"

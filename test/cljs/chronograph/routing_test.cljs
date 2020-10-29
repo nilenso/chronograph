@@ -7,7 +7,7 @@
             [chronograph.fixtures :as fixtures]
             [chronograph.test-utils :as tu]))
 
-(use-fixtures :once fixtures/check-specs)
+(use-fixtures :once fixtures/silence-logging fixtures/check-specs)
 
 (deftest pushy-dispatch-test
   (testing "when page is set"

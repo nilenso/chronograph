@@ -1,25 +1,39 @@
 (ns chronograph-web.events.user
   (:require [re-frame.core :as rf]
             [chronograph-web.db :as db]
-            [ajax.core :as ajax]
-            [day8.re-frame.http-fx]))
+            [day8.re-frame.http-fx]
+            [chronograph-web.db.organization :as org-db]
+            [chronograph-web.api-client :as api]
+            [chronograph-web.routes :as routes]))
 
 (rf/reg-event-fx
   ::initialize
   (fn [_ _]
-    {:db (assoc-in db/default-db [:user :signin-state] :fetching-profile)
-     :http-xhrio {:method :get
-                  :uri "/api/users/me"
-                  :response-format (ajax/json-response-format {:keywords? true})
-                  :on-success [::fetch-profile-succeeded]
-                  :on-failure [::fetch-profile-failed]}}))
+    {:db (assoc-in db/default-db [:user :signin-state] :fetching-data)
+     :fx [[:http-xhrio (api/fetch-profile [::fetch-profile-succeeded]
+                                          [::fetch-data-failed])]]}))
 
-(rf/reg-event-db
+(defn- sign-in-user
+  [db user-response]
+  (assoc db :user (merge {:signin-state :signed-in} user-response)))
+
+(rf/reg-event-fx
   ::fetch-profile-succeeded
-  (fn [db [_ response]]
-    (assoc db :user (merge {:signin-state :signed-in} response))))
+  (fn [{:keys [db]} [_ response]]
+    (if (not-empty (org-db/organizations db))
+      {:db (sign-in-user db response)}
+      {:fx [[:http-xhrio (api/fetch-organizations [::fetch-organizations-succeeded response]
+                                                  [::fetch-data-failed])]]})))
+
+(rf/reg-event-fx
+  ::fetch-organizations-succeeded
+  (fn [{:keys [db]} [_ user-response response]]
+    {:db (-> db
+             (org-db/add-organizations response)
+             (sign-in-user user-response))
+     :fx [[:history-token (routes/path-for :overview :slug (:slug (first response)))]]}))
 
 (rf/reg-event-db
-  ::fetch-profile-failed
+  ::fetch-data-failed
   (fn [db _]
     (assoc-in db [:user :signin-state] :signed-out)))

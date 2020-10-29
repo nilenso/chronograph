@@ -1,31 +1,47 @@
 (ns chronograph-web.components.form
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as string]
-            [re-frame.core :as rf]))
+            [re-frame.core :as rf]
+            [chronograph-web.db :as db]))
+
+(defn- get-in-form-state
+  [db form-key path]
+  (db/get-in-page-state db (concat [:forms form-key] path)))
 
 (defn- get-input-params
   [db form-key]
-  (get-in db [:forms form-key :params]))
+  (get-in-form-state db form-key [:params]))
+
+(defn- set-in-form-state
+  [db form-key path v]
+  (db/set-in-page-state db (concat [:forms form-key] path) v))
 
 (defn- set-status
   [db form-key status]
-  (assoc-in db [:forms form-key :status] status))
+  (set-in-form-state db form-key [:status] status))
+
+(defn- get-status
+  [db form-key]
+  (get-in-form-state db form-key [:status]))
+
+(defn- set-params
+  [db form-key params]
+  (set-in-form-state db form-key [:params] params))
 
 (defn- set-input-value
   [db form-key input-key value]
-  (assoc-in db [:forms form-key :params input-key] value))
+  (set-in-form-state db form-key [:params input-key] value))
 
 (defn- clear-form [db form-key]
-  (update db :forms #(dissoc % form-key)))
+  (db/update-in-page-state db [:forms] #(dissoc % form-key)))
 
 ;; Events
 
 (rf/reg-event-db ::initialize
   (fn [db [_ form-key initial-values]]
-    (assoc-in db
-              [:forms form-key]
-              {:status :initialized
-               :params initial-values})))
+    (-> db
+        (set-status form-key :initialized)
+        (set-params form-key initial-values))))
 
 (rf/reg-event-db ::update
   (fn [db [_ form-key input-key value]]
@@ -56,13 +72,13 @@
 
 (rf/reg-sub ::form
   (fn [db [_ form-key child]]
-    (get-in db (if child
-                 [:forms form-key child]
-                 [:forms form-key]))))
+    (get-in-form-state db form-key (if child
+                                     [child]
+                                     []))))
 
 (rf/reg-sub ::submitting?
   (fn [db [_ form-key]]
-    (= (get-in db [:forms form-key :status])
+    (= (get-status db form-key)
        :submitting)))
 
 ;; Attribute builders and form function
