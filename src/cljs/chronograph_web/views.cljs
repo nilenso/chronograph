@@ -3,7 +3,8 @@
             [chronograph-web.subscriptions :as subs]
             [chronograph-web.pages.landing.views :refer [landing-page]]
             [chronograph-web.pages.organization.views :refer [organization-page]]
-            [chronograph-web.components.common :as components]))
+            [chronograph-web.components.common :as components]
+            [chronograph-web.pages :as pages]))
 
 (defn login-route []
   (let [location (-> js/window .-location .-search)
@@ -24,7 +25,8 @@
 
 (defn authenticated-page []
   (if-let [{:keys [handler route-params]} @(rf/subscribe [::subs/current-page])]
-    [(authenticated-view handler) route-params]
+    [pages/main-page-container
+     [(authenticated-view handler) route-params]]
     [:div "Page not found"]))
 
 (defn root []
