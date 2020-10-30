@@ -3,7 +3,10 @@
             [chronograph-web.pages.overview.events :as overview-events]
             [chronograph-web.pages.overview.subscriptions :as overview-subs]
             [chronograph-web.components.antd :as antd]
-            [chronograph-web.page-container.views :as page-container]))
+            [chronograph.specs]
+            [chronograph-web.page-container.views :as page-container]
+            [chronograph-web.components.timer :as timer-com]
+            [chronograph-web.utils.time :as time]))
 
 (defn- invited-organizations-list
   [organizations]
@@ -24,12 +27,22 @@
                                    "Decline"]]]])
                  :dataSource organizations}]]))
 
+(defn timer-list [ds]
+  [antd/list {:dataSource ds
+              :grid       {:gutter 64}
+              :renderItem (fn [{:keys [id] :as timer}]
+                            [antd/list-item {:key id}
+                             [timer-com/timer timer]])}])
+
 (defn landing-page [_]
-  (rf/dispatch [::overview-events/fetch-invited-orgs])
-  (fn [_]
-    (let [invited-organizations @(rf/subscribe [::overview-subs/invites])]
-      [page-container/org-scoped-page-container
-       [antd/page-header {:title "Overview"}
-        [invited-organizations-list invited-organizations]
-        (when (not-empty invited-organizations)
-          [antd/divider])]])))
+  (let [invited-organizations @(rf/subscribe [::overview-subs/invites])
+        timers                (->> @(rf/subscribe [::overview-subs/current-organization-timers
+                                                   (time/current-calendar-date)])
+                                   (sort-by :created-at))]
+    [page-container/org-scoped-page-container
+     [antd/page-header {:title "Timers"}
+      [invited-organizations-list invited-organizations]
+      (when (not-empty invited-organizations)
+        [antd/divider])
+      [timer-list timers]]]))
+

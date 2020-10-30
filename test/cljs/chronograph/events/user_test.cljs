@@ -27,7 +27,8 @@
                                                                 {:id   43
                                                                  :name "A Test Org 2"
                                                                  :slug "test-2"
-                                                                 :role "admin"}])))))
+                                                                 :role "admin"}]))
+           nil)))
      (rf/dispatch [::user-events/initialize])
      (is (= {:signin-state :signed-in
              :id           123

@@ -1,0 +1,17 @@
+@use '../_variables' as v;
+
+.timer {
+  padding: 16px;
+  font-size: 20px;
+  font-weight: 400;
+  background-color: rgb(240, 242, 245);
+  min-height: 100px;
+
+  &.timer-running {
+    background-color: v.$green-1;
+  }
+}
+
+.timer-duration {
+  font-weight: 700;
+}
