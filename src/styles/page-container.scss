@@ -1,0 +1,22 @@
+.org-select-dropdown {
+  .org-name {
+    font-size: 32px;
+    max-width: 108px;
+    max-height: 50px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.org-select-menu {
+    box-shadow: 3px 3px 8px -2px #999192 !important;
+
+  .org-select-menu-item {
+    max-width: 150px;
+    max-height: 50px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
