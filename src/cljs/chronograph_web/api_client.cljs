@@ -10,6 +10,14 @@
 
 (defn fetch-profile
   [on-success on-failure]
-  (http/get {:uri "/api/users/me"
+  (http/get {:uri (str config/api-root "/users/me")
+             :on-success on-success
+             :on-failure on-failure}))
+
+(defn fetch-timers
+  [day on-success on-failure]
+  (http/get {:uri (str config/api-root "/timers")
+             :method :get
+             :params {:day day}
              :on-success on-success
              :on-failure on-failure}))

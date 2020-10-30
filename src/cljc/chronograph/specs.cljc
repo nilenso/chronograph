@@ -2,7 +2,8 @@
   (:require [clojure.string :as string]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen])
-  #?(:clj (:import [java.time Instant])))
+  #?(:cljs (:import [goog.date Date DateTime])
+     :clj  (:import [java.time Instant LocalDate])))
 
 (def non-empty-string?
   (s/and string? (comp not string/blank?)))
@@ -109,25 +110,35 @@
 
 ;; Timers - DB
 
-
-(defn- local-date? [v]
-  #?(:clj   (instance? java.time.LocalDate v)
-     :cljs (string? v)))
+(s/def :calendar-date/day (s/int-in 1 32))
+(s/def :calendar-date/month (s/int-in 0 12))
+(s/def :calendar-date/year pos-int?)
+;; TODO: Add tighter validation for a calendar date
+(s/def :calendar-date/calendar-date (s/keys :req-un [:calendar-date/day
+                                                     :calendar-date/month
+                                                     :calendar-date/year]))
 
 (s/def :timers/id uuid?)
 (s/def :timers/user-id :users/id)
 (s/def :timers/task-id :tasks/id)
-(s/def :timers/recorded-for local-date?)
-(s/def :timers/note string?)
+(s/def :timers/recorded-for #?(:clj  #(instance? LocalDate %)
+                               :cljs :calendar-date/calendar-date))
+(s/def :timers/note (s/nilable string?))
 
 (s/def :timers.time-span/started-at instant?)
 (s/def :timers.time-span/stopped-at (s/nilable instant?))
 
 (defn- stopped-at-after-started-at?
-  [{:keys [^Instant stopped-at ^Instant started-at]}]
-  (or (nil? stopped-at)
-      (= stopped-at started-at)
-      (.isAfter stopped-at started-at)))
+  [timespan]
+  #?(:clj (let [{:keys [^Instant stopped-at ^Instant started-at]} timespan]
+            (or (nil? stopped-at)
+                (= stopped-at started-at)
+                (.isAfter stopped-at started-at)))
+     :cljs (let [{:keys [^DateTime stopped-at ^DateTime started-at]} timespan]
+             true
+            #_(or (nil? stopped-at)
+                (= stopped-at started-at)
+                (> stopped-at started-at)))))
 
 (s/def :timers/time-span (s/and (s/keys :req-un [:timers.time-span/started-at
                                                  :timers.time-span/stopped-at])
@@ -140,6 +151,13 @@
                                    :timers/recorded-for
                                    :timers/time-spans]
                              :opt [:timers/note]))
+
+(s/def :timers/timer-un (s/keys :req-un [:timers/id
+                                         :timers/user-id
+                                         :timers/task-id
+                                         :timers/recorded-for
+                                         :timers/time-spans]
+                                :opt-un [:timers/note]))
 
 ;; Timers - Handler
 (s/def :handlers.timer/recorded-for string?)

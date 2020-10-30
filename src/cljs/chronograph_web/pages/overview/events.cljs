@@ -1,9 +1,23 @@
 (ns chronograph-web.pages.overview.events
   (:require [re-frame.core :as rf]
+            [chronograph-web.events.routing :as routing-events]
             [chronograph-web.events.organization :as org-events]
+            [chronograph-web.events.timer :as timer-events]
             [chronograph-web.db.organization-invites :as org-invites-db]
+            [chronograph-web.utils.time :as time]
             [chronograph-web.http :as http]
             [chronograph-web.config :as config]))
+
+(defmethod routing-events/on-route-change-event
+  :overview
+  [_]
+  ::overview-page-navigated)
+
+(rf/reg-event-fx
+  ::overview-page-navigated
+  (fn [{:keys [db]} _]
+    {:fx [[:dispatch [::fetch-invited-orgs]]
+          [:dispatch [::timer-events/fetch-timers (time/calendar-date->string (time/current-calendar-date))]]]}))
 
 (rf/reg-event-fx
   ::reject-invite

@@ -41,10 +41,14 @@
 (s/def ::page-state (s/nilable (s/keys :opt-un [:page-state/organization-show
                                                 :page-state/create-organization])))
 
+(s/def ::timers (s/map-of :timers/recorded-for (s/coll-of :timers/timer-un)))
+
 (s/def ::db (s/keys :req-un [::user ::page]
                     :opt-un [::organizations
                              ::invited-members
                              ::joined-members
                              ::tasks
                              ::organization-invites
-                             ::page-state]))
+                             ::page-state
+                             ::timers]))
+
