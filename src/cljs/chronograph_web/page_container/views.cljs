@@ -94,7 +94,7 @@
                :selectedKeys (selected-sider-menu-keys)}
     (antd/menu-item {:key "1" :icon icons/ClockCircleOutlined} [:a
                                                                 {:href (routes/path-for :overview :slug slug)}
-                                                                "Overview"])
+                                                                "Timers"])
     (antd/menu-item {:key "2" :icon icons/TeamOutlined} [:a
                                                          {:href (routes/path-for :organization-show :slug slug)}
                                                          "Admin"])]])

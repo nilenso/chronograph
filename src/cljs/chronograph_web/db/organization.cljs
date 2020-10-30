@@ -5,6 +5,10 @@
   [db slug]
   (get-in db [:organizations slug]))
 
+(defn org-id
+  [db slug]
+  (:id (org-by-slug db slug)))
+
 (defn add-org
   [db {:keys [slug] :as organization}]
   (assoc-in db [:organizations slug] organization))

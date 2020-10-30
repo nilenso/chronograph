@@ -9,12 +9,29 @@
             [re-frame.db :as db]
             [chronograph-web.pages.overview.events :as overview-events]
             [chronograph-web.pages.overview.subscriptions :as overview-subs]
+            [chronograph-web.events.timer :as timer-events]
             [chronograph-web.subscriptions :as subs]
-            [chronograph-web.effects]))
+            [chronograph-web.effects]
+            [chronograph-web.utils.time :as time]))
 
 (use-fixtures :once fixtures/silence-logging fixtures/check-specs)
 
 (deftest landing-page-test
+  (testing "When the user navigates to the page, timers & invites should be fetched"
+    (rf-test/run-test-sync
+      ;; TODO: extract test setup stuff
+     (tu/initialize-db!)
+     (with-redefs [time/now (fn [] (let [d (js/Date.)]
+                                     (.setYear d 2020)
+                                     (.setMonth d 10)
+                                     (.setDate d 5)
+                                     d))]
+       (let [invited-orgs-stub (tu/stub-event ::overview-events/fetch-invited-orgs)
+             fetch-timers-stub (tu/stub-event ::timer-events/fetch-timers)]
+         (rf/dispatch [::overview-events/overview-page-navigated])
+         (is (= [::overview-events/fetch-invited-orgs] @invited-orgs-stub))
+         (is (= [::timer-events/fetch-timers {:day 5 :month 10 :year 2020}] @fetch-timers-stub))))))
+
   (testing "When invited orgs are fetched, db should contain them"
     (let [invited-orgs [{:id 1 :slug "slug1" :name "org1"}
                         {:id 2 :slug "slug2" :name "org2"}

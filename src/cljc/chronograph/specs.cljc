@@ -2,14 +2,14 @@
   (:require [clojure.string :as string]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen])
-  #?(:clj (:import [java.time Instant])))
+  #?(:clj  (:import [java.time Instant LocalDate])))
 
 (def non-empty-string?
   (s/and string? (comp not string/blank?)))
 
 (defn instant?
   [v]
-  #?(:clj (instance? Instant v)
+  #?(:clj  (instance? Instant v)
      :cljs (inst? v)))
 
 ;; Users
@@ -32,8 +32,8 @@
 
 (s/def :users/google-id (s/with-gen
                           string?
-                          ;; A UUID ensures tests do not flake. A UUID is fine
-                          ;; because a google id is a uniquely random value.
+                         ;; A UUID ensures tests do not flake. A UUID is fine
+                         ;; because a google id is a uniquely random value.
                           #(gen/fmap str (gen/uuid))))
 
 
@@ -51,7 +51,7 @@
                              (s/and string?
                                     matches-organization-slug-regex?
                                     #(<= 1 (count %) 256))
-                             ;; simplifying trick: a uuid will always match our desired slug pattern
+                            ;; simplifying trick: a uuid will always match our desired slug pattern
                              #(gen/fmap (fn [uid] (.toLowerCase (str uid)))
                                         (gen/uuid))))
 
@@ -110,24 +110,37 @@
 ;; Timers - DB
 
 
-(defn- local-date? [v]
-  #?(:clj   (instance? java.time.LocalDate v)
-     :cljs (string? v)))
+(s/def :calendar-date/day (s/int-in 1 32))
+(s/def :calendar-date/month (s/int-in 0 12))
+(s/def :calendar-date/year (s/int-in 1500 3000))
+(s/def :calendar-date/calendar-date (s/keys :req-un [:calendar-date/day
+                                                     :calendar-date/month
+                                                     :calendar-date/year]))
 
 (s/def :timers/id uuid?)
 (s/def :timers/user-id :users/id)
 (s/def :timers/task-id :tasks/id)
-(s/def :timers/recorded-for local-date?)
-(s/def :timers/note string?)
+(s/def :timers/recorded-for #?(:clj  #(instance? LocalDate %)
+                               :cljs :calendar-date/calendar-date))
+(s/def :timers/note (s/nilable string?))
 
-(s/def :timers.time-span/started-at instant?)
-(s/def :timers.time-span/stopped-at (s/nilable instant?))
+(defn- now []
+  #?(:clj  (Instant/now)
+     :cljs (js/Date.)))
+
+(s/def :timers.time-span/started-at (s/with-gen instant? #(gen/return (now))))
+(s/def :timers.time-span/stopped-at (s/nilable (s/with-gen instant? #(gen/return (now)))))
 
 (defn- stopped-at-after-started-at?
-  [{:keys [^Instant stopped-at ^Instant started-at]}]
-  (or (nil? stopped-at)
-      (= stopped-at started-at)
-      (.isAfter stopped-at started-at)))
+  [timespan]
+  #?(:clj  (let [{:keys [^Instant stopped-at ^Instant started-at]} timespan]
+             (or (nil? stopped-at)
+                 (= stopped-at started-at)
+                 (.isAfter stopped-at started-at)))
+     :cljs (let [{:keys [stopped-at started-at]} timespan]
+             (or (nil? stopped-at)
+                 (= stopped-at started-at)
+                 (> stopped-at started-at)))))
 
 (s/def :timers/time-span (s/and (s/keys :req-un [:timers.time-span/started-at
                                                  :timers.time-span/stopped-at])

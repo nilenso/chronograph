@@ -82,6 +82,11 @@
                                                       :actions
                                                       (partial map r/as-element))))
 
+(def list-item-meta (antd-wrapper antd/List.Item.Meta
+                                  #(medley/update-existing %
+                                                           :title
+                                                           (partial map r/as-element))))
+
 (def space (antd-wrapper antd/Space
                          #(medley/update-existing %
                                                   :split
