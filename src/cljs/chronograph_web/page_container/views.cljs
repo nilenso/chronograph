@@ -33,9 +33,11 @@
   (let [organizations @(rf/subscribe [::pc-subs/selectable-orgs])]
     (into [antd/menu {:mode         "inline"
                       :selectedKeys []
-                      :onClick      on-click}]
+                      :onClick      on-click
+                      :class        "org-select-menu"}]
           (conj (mapv (fn [{:keys [name slug]}]
-                        (antd/menu-item [:a
+                        (antd/menu-item {:class "org-select-menu-item"}
+                                        [:a
                                          {:href @(rf/subscribe [::pc-subs/switch-organization-href slug])}
                                          name]))
                       organizations)
@@ -57,11 +59,12 @@
       [antd/dropdown {:overlay         [organizations-menu #(reset! dropdown-visible? false)]
                       :trigger         "click"
                       :visible         @dropdown-visible?
-                      :onVisibleChange #(reset! dropdown-visible? %)}
+                      :onVisibleChange #(reset! dropdown-visible? %)
+                      :class           "org-select-dropdown"}
        [antd/space {:style {:margin "16px"}
                     :align "center"}
         [org-icon]
-        [:span {:style {:fontSize "32px"}} name]
+        [:div.org-name name]
         [:> icons/DownOutlined]]])))
 
 (defn- selected-sider-menu-keys []
