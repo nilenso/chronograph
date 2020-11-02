@@ -4,11 +4,21 @@
             [chronograph-web.components.antd :as antd]
             [chronograph-web.routes :as routes]
             [chronograph-web.pages.create-organization.events :as create-org-events]
-            [chronograph-web.page-container.views :as page-container]))
+            [chronograph-web.page-container.views :as page-container]
+            [clojure.string :as string]))
 
-(defn- organizations-root-url []
-  (str js/location.origin
-       (routes/path-for :organization-show :slug "")))
+(defn- overview-url-prefix []
+  (let [slug "default"]
+    (-> (str js/location.origin
+             (routes/path-for :overview :slug slug))
+        (string/split (re-pattern slug))
+        (first))))
+
+(defn- overview-url-suffix []
+  (let [slug "default"]
+    (-> (routes/path-for :overview :slug slug)
+        (string/split (re-pattern slug))
+        (second))))
 
 (defn- create-organization-form []
   (let [{::form/keys [get-input-attributes get-submit-attributes]}
@@ -24,8 +34,9 @@
        [antd/space {:direction "vertical"}
         [antd/input (get-input-attributes :name {:type :text :autoFocus true} :organizations/name)]
         [antd/input (get-input-attributes :slug
-                                          {:addonBefore (organizations-root-url)
-                                           :placeholder "e.g. my-org-name-42"}
+                                          {:placeholder "e.g. my-org-name-42"
+                                           :addonBefore (overview-url-prefix)
+                                           :addonAfter  (overview-url-suffix)}
                                           :organizations/slug)]
         [antd/space
          [antd/button (get-submit-attributes) "Save"]]]])))
