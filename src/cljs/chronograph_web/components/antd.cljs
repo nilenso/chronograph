@@ -119,3 +119,5 @@
            children)]))
 
 (def avatar (antd-wrapper antd/Avatar))
+
+(def tooltip (antd-wrapper antd/Tooltip))
