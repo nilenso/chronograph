@@ -12,14 +12,14 @@
 
 (use-fixtures :once fixtures/silence-logging fixtures/check-specs)
 
-(deftest organization-page-mounted-test
-  (testing "When the org page is mounted, the organization and tasks should be fetched"
+(deftest organization-page-navigated-test
+  (testing "When the org page is navigated to, the organization and tasks should be fetched"
     (rf-test/run-test-sync
      (tu/initialize-db!)
      (let [fetch-org-event   (tu/stub-event ::org-events/fetch-organization)
            fetch-tasks-event (tu/stub-event ::org-events/fetch-tasks)]
        (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
-       (rf/dispatch [::org-events/organization-page-mounted])
+       (rf/dispatch [::org-events/organization-page-navigated])
        (is (= [::org-events/fetch-organization "test-slug"]
               @fetch-org-event))
        (is (= [::org-events/fetch-tasks "test-slug"]

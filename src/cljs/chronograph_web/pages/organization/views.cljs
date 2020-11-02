@@ -101,23 +101,21 @@
    (when-let [tasks @(rf/subscribe [::org-subs/tasks])]
      [task-list tasks])])
 
-(defn organization-page [_]
-  (rf/dispatch [::org-events/organization-page-mounted])
-  (fn [{:keys [slug]}]
-    (let [{:keys [name]} @(rf/subscribe [::subs/organization slug])]
-      (if-not name
-        [components/loading-spinner]
-        [page-container/org-scoped-page-container
-         [:div
-          [:h1 name]
-          (when @(rf/subscribe [::org-subs/user-is-admin?])
-            [invite-member-form])
-          (when @(rf/subscribe [::org-subs/user-is-admin?])
-            [:div
-             [:h2 "Members"]
-             [:ul
-              (for [member @(rf/subscribe [::org-subs/joined-members])]
-                ^{:key (str "joined-" (:id member))} [:li (:name member)])
-              (for [member @(rf/subscribe [::org-subs/invited-members])]
-                ^{:key (str "invited-" (:email member))} [:li (str (:email member) " (invited)")])]])
-          [tasks-section]]]))))
+(defn organization-page [{:keys [slug]}]
+  (let [{:keys [name]} @(rf/subscribe [::subs/organization slug])]
+    (if-not name
+      [components/loading-spinner]
+      [page-container/org-scoped-page-container
+       [:div
+        [:h1 name]
+        (when @(rf/subscribe [::org-subs/user-is-admin?])
+          [invite-member-form])
+        (when @(rf/subscribe [::org-subs/user-is-admin?])
+          [:div
+           [:h2 "Members"]
+           [:ul
+            (for [member @(rf/subscribe [::org-subs/joined-members])]
+              ^{:key (str "joined-" (:id member))} [:li (:name member)])
+            (for [member @(rf/subscribe [::org-subs/invited-members])]
+              ^{:key (str "invited-" (:email member))} [:li (str (:email member) " (invited)")])]])
+        [tasks-section]]])))
