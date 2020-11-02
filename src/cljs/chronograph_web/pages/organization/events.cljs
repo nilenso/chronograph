@@ -4,7 +4,8 @@
             [chronograph-web.pages.organization.db :as page-db]
             [chronograph.utils.data :as datautils]
             [chronograph-web.db.organization :as org-db]
-            [chronograph-web.config :as config]))
+            [chronograph-web.config :as config]
+            [chronograph-web.events.routing :as routing-events]))
 
 (def ^:private get-organization-uri
   "/api/organizations/")
@@ -14,6 +15,14 @@
        slug
        "/tasks/"))
 
+(defmethod routing-events/on-route-change-event :organization-show [_] ::organization-page-navigated)
+
+(rf/reg-event-fx
+  ::organization-page-navigated
+  (fn [{:keys [db]} _]
+    {:fx [[:dispatch [::fetch-organization (page-db/slug db)]]
+          [:dispatch [::fetch-tasks (page-db/slug db)]]]}))
+
 (rf/reg-event-fx
   ::fetch-organization
   (fn [_ [_ slug]]
@@ -22,20 +31,6 @@
     {:http-xhrio (http/get {:uri        (str get-organization-uri slug)
                             :on-success [::fetch-organization-success]
                             :on-failure [::fetch-organization-fail slug]})}))
-
-(rf/reg-event-fx
-  ::fetch-members
-  (fn [_ [_ slug]]
-    {:http-xhrio (http/get {:uri        (str get-organization-uri slug "/members")
-                            :on-success [::fetch-members-succeeded]
-                            :on-failure [::fetch-members-failed slug]})}))
-
-(rf/reg-event-db
-  ::fetch-members-succeeded
-  (fn [db [_ {:keys [invited joined]}]]
-    (-> db
-        (page-db/add-invited-members invited)
-        (page-db/add-joined-members joined))))
 
 (rf/reg-event-fx
   ::fetch-organization-success
@@ -53,10 +48,25 @@
                                  " Please refresh the page!")}}))
 
 (rf/reg-event-fx
-  ::organization-page-mounted
-  (fn [{:keys [db]} _]
-    {:fx [[:dispatch [::fetch-organization (page-db/slug db)]]
-          [:dispatch [::fetch-tasks (page-db/slug db)]]]}))
+  ::fetch-members
+  (fn [_ [_ slug]]
+    {:http-xhrio (http/get {:uri        (str get-organization-uri slug "/members")
+                            :on-success [::fetch-members-succeeded]
+                            :on-failure [::fetch-members-failed slug]})}))
+
+(rf/reg-event-db
+  ::fetch-members-succeeded
+  (fn [db [_ {:keys [invited joined]}]]
+    (-> db
+        (page-db/add-invited-members invited)
+        (page-db/add-joined-members joined))))
+
+(rf/reg-event-fx
+  ::fetch-members-failed
+  (fn [_ _]
+    {:flash-error {:content (str "Oh no, something went wrong! "
+                                 (:frown config/emojis)
+                                 " Please refresh the page!")}}))
 
 (rf/reg-event-db
   ::invite-member-succeeded
@@ -71,13 +81,6 @@
       {:flash-error {:content (str "Failed to send the invitation "
                                    (:frown config/emojis)
                                    " Please try again.")}})))
-
-(rf/reg-event-fx
-  ::fetch-members-failed
-  (fn [_ _]
-    {:flash-error {:content (str "Oh no, something went wrong! "
-                                 (:frown config/emojis)
-                                 " Please refresh the page!")}}))
 
 (rf/reg-event-fx
   ::fetch-tasks
