@@ -29,6 +29,18 @@
               :align   "middle"}
     [user-dropdown name photo-url]]])
 
+(defn- limit-text [max-length text]
+  (str (subs text 0 max-length) "..."))
+
+;; This awkward API is needed because for some reason, the tooltip won't appear
+;; in the dropdown unless it wraps the :a tag. ¯\_(ツ)_/¯
+(defn- overflow-protected [max-length hiccup text]
+  (if (> (count text) max-length)
+    [antd/tooltip {:title     text
+                   :placement "right"}
+     (conj hiccup (limit-text max-length text))]
+    (conj hiccup text)))
+
 (defn organizations-menu [on-click]
   (let [organizations @(rf/subscribe [::pc-subs/selectable-orgs])]
     (into [antd/menu {:mode         "inline"
@@ -37,9 +49,10 @@
                       :class        "org-select-menu"}]
           (conj (mapv (fn [{:keys [name slug]}]
                         (antd/menu-item {:class "org-select-menu-item"}
-                                        [:a
-                                         {:href @(rf/subscribe [::pc-subs/switch-organization-href slug])}
-                                         name]))
+                                        (overflow-protected 15
+                                                            [:a
+                                                             {:href @(rf/subscribe [::pc-subs/switch-organization-href slug])}]
+                                                            name)))
                       organizations)
                 (when-not (= :new-organization
                              (:handler @(rf/subscribe [::subs/current-page])))
@@ -64,7 +77,7 @@
        [antd/space {:style {:margin "16px"}
                     :align "center"}
         [org-icon]
-        [:div.org-name name]
+        [:div.org-name (overflow-protected 7 [:span] name)]
         [:> icons/DownOutlined]]])))
 
 (defn- selected-sider-menu-keys []
