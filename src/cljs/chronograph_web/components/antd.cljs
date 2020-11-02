@@ -45,7 +45,8 @@
 
 ;; Menu
 
-(def menu (antd-wrapper antd/Menu))
+(def menu (antd-wrapper antd/Menu
+                        #(update % :class str " menu")))
 
 ;; Call the following menu child components like functions; don't put them in vectors
 ;; like Hiccup.
