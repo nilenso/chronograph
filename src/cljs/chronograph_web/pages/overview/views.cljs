@@ -31,9 +31,7 @@
 
 (defn timer-list [ds]
   [antd/list {:dataSource ds
-              :grid       {:gutter 64
-                           :xl     4
-                           :xxl    4}
+              :grid       {:gutter 64}
               :renderItem (fn [{:keys [id] :as timer}]
                             [antd/list-item {:key id}
                              [timer-com/timer timer]])}])

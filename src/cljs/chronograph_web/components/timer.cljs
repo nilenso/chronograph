@@ -19,8 +19,11 @@
 
 (defn timer [{:keys [task] :as timer}]
   [:<>
-   [antd/row {:class   (str "timer " (when (running? timer)
-                                       "timer-running"))}
+   [antd/row {:class  (str "timer " (when (running? timer)
+                                      "timer-running"))
+              :align  "middle"
+              :wrap   false
+              :gutter 16}
     [antd/col
      [:span {:class "timer-duration"} (format-duration (time/timer-duration timer))]]
 
