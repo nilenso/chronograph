@@ -5,6 +5,7 @@
             [chronograph-web.components.antd :as antd]
             [chronograph.specs]
             [chronograph-web.page-container.views :as page-container]
+            [chronograph-web.components.timer :as timer-com]
             [chronograph-web.utils.time :as time])
   (:import [goog.date Date]))
 
@@ -27,26 +28,24 @@
                                    "Decline"]]]])
                  :dataSource organizations}]]))
 
+
 (defn timer-list [ds]
   [antd/list {:dataSource ds
-              :grid {:gutter 64
-                     :xl 4
-                     :xxl 4}
-              :renderItem (fn [{:keys [name duration]}]
-                            [antd/list-item {:key name
-                                             :actions [[antd/button {:type "link"} "Start"]]}
-                             [antd/list-item-meta {:title [name]}]
-                             duration])}])
+              :grid       {:gutter 64
+                           :xl     4
+                           :xxl    4}
+              :renderItem (fn [{:keys [id] :as timer}]
+                            [antd/list-item {:key id}
+                             [timer-com/timer timer]])}])
 
 (defn landing-page [_]
-  (fn [_]
-    (let [invited-organizations @(rf/subscribe [::overview-subs/invites])
-          timers @(rf/subscribe [::overview-subs/timers (time/current-calendar-date)])]
-      [page-container/org-scoped-page-container
-       [antd/page-header {:title "Overview"}
-        [invited-organizations-list invited-organizations]
-        (when (not-empty invited-organizations)
-          [antd/divider])
-        [timer-list (into [] (map #(do {:duration (time/timer-duration %)
-                                        :name (get-in % [:task :name])}) timers))]]])))
+  (let [invited-organizations @(rf/subscribe [::overview-subs/invites])
+        timers                (->> @(rf/subscribe [::overview-subs/timers (time/current-calendar-date)])
+                                   (sort-by :created-at))]
+    [page-container/org-scoped-page-container
+     [antd/page-header {:title "Timers"}
+      [invited-organizations-list invited-organizations]
+      (when (not-empty invited-organizations)
+        [antd/divider])
+      [timer-list timers]]]))
 

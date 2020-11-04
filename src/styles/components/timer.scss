@@ -1,0 +1,25 @@
+@use '../_variables' as v;
+
+// TODO: Move this elsewhere
+.ant-layout-content {
+  background: white;
+}
+
+.timer {
+  padding: 8px;
+  font-size: 20px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  background-color: rgb(240, 242, 245);
+  height: 100px;
+
+  &.timer-running {
+    background-color: v.$green-1;
+  }
+}
+
+.timer-duration {
+  font-weight: 700;
+  padding: 16px;
+}

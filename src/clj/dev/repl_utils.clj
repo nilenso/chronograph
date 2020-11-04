@@ -9,7 +9,9 @@
             [chronograph.db.core :as db]
             [chronograph.domain.user :as domain-user] ; do NOT alias as user, else lein repl barfs
             [chronograph.domain.organization :as organization]
-            [chronograph.domain.invite :as invite]))
+            [chronograph.domain.invite :as invite]
+            [chronograph.domain.timer :as timer])
+  (:import (java.time LocalDate)))
 
 (defn start-app! []
   (core/mount-init!)
@@ -60,3 +62,11 @@
               db/datasource
               {:user-id         user-id
                :organization-id org-id}))
+
+(defn create-started-timer! [user-id task-id recorded-for-str]
+  (let [{:timers/keys [id]} (timer/create! db/datasource 1 #:timers{:user-id      user-id
+                                                                    :task-id      task-id
+                                                                    :recorded-for (LocalDate/parse recorded-for-str)})]
+    (timer/start! db/datasource user-id id)
+    (Thread/sleep 5000)
+    (timer/stop! db/datasource user-id id)))
