@@ -6,7 +6,8 @@
             [chronograph.db.core :as db]
             [clojure.spec.alpha :as s]
             [chronograph.domain.timer :as timer]
-            [chronograph.fixtures :as fixtures]))
+            [chronograph.fixtures :as fixtures])
+  (:import [java.time LocalDate]))
 
 (defn- setup-org-users-tasks!
   []
@@ -22,14 +23,16 @@
                        #:acls{:user-id user-2-id
                               :organization-id organization-id
                               :role acl/member})
-        {task-id-1 :tasks/id} (factories/create-task organization)
-        {task-id-2 :tasks/id} (factories/create-task organization)]
+        {task-id-1 :tasks/id :as task-1} (factories/create-task organization)
+        {task-id-2 :tasks/id :as task-2} (factories/create-task organization)]
     {:user-1-id user-1-id
      :organization organization
      :organization-id organization-id
      :user-2-id user-2-id
      :task-id-1 task-id-1
-     :task-id-2 task-id-2}))
+     :task-id-2 task-id-2
+     :task-1 task-1
+     :task-2 task-2}))
 
 (use-fixtures :once fixtures/config fixtures/datasource)
 (use-fixtures :each fixtures/clear-db)
@@ -259,3 +262,22 @@
              (handler-timer/find-by-user-and-task {:params {:task-id Long/MAX_VALUE}
                                                    :user   {:users/id user-2-id}}))
           "fails with HTTP error when timers do not exist"))))
+
+(deftest find-by-day-test
+  (testing "when timers exist for a given day"
+    (let [{:keys [organization-id user-2-id task-id-1 task-1 task-2]} (setup-org-users-tasks!)
+          timer-1 (factories/create-timer organization-id
+                                                 #:timers{:user-id user-2-id
+                                                          :task-id task-id-1
+                                                          :recorded-for (LocalDate/parse "2020-01-13")
+                                                          :note "A lovely timer."})
+          timer-2 (factories/create-timer organization-id
+                                                 #:timers{:user-id user-2-id
+                                                          :task-id task-id-1
+                                                          :recorded-for (LocalDate/parse "2020-01-13")
+                                                          :note "A lovely timer."})
+          response (handler-timer/find-by-day {:params {:day "2020-01-13"}
+                                               :user {:users/id user-2-id}})]
+        (is (= 200 (:status response)))
+        (is (= {:timers [(assoc timer-1 :task task-1) (assoc timer-2 :task task-1)]}
+               (:body response))))))

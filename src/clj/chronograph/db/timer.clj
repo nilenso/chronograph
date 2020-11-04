@@ -1,11 +1,12 @@
 (ns chronograph.db.timer
   (:require [next.jdbc.sql :as sql]
+            [cheshire.core :as json]
             [chronograph.db.core :as db]
             [chronograph.utils.time :as time]
             [next.jdbc :as jdbc]
             [medley.core :as medley]
             [clojure.spec.alpha :as s])
-  (:import (java.time Instant)))
+  (:import (java.time Instant LocalDate)))
 
 (defn- ->instant
   [s]
@@ -55,6 +56,23 @@
                           :task-id task-id}
                          db/sql-opts)
        (map coerce-time-spans-in-timer)))
+
+
+(defn- extract-task [m]
+  (-> (medley/remove-keys #(= "tasks" (namespace %)) m)
+      (assoc :task (medley/filter-keys #(= "tasks" (namespace %)) m))))
+
+(defn find-by-user-and-recorded-for
+  [tx user-id recorded-for]
+  (->> (db/query tx
+                 ["SELECT timers.*, tasks.* AS task
+                  FROM tasks, timers
+                  WHERE tasks.id = timers.task_id 
+                  AND user_id = ?
+                  AND recorded_for = ?"
+                  user-id
+                  recorded-for])
+       (map extract-task)))
 
 (defn update-note!
   [tx user-id timer-id note]

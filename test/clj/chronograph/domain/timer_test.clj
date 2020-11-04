@@ -1,6 +1,7 @@
 (ns chronograph.domain.timer-test
   (:require [chronograph.domain.timer :as timer]
             [clojure.test :refer :all]
+            [chronograph.test-utils :as tu]
             [chronograph.fixtures :as fixtures]
             [chronograph.factories :as factories]
             [chronograph.domain.acl :as acl]
@@ -511,3 +512,47 @@
                                              user-1-id
                                              task-id-timed-by-user-2))
           "user-1 cannot fetch user-2's timers by task id."))))
+
+(deftest find-by-user-and-recorded-for-test
+  (tu/with-fixtures [fixtures/clear-db]
+    (testing "Returns timers when timers exist for the user on the given date"
+      (let [{user-id :users/id} (factories/create-user)
+            {organization-id :organizations/id
+             :as organization} (factories/create-organization user-id)
+            {task-id-1 :tasks/id :as task-1} (factories/create-task organization)
+            {task-id-2 :tasks/id :as task-2} (factories/create-task organization)
+            recorded-date (LocalDate/parse "2020-01-14")
+            timer-1 (factories/create-timer organization-id #:timers{:user-id      user-id
+                                                                     :task-id      task-id-1
+                                                                     :note         "note1"
+                                                                     :recorded-for recorded-date})
+            timer-2 (factories/create-timer organization-id #:timers{:user-id      user-id
+                                                                     :task-id      task-id-2
+                                                                     :note         "note2"
+                                                                     :recorded-for recorded-date})]
+        (is (= [(assoc timer-1 :task task-1)
+                (assoc timer-2 :task task-2)]
+               (timer/find-by-user-and-recorded-for db/datasource
+                                                    user-id
+                                                    recorded-date))))))
+  (testing "Returns an empty vector when timers don't exist for the user on the given date"
+    (let [{user-1-id :users/id} (factories/create-user)
+          {organization-id :organizations/id
+           :as organization} (factories/create-organization user-1-id)
+          {task-id-1 :tasks/id} (factories/create-task organization)
+          {task-id-2 :tasks/id} (factories/create-task organization)
+          {user-2-id :users/id} (factories/create-user)
+          _ (acl/create! db/datasource
+                         #:acls{:user-id user-2-id
+                                :organization-id organization-id
+                                :role acl/member})
+          _timer-1 (factories/create-timer organization-id #:timers{:user-id      user-1-id
+                                                                   :task-id      task-id-1
+                                                                   :note         "note1"
+                                                                   :recorded-for (LocalDate/parse "2020-01-13")})
+          _timer-2 (factories/create-timer organization-id #:timers{:user-id      user-2-id
+                                                                   :task-id      task-id-2
+                                                                   :note         "note2"
+                                                                   :recorded-for (LocalDate/parse "2020-01-14")})]
+      (is (= []
+             (timer/find-by-user-and-recorded-for db/datasource user-1-id (LocalDate/parse "2020-01-14")))))))

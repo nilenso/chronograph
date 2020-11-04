@@ -132,3 +132,10 @@
             response/response)
         (response/not-found
          {:error "Timers not found."})))))
+
+(defn find-by-day [{{:keys [day]} :params
+                    {user-id :users/id} :user
+                    :as _request}]
+  (jdbc/with-transaction [tx db/datasource]
+    (response/response {:timers
+                        (timer/find-by-user-and-recorded-for tx user-id (LocalDate/parse day))})))
