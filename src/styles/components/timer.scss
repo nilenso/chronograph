@@ -14,4 +14,9 @@
 
 .timer-duration {
   font-weight: 700;
+
+  .timer-duration-colon {
+    display: inline-block;
+    min-width: 6px;
+  }
 }
