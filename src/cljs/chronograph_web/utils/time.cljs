@@ -35,9 +35,9 @@
 (defn- time-span-minutes [current-time {:keys [started-at stopped-at]}]
   (date-fns/differenceInMinutes (or stopped-at current-time) started-at))
 
-(defn timer-duration [{:keys [time-spans]}]
+(defn timer-duration [{:keys [time-spans]} current-time]
   (let [minutes (->> time-spans
-                     (map time-span-minutes)
+                     (map (partial time-span-minutes current-time))
                      (reduce +))]
     {:minutes (rem minutes 60)
      :hours (quot minutes 60)}))
