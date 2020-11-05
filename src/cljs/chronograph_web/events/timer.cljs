@@ -3,14 +3,15 @@
             [chronograph-web.api-client :as api]
             [chronograph-web.db.timers :as db-timers]
             [chronograph-web.db.tasks :as db-tasks]
-            [chronograph.utils.data :as datautils]
             [re-frame.core :as rf]
-            [medley.core :as medley])
+            [medley.core :as medley]
+            [chronograph-web.config :as config])
   (:import [goog.date Date DateTime]))
 
 (rf/reg-event-fx
   ::fetch-timers
   (fn [_ [_ day]]
+    ;; TODO: accept day as a calendar-date
     {:fx [[:http-xhrio (api/fetch-timers day
                                          [::fetch-timers-success day]
                                          [::fetch-timers-fail day])]]}))
@@ -37,7 +38,9 @@
         (db-timers/set-timers (->date date-str) (map convert-timer timers))
         (db-tasks/merge-tasks (map :task timers)))))
 
-(rf/reg-event-db
+(rf/reg-event-fx
   ::fetch-timers-fail
-  (fn [db [_ _]]
-    db))
+  (fn [_ _]
+    {:flash-error {:content (str "Oh no, something went wrong! "
+                                 (:frown config/emojis)
+                                 " Please refresh the page!")}}))

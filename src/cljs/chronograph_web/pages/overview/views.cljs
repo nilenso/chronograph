@@ -2,6 +2,7 @@
   (:require [re-frame.core :as rf]
             [chronograph-web.pages.overview.events :as overview-events]
             [chronograph-web.pages.overview.subscriptions :as overview-subs]
+            [chronograph-web.subscriptions :as subs]
             [chronograph-web.components.antd :as antd]
             [chronograph.specs]
             [chronograph-web.page-container.views :as page-container]
@@ -38,7 +39,7 @@
 
 (defn landing-page [_]
   (let [invited-organizations @(rf/subscribe [::overview-subs/invites])
-        timers                (->> @(rf/subscribe [::overview-subs/timers (time/current-calendar-date)])
+        timers                (->> @(rf/subscribe [::subs/timers (time/current-calendar-date)])
                                    (sort-by :created-at))]
     [page-container/org-scoped-page-container
      [antd/page-header {:title "Timers"}

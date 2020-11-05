@@ -12,13 +12,13 @@
    :month (.getMonth date) ;; Between 0-11
    :year  (.getFullYear date)})
 
-(defn- format-day [day]
-  (if (> day 9)
-    (str day)
-    (str "0" day)))
+(defn- format-two-digits [n]
+  (if (> n 9)
+    (str n)
+    (str "0" n)))
 
 (defn calendar-date->string [{:keys [day month year]}]
-  (str year "-" (inc month) "-" (format-day day)))
+  (str year "-" (format-two-digits (inc month)) "-" (format-two-digits day)))
 
 (defn string->calendar-date [s]
   (goog-date->calendar-date (Date/fromIsoString s)))

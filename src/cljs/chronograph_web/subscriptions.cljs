@@ -1,5 +1,7 @@
 (ns chronograph-web.subscriptions
-  (:require [re-frame.core :as rf]))
+  (:require [re-frame.core :as rf]
+            [chronograph-web.db.tasks :as tasks-db]
+            [chronograph-web.db.timers :as timers-db]))
 
 (rf/reg-sub
   ::signin-state
@@ -25,3 +27,10 @@
   ::organization
   (fn [db [_ slug]]
     (get-in db [:organizations slug])))
+
+(rf/reg-sub
+  ::timers
+  (fn [db [_ date _org-id]]
+    ;; TODO: use org id to filter timers
+    (map #(assoc % :task (tasks-db/find-by-id db (:task-id %)))
+         (timers-db/timers-by-date db date))))
