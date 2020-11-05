@@ -1,6 +1,8 @@
 (ns chronograph-web.events.timer
   (:require [chronograph-web.utils.time :as time]
             [chronograph-web.api-client :as api]
+            [chronograph-web.db.timers :as db-timers]
+            [chronograph-web.db.tasks :as db-tasks]
             [chronograph.utils.data :as datautils]
             [re-frame.core :as rf]
             [medley.core :as medley])
@@ -25,19 +27,15 @@
   (-> m
       (update :recorded-for ->date)
       (update :time-spans (fn [ts] (map #(medley/map-vals ->date-time %) ts)))
-      (update :id uuid)))
+      (update :id uuid)
+      (dissoc :task)))
 
 (rf/reg-event-db
   ::fetch-timers-success
   (fn [db [_ date-str {:keys [timers] :as _response}]]
-    ;; TODO: Move to db func
-    (-> db 
-        (assoc-in [:timers (->date date-str)]
-                  (map convert-timer timers))
-        ;; TODO: dissoc the task from the timer
-        (update :tasks
-                merge
-                (datautils/normalize-by :id (map :task timers))))))
+    (-> db
+        (db-timers/set-timers (->date date-str) (map convert-timer timers))
+        (db-tasks/merge-tasks (map :task timers)))))
 
 (rf/reg-event-db
   ::fetch-timers-fail

@@ -23,8 +23,11 @@
 (defn string->calendar-date [s]
   (goog-date->calendar-date (Date/fromIsoString s)))
 
+(defn now []
+  (js/Date.))
+
 (defn current-calendar-date []
-  (js-date->calendar-date (js/Date.)))
+  (js-date->calendar-date (now)))
 
 (defn string->date [s]
   (date-fns/parseISO s))

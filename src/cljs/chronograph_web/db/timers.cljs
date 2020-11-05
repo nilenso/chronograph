@@ -5,3 +5,6 @@
 (defn timers-by-date
   [db date]
   (get-in db [:timers date]))
+
+(defn set-timers [db date timers]
+  (assoc-in db [:timers date] timers))
