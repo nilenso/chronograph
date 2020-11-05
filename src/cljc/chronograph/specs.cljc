@@ -113,7 +113,6 @@
 (s/def :calendar-date/day (s/int-in 1 32))
 (s/def :calendar-date/month (s/int-in 0 12))
 (s/def :calendar-date/year pos-int?)
-;; TODO: Add tighter validation for a calendar date
 (s/def :calendar-date/calendar-date (s/keys :req-un [:calendar-date/day
                                                      :calendar-date/month
                                                      :calendar-date/year]))
