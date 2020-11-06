@@ -51,6 +51,8 @@
         (is (s/valid? :timers/timer
                       (:body response))
             "the body is a valid timer object")
+        (is (timer/running? (:body response))
+            "the timer should be running")
         (is (= ""
                (:timers/note (:body response)))
             "the note is an empty string.")))
@@ -67,6 +69,8 @@
         (is (s/valid? :timers/timer
                       (:body response))
             "the body is a valid timer object")
+        (is (timer/running? (:body response))
+            "the timer should be running")
         (is (= note
                (:timers/note (:body response)))
             "the timer contains the note we added")))

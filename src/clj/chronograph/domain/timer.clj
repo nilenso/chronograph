@@ -74,6 +74,12 @@
       (stop-running-timers! tx user-id)
       (db-timer/add-time-span tx timer-id (started-time-span)))))
 
+(defn create-and-start!
+  "Creates and starts a timer."
+  [tx organization-id {:timers/keys [user-id] :as timer}]
+  (when-let [{:timers/keys [id]} (create! tx organization-id timer)]
+    (start! tx user-id id)))
+
 (defn find-by-user-and-id
   "Given a timer id and a user id, return a consolidated timer object,
   with timer data and all the associated time spans. Return nil if no timer
