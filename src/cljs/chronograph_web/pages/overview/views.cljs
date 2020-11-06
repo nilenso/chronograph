@@ -39,7 +39,8 @@
 
 (defn landing-page [_]
   (let [invited-organizations @(rf/subscribe [::overview-subs/invites])
-        timers                (->> @(rf/subscribe [::subs/timers (time/current-calendar-date)])
+        timers                (->> @(rf/subscribe [::overview-subs/current-organization-timers
+                                                   (time/current-calendar-date)])
                                    (sort-by :created-at))]
     [page-container/org-scoped-page-container
      [antd/page-header {:title "Timers"}

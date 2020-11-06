@@ -7,9 +7,12 @@
             [clojure.test.check.generators]
             [chronograph.specs]
             [chronograph-web.subscriptions :as subs]
+            [chronograph-web.pages.overview.subscriptions :as overview-subs]
             [chronograph-web.events.timer :as timer-events]
             [chronograph-web.utils.time :as time]
-            [medley.core :as medley]))
+            [medley.core :as medley]
+            [chronograph-web.routes :as routes]
+            [chronograph-web.db.organization :as org-db]))
 
 (use-fixtures :once fixtures/silence-logging fixtures/check-specs)
 
@@ -90,10 +93,16 @@
   (testing "When timers are successfully fetched, the db is updated"
     (rf-test/run-test-sync
      (tu/initialize-db!)
+     (tu/stub-routing)
+     (tu/set-token (routes/path-for :overview :slug "test-slug"))
+     (swap! re-frame.db/app-db org-db/add-org {:id   3
+                                               :slug "test-slug"
+                                               :name "test"
+                                               :role "member"})
      (tu/stub-xhrio timers-response true)
      (rf/dispatch [::timer-events/fetch-timers {:day 14 :month 2 :year 2020}])
      (is (= expected-timers
-            @(rf/subscribe [::subs/timers {:day 14 :month 2 :year 2020} 3])))))
+            @(rf/subscribe [::overview-subs/current-organization-timers {:day 14 :month 2 :year 2020}])))))
 
   (testing "When fetching timers fails, there is no change"
     (rf-test/run-test-sync
