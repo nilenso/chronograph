@@ -51,14 +51,6 @@
   {:started-at (time/now)
    :stopped-at nil})
 
-(defn start!
-  "Given a timer ID for a user, start it and return the started time span.
-  If the timer is already running, do nothing and return nil."
-  [tx user-id timer-id]
-  (when-let [timer-to-start (db-timer/find-by-user-and-id tx user-id timer-id)]
-    (when-not (running? timer-to-start)
-      (db-timer/add-time-span tx timer-id (started-time-span)))))
-
 (defn stop!
   "Given a timer ID for a user, stop the timer and return the stopped time span.
   If the timer is not running, do nothing and return nil."
@@ -66,6 +58,21 @@
   (when-let [timer-to-start (db-timer/find-by-user-and-id tx user-id timer-id)]
     (when (running? timer-to-start)
       (db-timer/set-stopped-at tx timer-id (time/now)))))
+
+(defn- stop-running-timers!
+  [tx user-id]
+  (doseq [{:timers/keys [id]} (db-timer/find-running-timers tx user-id)]
+    (stop! tx user-id id)))
+
+(defn start!
+  "Given a timer ID for a user, start it and return the started time span.
+  If the timer is already running, do nothing and return nil.
+  Other running timers will be stopped."
+  [tx user-id timer-id]
+  (when-let [timer-to-start (db-timer/find-by-user-and-id tx user-id timer-id)]
+    (when-not (running? timer-to-start)
+      (stop-running-timers! tx user-id)
+      (db-timer/add-time-span tx timer-id (started-time-span)))))
 
 (defn find-by-user-and-id
   "Given a timer id and a user id, return a consolidated timer object,

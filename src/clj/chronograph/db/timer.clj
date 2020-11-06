@@ -54,7 +54,7 @@
                          {:user-id user-id
                           :task-id task-id}
                          db/sql-opts)
-       (map coerce-time-spans-in-timer)))
+       (mapv coerce-time-spans-in-timer)))
 
 (defn- extract-task [m]
   (-> (medley/remove-keys #(= "tasks" (namespace %)) m)
@@ -114,3 +114,10 @@
                             timer-id]
                            db/sql-opts)
         coerce-time-spans-in-timer)))
+
+(defn find-running-timers
+  [tx user-id]
+  (->> (db/query tx ["SELECT * FROM timers
+                      WHERE (time_spans #> '{-1, \"stopped-at\"}') = 'null'::jsonb
+                      AND   user_id = ?" user-id])
+       (mapv coerce-time-spans-in-timer)))

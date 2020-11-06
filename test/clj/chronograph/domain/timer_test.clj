@@ -277,6 +277,27 @@
                               (:timers/id timer)))
           "does nothing. An already-started timer remains started."))))
 
+(deftest start-timer-when-another-timer-is-running-test
+  (testing "starting a timer should stop other running timers belonging to the user"
+    (let [{:keys [user-id organization-id task-id-1]} (setup-org-users-tasks!)
+          timer1 (factories/create-timer organization-id
+                                         #:timers{:user-id user-id
+                                                  :task-id task-id-1
+                                                  :note    "A sample note."})
+          timer2 (factories/create-timer organization-id
+                                         #:timers{:user-id user-id
+                                                  :task-id task-id-1
+                                                  :note    "A sample note."})]
+      (timer/start! db/datasource
+                    user-id
+                    (:timers/id timer1))
+      (timer/start! db/datasource
+                    user-id
+                    (:timers/id timer2))
+      (is (not (timer/running? (timer/find-by-user-and-id db/datasource
+                                                          user-id
+                                                          (:timers/id timer1))))))))
+
 (deftest start-timer-isolation-by-user-test
   (testing "Users trying to start each others' timers."
     (let [{:keys [organization-id admin-id user-id task-id-1]} (setup-org-users-tasks!)
