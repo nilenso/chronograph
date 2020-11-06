@@ -29,8 +29,8 @@
     (get-in db [:organizations slug])))
 
 (rf/reg-sub
-  ::timers
-  (fn [db [_ date organization-id]]
-    (->> (timers-db/timers-by-date db date)
-         (filter #(= organization-id (:organization-id %)))
-         (map #(assoc % :task (tasks-db/find-by-id db (:task-id %)))))))
+ ::timers
+ (fn [db [_ date organization-id]]
+     (->> (timers-db/timers-by-date db date)
+          (map #(assoc % :task (tasks-db/find-by-id db (:task-id %))))
+          (filter #(= organization-id (get-in % [:task :organization-id]))))))

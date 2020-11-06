@@ -15,9 +15,9 @@
 
 (rf/reg-event-fx
   ::overview-page-navigated
-  (fn [{:keys [db]} _]
+  (fn [_ _]
     {:fx [[:dispatch [::fetch-invited-orgs]]
-          [:dispatch [::timer-events/fetch-timers (time/calendar-date->string (time/current-calendar-date))]]]}))
+          [:dispatch [::timer-events/fetch-timers (time/current-calendar-date)]]]}))
 
 (rf/reg-event-fx
   ::reject-invite

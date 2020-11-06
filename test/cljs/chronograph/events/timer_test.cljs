@@ -38,7 +38,20 @@
                                 :task         {:id              3
                                                :name            "quuxy"
                                                :description     "quux"
-                                               :organization-id 3}}]})
+                                               :organization-id 3}}
+                               {:id           "35947099-178e-490a-8fa3-9d37e26984bc"
+                                :task-id      4
+                                :user-id      1
+                                :recorded-for "2020-03-14"
+                                :note         "baz"
+                                :time-spans   [{:started-at "2020-11-05T19:08:24.500944Z"
+                                                :stopped-at "2020-11-05T20:08:24.501902Z"}
+                                               {:started-at "2020-11-05T21:08:24.500944Z"
+                                                :stopped-at "2020-11-05T22:08:24.501902Z"}]
+                                :task         {:id              4
+                                               :name            "foobar"
+                                               :description     "quux"
+                                               :organization-id 4}}]})
 
 (def expected-timers [{:id           #uuid"ab289769-609d-46ce-a6cf-601bf716fcf6"
                        :task-id      2
@@ -78,8 +91,9 @@
     (rf-test/run-test-sync
      (tu/initialize-db!)
      (tu/stub-xhrio timers-response true)
-     (rf/dispatch [::timer-events/fetch-timers "2020-03-14"])
-     (is (= expected-timers @(rf/subscribe [::subs/timers {:day 14 :month 2 :year 2020} 3])))))
+     (rf/dispatch [::timer-events/fetch-timers {:day 14 :month 2 :year 2020}])
+     (is (= expected-timers
+            @(rf/subscribe [::subs/timers {:day 14 :month 2 :year 2020} 3])))))
 
   (testing "When fetching timers fails, there is no change"
     (rf-test/run-test-sync

@@ -10,11 +10,10 @@
 
 (rf/reg-event-fx
   ::fetch-timers
-  (fn [_ [_ day]]
-    ;; TODO: accept day as a calendar-date
-    {:fx [[:http-xhrio (api/fetch-timers day
-                                         [::fetch-timers-success day]
-                                         [::fetch-timers-fail day])]]}))
+  (fn [_ [_ calendar-date]]
+    {:fx [[:http-xhrio (api/fetch-timers calendar-date
+                                         [::fetch-timers-success calendar-date]
+                                         [::fetch-timers-fail calendar-date])]]}))
 
 (defn- ->date [s]
   (when s
@@ -33,9 +32,9 @@
 
 (rf/reg-event-db
   ::fetch-timers-success
-  (fn [db [_ date-str {:keys [timers] :as _response}]]
+  (fn [db [_ calendar-date {:keys [timers] :as _response}]]
     (-> db
-        (db-timers/set-timers (->date date-str) (map convert-timer timers))
+        (db-timers/set-timers calendar-date (map convert-timer timers))
         (db-tasks/merge-tasks (map :task timers)))))
 
 (rf/reg-event-fx

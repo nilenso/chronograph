@@ -30,7 +30,7 @@
               fetch-timers-stub (tu/stub-event ::timer-events/fetch-timers)]
           (rf/dispatch [::overview-events/overview-page-navigated])
           (is (= [::overview-events/fetch-invited-orgs] @invited-orgs-stub))
-          (is (= [::timer-events/fetch-timers "2020-11-05"] @fetch-timers-stub))))))
+          (is (= [::timer-events/fetch-timers {:day 5 :month 10 :year 2020}] @fetch-timers-stub))))))
 
   (testing "When invited orgs are fetched, db should contain them"
     (let [invited-orgs [{:id 1 :slug "slug1" :name "org1"}

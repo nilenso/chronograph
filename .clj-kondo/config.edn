@@ -1,4 +1,5 @@
-{:lint-as {mount.core/defstate clj-kondo.lint-as/def-catch-all}
+{:lint-as {mount.core/defstate   clj-kondo.lint-as/def-catch-all
+           reagent.core/with-let clojure.core/let}
  :linters {:unused-namespace    {:exclude [chronograph.server
                                            "chronograph-web.*\\.events(\\..*)?$"]}
            :unused-binding      {:exclude-destructured-keys-in-fn-args true}
