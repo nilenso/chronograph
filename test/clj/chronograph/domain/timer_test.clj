@@ -1,6 +1,7 @@
 (ns chronograph.domain.timer-test
   (:require [chronograph.domain.timer :as timer]
             [clojure.test :refer :all]
+            [chronograph.test-utils :as tu]
             [chronograph.fixtures :as fixtures]
             [chronograph.factories :as factories]
             [chronograph.domain.acl :as acl]
@@ -11,23 +12,25 @@
 
 (defn- setup-org-users-tasks!
   []
-  (let [{user-1-id :users/id}
+  (let [{admin-id :users/id}
         (factories/create-user)
 
         {organization-id :organizations/id
          :as organization}
-        (factories/create-organization user-1-id)
+        (factories/create-organization admin-id)
 
-        {user-2-id :users/id} (factories/create-user)
+        {user-id :users/id} (factories/create-user)
         _ (acl/create! db/datasource
-                       #:acls{:user-id user-2-id
+                       #:acls{:user-id user-id
                               :organization-id organization-id
                               :role acl/member})
-        {task-id-1 :tasks/id} (factories/create-task organization)
-        {task-id-2 :tasks/id} (factories/create-task organization)]
-    {:user-1-id user-1-id
+        {task-id-1 :tasks/id :as task-1} (factories/create-task organization)
+        {task-id-2 :tasks/id :as task-2} (factories/create-task organization)]
+    {:admin-id admin-id
      :organization-id organization-id
-     :user-2-id user-2-id
+     :user-id user-id
+     :task-1 task-1
+     :task-2 task-2
      :task-id-1 task-id-1
      :task-id-2 task-id-2}))
 
@@ -43,10 +46,8 @@
 
 (deftest create-timer-success-test
   (testing "Timer creation"
-    (let [test-context (setup-org-users-tasks!)
-          task-id (:task-id-1 test-context)
-          user-id (:user-2-id test-context)
-          organization-id (:organization-id test-context)]
+    (let [{:keys [task-id-1 user-id organization-id]} (setup-org-users-tasks!)
+          task-id task-id-1]
       (is (s/valid? :timers/timer
                     (timer/create! db/datasource
                                    organization-id
@@ -104,10 +105,7 @@
 
 (deftest create-timer-disallowed-test
   (testing "Timer creation is disallowed when"
-    (let [test-context (setup-org-users-tasks!)
-          task-id (:task-id-1 test-context)
-          user-id (:user-2-id test-context)
-          organization-id (:organization-id test-context)
+    (let [{:keys [user-id organization-id task-id-1]} (setup-org-users-tasks!)
           task-of-other-org (factories/create-task
                              (factories/create-organization
                               (:users/id (factories/create-user))))]
@@ -121,7 +119,7 @@
       (is (nil? (timer/create! db/datasource
                                organization-id
                                #:timers{:user-id Long/MAX_VALUE
-                                        :task-id task-id
+                                        :task-id task-id-1
                                         :note "A sample note."
                                         :recorded-for default-local-date}))
           "the user does not exist.")
@@ -141,12 +139,10 @@
 
 (deftest delete-timer-test
   (testing "Timer deletion for timer without any time spans"
-    (let [test-context (setup-org-users-tasks!)
-          user-id (:user-2-id test-context)
-          organization-id (:organization-id test-context)
+    (let [{:keys [user-id organization-id task-id-1]} (setup-org-users-tasks!)
           {timer-id :timers/id :as timer} (factories/create-timer organization-id
                                                                   #:timers{:user-id user-id
-                                                                           :task-id (:task-id-1 test-context)
+                                                                           :task-id task-id-1
                                                                            :note "A sample note."})]
       (is (nil? (timer/delete! db/datasource
                                user-id
@@ -164,12 +160,10 @@
 
 (deftest delete-timer-having-time-spans-test
   (testing "When a timer having time spans is being deleted"
-    (let [test-context (setup-org-users-tasks!)
-          user-id (:user-2-id test-context)
-          organization-id (:organization-id test-context)
+    (let [{:keys [user-id organization-id task-id-1]} (setup-org-users-tasks!)
           {timer-id :timers/id} (factories/create-timer organization-id
                                                         #:timers{:user-id user-id
-                                                                 :task-id (:task-id-1 test-context)
+                                                                 :task-id task-id-1
                                                                  :note "A sample note."})]
       ;; first set up 3 time spans for the timer
       (dotimes [_ 3]
@@ -189,25 +183,22 @@
 
 (deftest delete-timer-isolation-by-user-test
   (testing "Users trying to delete each others' timers."
-    (let [test-context (setup-org-users-tasks!)
-          user-1-id (:user-1-id test-context)
-          user-2-id (:user-2-id test-context)
-          task-id (:task-id-1 test-context)
-          organization-id (:organization-id test-context)
+    (let [{:keys [admin-id user-id task-id-1 organization-id]} (setup-org-users-tasks!)
+          task-id task-id-1
           timer-by-user-1 (factories/create-timer organization-id
-                                                  #:timers{:user-id user-1-id
+                                                  #:timers{:user-id admin-id
                                                            :task-id task-id
                                                            :note "A note by user-1."})
           timer-by-user-2 (factories/create-timer organization-id
-                                                  #:timers{:user-id user-2-id
+                                                  #:timers{:user-id user-id
                                                            :task-id task-id
                                                            :note "A note by user-2."})]
       (is (nil? (timer/delete! db/datasource
-                               user-2-id
+                               user-id
                                (:timers/id timer-by-user-1)))
           "user-2 cannot delete user-1's timer.")
       (is (nil? (timer/delete! db/datasource
-                               user-1-id
+                               admin-id
                                (:timers/id timer-by-user-2)))
           "user-1 cannot delete user-2's timer."))))
 
@@ -220,12 +211,10 @@
 (deftest update-timer-note-test
   (testing "updating a Timer's note"
     (with-redefs [time/now (constantly (time/now))]
-      (let [test-context (setup-org-users-tasks!)
-            user-id (:user-2-id test-context)
-            organization-id (:organization-id test-context)
+      (let [{:keys [user-id organization-id task-id-1]} (setup-org-users-tasks!)
             {timer-id :timers/id :as timer} (factories/create-timer organization-id
                                                                     #:timers{:user-id user-id
-                                                                             :task-id (:task-id-1 test-context)
+                                                                             :task-id task-id-1
                                                                              :note "A sample note."})
             revised-note (str "Revised note " (rand))]
         (is (= (assoc timer
@@ -244,26 +233,23 @@
 
 (deftest update-note-isolation-by-user-test
   (testing "Users trying to update each others' timer notes."
-    (let [test-context (setup-org-users-tasks!)
-          user-1-id (:user-1-id test-context)
-          user-2-id (:user-2-id test-context)
-          task-id (:task-id-1 test-context)
-          organization-id (:organization-id test-context)
+    (let [{:keys [admin-id user-id organization-id task-id-1]} (setup-org-users-tasks!)
+          task-id task-id-1
           unstarted-timer-by-user-1 (factories/create-timer organization-id
-                                                            #:timers{:user-id user-1-id
+                                                            #:timers{:user-id admin-id
                                                                      :task-id task-id
                                                                      :note "A note by user-1."})
           unstarted-timer-by-user-2 (factories/create-timer organization-id
-                                                            #:timers{:user-id user-2-id
+                                                            #:timers{:user-id user-id
                                                                      :task-id task-id
                                                                      :note "A note by user-2."})]
       (is (nil? (timer/update-note! db/datasource
-                                    user-2-id
+                                    user-id
                                     (:timers/id unstarted-timer-by-user-1)
                                     "A sneaky note by user-2."))
           "user-2 cannot overwrite user-1's note.")
       (is (nil? (timer/update-note! db/datasource
-                                    user-1-id
+                                    admin-id
                                     (:timers/id unstarted-timer-by-user-2)
                                     "A sneaky note by user-1."))
           "user-1 cannot overwrite user-2's note."))))
@@ -276,12 +262,10 @@
 
 (deftest start-timer-test
   (testing "starting a timer"
-    (let [test-context (setup-org-users-tasks!)
-          user-id (:user-2-id test-context)
-          organization-id (:organization-id test-context)
+    (let [{:keys [user-id organization-id task-id-1]} (setup-org-users-tasks!)
           timer (factories/create-timer organization-id
                                         #:timers{:user-id user-id
-                                                 :task-id (:task-id-1 test-context)
+                                                 :task-id task-id-1
                                                  :note "A sample note."})]
       (is (s/valid? :timers/timer
                     (timer/start! db/datasource
@@ -295,25 +279,22 @@
 
 (deftest start-timer-isolation-by-user-test
   (testing "Users trying to start each others' timers."
-    (let [test-context (setup-org-users-tasks!)
-          user-1-id (:user-1-id test-context)
-          user-2-id (:user-2-id test-context)
-          task-id (:task-id-1 test-context)
-          organization-id (:organization-id test-context)
+    (let [{:keys [organization-id admin-id user-id task-id-1]} (setup-org-users-tasks!)
+          task-id task-id-1
           unstarted-timer-by-user-1 (factories/create-timer organization-id
-                                                            #:timers{:user-id user-1-id
+                                                            #:timers{:user-id admin-id
                                                                      :task-id task-id
                                                                      :note "A note by user-1."})
           unstarted-timer-by-user-2 (factories/create-timer organization-id
-                                                            #:timers{:user-id user-2-id
+                                                            #:timers{:user-id user-id
                                                                      :task-id task-id
                                                                      :note "A note by user-2."})]
       (is (nil? (timer/start! db/datasource
-                              user-2-id
+                              user-id
                               (:timers/id unstarted-timer-by-user-1)))
           "user-2 cannot start user-1's timer.")
       (is (nil? (timer/start! db/datasource
-                              user-1-id
+                              admin-id
                               (:timers/id unstarted-timer-by-user-2)))
           "user-1 cannot start user-2's timer."))))
 
@@ -325,25 +306,21 @@
 
 (deftest stop-unstarted-timer-test
   (testing "stopping an unstarted timer (having no time spans)"
-    (let [test-context (setup-org-users-tasks!)
-          user-id (:user-2-id test-context)
-          organization-id (:organization-id test-context)]
+    (let [{:keys [user-id organization-id task-id-1]} (setup-org-users-tasks!)]
       (is (nil? (timer/stop! db/datasource
                              user-id
                              (:timers/id (factories/create-timer organization-id
                                                                  #:timers{:user-id user-id
-                                                                          :task-id (:task-id-1 test-context)
+                                                                          :task-id task-id-1
                                                                           :note "A sample note."}))))
           "does nothing. An un-started timer remains un-started."))))
 
 (deftest stop-running-timer-test
   (testing "stopping a running timer (having at least one time span)"
-    (let [test-context (setup-org-users-tasks!)
-          user-id (:user-2-id test-context)
-          organization-id (:organization-id test-context)
+    (let [{:keys [user-id organization-id task-id-1]} (setup-org-users-tasks!)
           timer (let [timer (factories/create-timer organization-id
                                                     #:timers{:user-id user-id
-                                                             :task-id (:task-id-1 test-context)
+                                                             :task-id task-id-1
                                                              :note "A sample note."})]
                   (timer/start! db/datasource
                                 user-id
@@ -361,33 +338,29 @@
 
 (deftest stop-timer-isolation-by-user-test
   (testing "Users trying to stop each others' timers."
-    (let [test-context (setup-org-users-tasks!)
-          user-1-id (:user-1-id test-context)
-          user-2-id (:user-2-id test-context)
-          task-id (:task-id-1 test-context)
-          organization-id (:organization-id test-context)
+    (let [{:keys [organization-id admin-id user-id task-id-1]} (setup-org-users-tasks!)
           running-timer-by-user-1 (let [timer (factories/create-timer organization-id
-                                                                      #:timers{:user-id user-1-id
-                                                                               :task-id task-id
+                                                                      #:timers{:user-id admin-id
+                                                                               :task-id task-id-1
                                                                                :note "A note by user-1."})]
                                     (timer/start! db/datasource
-                                                  user-1-id
+                                                  admin-id
                                                   (:timers/id timer))
                                     timer)
           running-timer-by-user-2 (let [timer (factories/create-timer organization-id
-                                                                      #:timers{:user-id user-2-id
-                                                                               :task-id task-id
+                                                                      #:timers{:user-id user-id
+                                                                               :task-id task-id-1
                                                                                :note "A note by user-1."})]
                                     (timer/start! db/datasource
-                                                  user-2-id
+                                                  user-id
                                                   (:timers/id timer))
                                     timer)]
       (is (nil? (timer/stop! db/datasource
-                             user-2-id
+                             user-id
                              (:timers/id running-timer-by-user-1)))
           "user-2 cannot stop user-1's timer.")
       (is (nil? (timer/stop! db/datasource
-                             user-1-id
+                             admin-id
                              (:timers/id running-timer-by-user-2)))
           "user-1 cannot start user-2's timer."))))
 
@@ -399,12 +372,10 @@
 
 (deftest find-unstarted-timer-by-timer-id
   (testing "when we find a timer by timer id, and it was never started"
-    (let [test-context (setup-org-users-tasks!)
-          user-id (:user-2-id test-context)
-          organization-id (:organization-id test-context)
+    (let [{:keys [user-id organization-id task-id-1]} (setup-org-users-tasks!)
           {timer-id :timers/id} (factories/create-timer organization-id
                                                         #:timers{:user-id user-id
-                                                                 :task-id (:task-id-1 test-context)
+                                                                 :task-id task-id-1
                                                                  :note "A sample note."})
           timer (timer/find-by-user-and-id db/datasource
                                            user-id
@@ -416,12 +387,10 @@
 (deftest find-started-timer-by-timer-id
   (testing "when we find a timer by timer id, and it was started and/or stopped at least once"
     (with-redefs [time/now (constantly (time/now))]
-      (let [test-context (setup-org-users-tasks!)
-            user-id (:user-2-id test-context)
-            organization-id (:organization-id test-context)
+      (let [{:keys [organization-id user-id task-id-1]} (setup-org-users-tasks!)
             {timer-id :timers/id} (factories/create-timer organization-id
                                                           #:timers{:user-id user-id
-                                                                   :task-id (:task-id-1 test-context)
+                                                                   :task-id task-id-1
                                                                    :note "A sample note."})
             final-timer (last
                          (repeatedly 3
@@ -446,13 +415,11 @@
 
 (deftest find-by-user-and-task-test
   (testing "when we find timers for a user's task"
-    (let [test-context (setup-org-users-tasks!)
-          user-id (:user-2-id test-context)
-          organization-id (:organization-id test-context)]
+    (let [{:keys [organization-id user-id task-id-1]} (setup-org-users-tasks!)]
       (dotimes [_ 3]
         (->> (factories/create-timer organization-id
                                      #:timers{:user-id user-id
-                                              :task-id (:task-id-1 test-context)
+                                              :task-id task-id-1
                                               :note "A sample note."})
              :timers/id
              (timer/start! db/datasource user-id)
@@ -463,43 +430,71 @@
 
       (is (= 3 (count (timer/find-by-user-and-task db/datasource
                                                    user-id
-                                                   (:task-id-1 test-context))))
+                                                   task-id-1)))
           "we find all the associated Timer objects")
       (is (s/valid? (s/coll-of :timers/timer)
                     (timer/find-by-user-and-task db/datasource
                                                  user-id
-                                                 (:task-id-1 test-context)))
+                                                 task-id-1))
           "each Timer object has Timer information"))))
 
 (deftest find-timer-isolation-by-user-test
   (testing "Users trying to read each others' timers."
-    (let [test-context (setup-org-users-tasks!)
-          user-1-id (:user-1-id test-context)
-          user-2-id (:user-2-id test-context)
-          organization-id (:organization-id test-context)
-          task-id-timed-by-user-1 (:task-id-1 test-context)
-          task-id-timed-by-user-2 (:task-id-2 test-context)
+    (let [{:keys [organization-id admin-id user-id task-id-1 task-id-2]} (setup-org-users-tasks!)
+          task-id-timed-by-user-1 task-id-1
+          task-id-timed-by-user-2 task-id-2
           timer-for-task-timed-by-user-1 (factories/create-timer organization-id
-                                                                 #:timers{:user-id user-1-id
+                                                                 #:timers{:user-id admin-id
                                                                           :task-id task-id-timed-by-user-1
                                                                           :note "A note by user-1."})
           timer-for-task-timed-by-user-2 (factories/create-timer organization-id
-                                                                 #:timers{:user-id user-2-id
+                                                                 #:timers{:user-id user-id
                                                                           :task-id task-id-timed-by-user-2
                                                                           :note "A note by user-2."})]
       (is (nil? (timer/find-by-user-and-id db/datasource
-                                           user-2-id
+                                           user-id
                                            (:timers/id timer-for-task-timed-by-user-1)))
           "user-2 cannot fetch user-1's timers by timer id.")
       (is (nil? (timer/find-by-user-and-id db/datasource
-                                           user-1-id
+                                           admin-id
                                            (:timers/id timer-for-task-timed-by-user-2)))
           "user-1 cannot fetch user-2's timer by timer id.")
       (is (nil? (timer/find-by-user-and-task db/datasource
-                                             user-2-id
+                                             user-id
                                              task-id-timed-by-user-1))
           "user-2 cannot fetch user-1's timers by task id.")
       (is (nil? (timer/find-by-user-and-task db/datasource
-                                             user-1-id
+                                             admin-id
                                              task-id-timed-by-user-2))
           "user-1 cannot fetch user-2's timers by task id."))))
+
+(deftest find-by-user-and-recorded-for-test
+  (tu/with-fixtures [fixtures/clear-db]
+    (testing "Returns timers when timers exist for the user on the given date"
+      (let [{:keys [organization-id task-id-1 task-id-2 task-1 task-2 user-id]} (setup-org-users-tasks!)
+            recorded-date (LocalDate/parse "2020-01-14")
+            timer-1 (factories/create-timer organization-id #:timers{:user-id      user-id
+                                                                     :task-id      task-id-1
+                                                                     :note         "note1"
+                                                                     :recorded-for recorded-date})
+            timer-2 (factories/create-timer organization-id #:timers{:user-id      user-id
+                                                                     :task-id      task-id-2
+                                                                     :note         "note2"
+                                                                     :recorded-for recorded-date})]
+        (is (= [(assoc timer-1 :task task-1)
+                (assoc timer-2 :task task-2)]
+               (timer/find-by-user-and-recorded-for db/datasource
+                                                    user-id
+                                                    recorded-date))))))
+  (testing "Returns an empty vector when timers don't exist for the user on the given date"
+    (let [{:keys [admin-id organization-id task-id-1 task-id-2 user-id]} (setup-org-users-tasks!)
+          _timer-1 (factories/create-timer organization-id #:timers{:user-id      admin-id
+                                                                    :task-id      task-id-1
+                                                                    :note         "note1"
+                                                                    :recorded-for (LocalDate/parse "2020-01-13")})
+          _timer-2 (factories/create-timer organization-id #:timers{:user-id      user-id
+                                                                    :task-id      task-id-2
+                                                                    :note         "note2"
+                                                                    :recorded-for (LocalDate/parse "2020-01-14")})]
+      (is (= []
+             (timer/find-by-user-and-recorded-for db/datasource admin-id (LocalDate/parse "2020-01-14")))))))

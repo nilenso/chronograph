@@ -56,6 +56,22 @@
                          db/sql-opts)
        (map coerce-time-spans-in-timer)))
 
+(defn- extract-task [m]
+  (-> (medley/remove-keys #(= "tasks" (namespace %)) m)
+      (assoc :task (medley/filter-keys #(= "tasks" (namespace %)) m))))
+
+(defn find-by-user-and-recorded-for
+  [tx user-id recorded-for]
+  (->> (db/query tx
+                 ["SELECT timers.*, tasks.* AS task
+                  FROM tasks, timers
+                  WHERE tasks.id = timers.task_id 
+                  AND user_id = ?
+                  AND recorded_for = ?"
+                  user-id
+                  recorded-for])
+       (map extract-task)))
+
 (defn update-note!
   [tx user-id timer-id note]
   (let [now (time/now)]
