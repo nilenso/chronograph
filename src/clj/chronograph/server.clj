@@ -41,6 +41,8 @@
 (def timer-routes
   {:post (-> timer/create
              middleware/wrap-authenticated)
+   :get (-> timer/find-by-day
+            middleware/wrap-authenticated)
    [:timer-id] {:delete (-> timer/delete
                             middleware/wrap-authenticated)}
    [:timer-id "/start"] {:put (-> timer/start
@@ -76,7 +78,7 @@
         ["auth/" [["google/" google-auth-routes]]]
         ["api/" [["users/me" {:get (-> user/me
                                        middleware/wrap-authenticated)}]
-                 ["timers/" timer-routes]
+                 ["timers" timer-routes]
                  ["invitations" invited-org-routes]
                  ["organizations/" organizations-routes]]]
         [true (fn [_] (-> (response/resource-response "public/index.html")

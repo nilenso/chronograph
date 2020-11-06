@@ -82,3 +82,10 @@
   [tx user-id task-id]
   (when-let [timers (not-empty (db-timer/find-by-user-and-task tx user-id task-id))]
     timers))
+
+(defn find-by-user-and-recorded-for
+  "Given a user's id and a date, find all of that user's timers for that
+  date. Return [] if no timers are found."
+  [tx user-id recorded-for]
+  (db-timer/find-by-user-and-recorded-for tx user-id recorded-for))
+

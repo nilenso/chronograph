@@ -141,9 +141,9 @@
                                    :timers/time-spans]
                              :opt [:timers/note]))
 
-;; Timers - Handler
-(s/def :handlers.timer/recorded-for string?)
-(s/def :handlers.timer/create-request-body (s/keys :req-un [:timers/task-id :handlers.timer/recorded-for]
-                                                   :opt-un [:timers/note]))
-(s/def :handlers.timer/create-request-body (s/keys :req-un [:timers/task-id]
-                                                   :opt-un [:timers/note]))
+(s/def :timers/timer-un (s/keys :req-un [:timers/id
+                                         :timers/user-id
+                                         :timers/task-id
+                                         :timers/recorded-for
+                                         :timers/time-spans]
+                                :opt-un [:timers/note]))

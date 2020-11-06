@@ -9,6 +9,10 @@
             [chronograph.domain.acl :as acl])
   (:import [java.time LocalDate]))
 
+(s/def :handlers.timer/recorded-for string?)
+(s/def :handlers.timer/create-request-body (s/keys :req-un [:timers/task-id :handlers.timer/recorded-for]
+                                                   :opt-un [:timers/note]))
+
 (defn create
   "Authorized users may create a timer for the give task id."
   [{{:keys [task-id note recorded-for] :as body} :body
@@ -132,3 +136,10 @@
             response/response)
         (response/not-found
          {:error "Timers not found."})))))
+
+(defn find-by-day [{{:keys [day]} :params
+                    {user-id :users/id} :user
+                    :as _request}]
+  (jdbc/with-transaction [tx db/datasource]
+    (response/response {:timers
+                        (timer/find-by-user-and-recorded-for tx user-id (LocalDate/parse day))})))
