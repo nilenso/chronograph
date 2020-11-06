@@ -33,12 +33,12 @@
       (response/bad-request
        {:error "Task does not exist."})
 
-      :else (-> (timer/create! tx
-                               organization-id
-                               #:timers{:user-id user-id
-                                        :task-id task-id
-                                        :recorded-for (LocalDate/parse recorded-for)
-                                        :note note})
+      :else (-> (timer/create-and-start! tx
+                                         organization-id
+                                         #:timers{:user-id      user-id
+                                                  :task-id      task-id
+                                                  :recorded-for (LocalDate/parse recorded-for)
+                                                  :note         note})
                 response/response))))
 
 (defn delete

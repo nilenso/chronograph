@@ -7,7 +7,8 @@
             [chronograph.domain.acl :as acl]
             [chronograph.db.core :as db]
             [clojure.spec.alpha :as s]
-            [chronograph.utils.time :as time])
+            [chronograph.utils.time :as time]
+            [next.jdbc :as jdbc])
   (:import [java.time LocalDate]))
 
 (defn- setup-org-users-tasks!
@@ -131,6 +132,15 @@
                                         :recorded-for default-local-date}))
           "the task does not exist."))))
 
+(deftest create-and-start!-test
+  (testing "Should create a running timer when called"
+    (let [{:keys [task-id-1 user-id organization-id]} (setup-org-users-tasks!)
+          timer (jdbc/with-transaction [tx db/datasource]
+                  (timer/create-and-start! tx organization-id #:timers{:user-id      user-id
+                                                                       :task-id      task-id-1
+                                                                       :note         "A sample note."
+                                                                       :recorded-for default-local-date}))]
+      (is (timer/running? timer)))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Delete Timer Tests
@@ -234,23 +244,23 @@
 (deftest update-note-isolation-by-user-test
   (testing "Users trying to update each others' timer notes."
     (let [{:keys [admin-id user-id organization-id task-id-1]} (setup-org-users-tasks!)
-          task-id task-id-1
-          unstarted-timer-by-user-1 (factories/create-timer organization-id
-                                                            #:timers{:user-id admin-id
-                                                                     :task-id task-id
-                                                                     :note "A note by user-1."})
-          unstarted-timer-by-user-2 (factories/create-timer organization-id
-                                                            #:timers{:user-id user-id
-                                                                     :task-id task-id
-                                                                     :note "A note by user-2."})]
+          task-id         task-id-1
+          timer-by-user-1 (factories/create-timer organization-id
+                                                  #:timers{:user-id admin-id
+                                                           :task-id task-id
+                                                           :note    "A note by user-1."})
+          timer-by-user-2 (factories/create-timer organization-id
+                                                  #:timers{:user-id user-id
+                                                           :task-id task-id
+                                                           :note    "A note by user-2."})]
       (is (nil? (timer/update-note! db/datasource
                                     user-id
-                                    (:timers/id unstarted-timer-by-user-1)
+                                    (:timers/id timer-by-user-1)
                                     "A sneaky note by user-2."))
           "user-2 cannot overwrite user-1's note.")
       (is (nil? (timer/update-note! db/datasource
                                     admin-id
-                                    (:timers/id unstarted-timer-by-user-2)
+                                    (:timers/id timer-by-user-2)
                                     "A sneaky note by user-1."))
           "user-1 cannot overwrite user-2's note."))))
 
