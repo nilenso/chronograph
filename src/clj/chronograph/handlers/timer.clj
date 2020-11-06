@@ -9,6 +9,10 @@
             [chronograph.domain.acl :as acl])
   (:import [java.time LocalDate]))
 
+(s/def :handlers.timer/recorded-for string?)
+(s/def :handlers.timer/create-request-body (s/keys :req-un [:timers/task-id :handlers.timer/recorded-for]
+                                                   :opt-un [:timers/note]))
+
 (defn create
   "Authorized users may create a timer for the give task id."
   [{{:keys [task-id note recorded-for] :as body} :body

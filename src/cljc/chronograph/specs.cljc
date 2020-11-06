@@ -137,10 +137,8 @@
              (or (nil? stopped-at)
                  (= stopped-at started-at)
                  (.isAfter stopped-at started-at)))
-     :cljs (let [{:keys [^DateTime stopped-at ^DateTime started-at]} timespan]
-             ;; TODO: Implement
-             true
-            #_(or (nil? stopped-at)
+     :cljs (let [{:keys [stopped-at started-at]} timespan]
+            (or (nil? stopped-at)
                 (= stopped-at started-at)
                 (> stopped-at started-at)))))
 
@@ -162,11 +160,3 @@
                                          :timers/recorded-for
                                          :timers/time-spans]
                                 :opt-un [:timers/note]))
-
-;; Timers - Handler
-;; TODO: Move this out of cljc and into the backend
-(s/def :handlers.timer/recorded-for string?)
-(s/def :handlers.timer/create-request-body (s/keys :req-un [:timers/task-id :handlers.timer/recorded-for]
-                                                   :opt-un [:timers/note]))
-(s/def :handlers.timer/create-request-body (s/keys :req-un [:timers/task-id]
-                                                   :opt-un [:timers/note]))
