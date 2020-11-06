@@ -179,21 +179,13 @@
         (timer/stop! db/datasource
                      user-id
                      timer-id))
-      ;; then verify we get back 3 time spans for the timer
-      #_(is (= 3
-               (count (db-time-span/find-all-for-timer db/datasource timer-id)))
-            "we can retrieve all associated time spans, prior to timer deletion.")
       ;; now, delete the timer
       (timer/delete! db/datasource user-id timer-id)
       ;; then, verify the timer is gone
       (is (nil? (timer/find-by-user-and-id db/datasource
                                            user-id
                                            timer-id))
-          "the timer ceases to exist in DB, and cannot be fetched.")
-      ;; finally, verify the time spans are gone
-      #_(is (empty?
-             (db-time-span/find-all-for-timer db/datasource timer-id))
-            "all of the timer's time spans are deleted."))))
+          "the timer ceases to exist in DB, and cannot be fetched."))))
 
 (deftest delete-timer-isolation-by-user-test
   (testing "Users trying to delete each others' timers."
