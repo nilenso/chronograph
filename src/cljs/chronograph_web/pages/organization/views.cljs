@@ -41,8 +41,8 @@
                                                      :on-failure [::org-events/create-task-failed]})))})]
     (fn []
       [:form
-       [:div [:input (get-input-attributes :name nil :tasks/name)]]
-       [:div [:input (get-input-attributes :description nil :tasks/description)]]
+       [:div [:input (get-input-attributes :name {:spec :tasks/name})]]
+       [:div [:input (get-input-attributes :description {:spec :tasks/description})]]
        [:button (get-submit-attributes) "Save"]])))
 
 (defn update-task-form
@@ -58,8 +58,8 @@
                                                   :on-failure [::org-events/update-task-failure id]}))})]
     (fn [_task]
       [:form
-       [:div [:input (get-input-attributes :name nil :tasks/name)]]
-       [:div [:input (get-input-attributes :description nil :tasks/description)]]
+       [:div [:input (get-input-attributes :name {:spec :tasks/name})]]
+       [:div [:input (get-input-attributes :description {:spec :tasks/description})]]
        [:button (get-submit-attributes) "Save"]
        [:button {:type     :button
                  :name     :cancel

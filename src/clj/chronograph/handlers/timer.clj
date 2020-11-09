@@ -16,30 +16,24 @@
 (defn create
   "Authorized users may create a timer for the give task id."
   [{{:keys [task-id note recorded-for] :as body} :body
-    {user-id :users/id} :user
-    {organization-id :organizations/id} :organization
-    :as _request}]
+    {user-id :users/id}                          :user
+    :as                                          _request}]
   (jdbc/with-transaction [tx db/datasource]
-    (cond
-      (not (s/valid? :handlers.timer/create-request-body body))
-      (response/bad-request
-       {:error "Invalid Task ID or Note."})
+    (if-not (s/valid? :handlers.timer/create-request-body body)
+      (response/bad-request {:error "Invalid Task ID or Note."})
+      (if-let [{:tasks/keys [organization-id]} (task/find-by-id tx task-id)]
+        (if-not (acl/belongs-to-org? tx user-id organization-id)
+          (-> (response/response {:error "Forbidden."})
+              (response/status 403))
+          (-> (timer/create-and-start! tx
+                                       organization-id
+                                       #:timers{:user-id      user-id
+                                                :task-id      task-id
+                                                :recorded-for (LocalDate/parse recorded-for)
+                                                :note         note})
+              response/response))
 
-      (not (acl/belongs-to-org? tx user-id organization-id))
-      (-> (response/response {:error "Forbidden."})
-          (response/status 403))
-
-      (empty? (task/find-by-id tx task-id))
-      (response/bad-request
-       {:error "Task does not exist."})
-
-      :else (-> (timer/create-and-start! tx
-                                         organization-id
-                                         #:timers{:user-id      user-id
-                                                  :task-id      task-id
-                                                  :recorded-for (LocalDate/parse recorded-for)
-                                                  :note         note})
-                response/response))))
+        (response/bad-request {:error "Task does not exist."})))))
 
 (defn delete
   "Authorized users may delete any timer they own."

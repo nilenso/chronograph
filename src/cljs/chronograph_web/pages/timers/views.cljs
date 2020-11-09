@@ -6,7 +6,8 @@
             [chronograph.specs]
             [chronograph-web.page-container.views :as page-container]
             [chronograph-web.components.timer :as timer-com]
-            [chronograph-web.utils.time :as time]))
+            [chronograph-web.utils.time :as time]
+            ["@ant-design/icons" :as icons]))
 
 (defn- invited-organizations-list
   [organizations]
@@ -30,19 +31,35 @@
 (defn timer-list [ds]
   [antd/list {:dataSource ds
               :grid       {:gutter 64}
-              :renderItem (fn [{:keys [id] :as timer}]
-                            [antd/list-item {:key id}
-                             [timer-com/timer timer]])}])
+              :renderItem (fn [{:keys [id state] :as timer}]
+                            (if (= "creating" state)
+                              [timer-com/create-timer-widget
+                               [::timers-events/dismiss-create-timer-widget]
+                               [::timers-events/create-timer-succeeded]
+                               [::timers-events/create-timer-failed]]
+                              [antd/list-item {:key id}
+                               [timer-com/timer
+                                timer
+                                [::timers-events/start-timer id]
+                                [::timers-events/stop-timer id]]]))}])
 
 (defn landing-page [_]
-  (let [invited-organizations @(rf/subscribe [::timers-subs/invites])
-        timers                (->> @(rf/subscribe [::timers-subs/current-organization-timers
-                                                   (time/current-calendar-date)])
-                                   (sort-by :created-at))]
+  (let [invited-organizations        @(rf/subscribe [::timers-subs/invites])
+        showing-create-timer-widget? @(rf/subscribe [::timers-subs/showing-create-timer-widget?])
+        timers                       @(rf/subscribe [::timers-subs/current-organization-timers
+                                                     (time/current-calendar-date)])]
     [page-container/org-scoped-page-container
-     [antd/page-header {:title "Timers"}
+     [antd/page-header {:title "Timers"
+                        :extra (when-not showing-create-timer-widget?
+                                 [antd/button
+                                  {:type    "primary"
+                                   :icon    icons/PlusOutlined
+                                   :onClick #(rf/dispatch [::timers-events/show-create-timer-widget])}
+                                  "New Timer"])}
       [invited-organizations-list invited-organizations]
       (when (not-empty invited-organizations)
         [antd/divider])
-      [timer-list timers]]]))
+      [timer-list (if showing-create-timer-widget?
+                    (cons {:state "creating"} timers)
+                    timers)]]]))
 

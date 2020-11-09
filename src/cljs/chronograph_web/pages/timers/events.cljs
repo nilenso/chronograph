@@ -6,7 +6,9 @@
             [chronograph-web.db.organization-invites :as org-invites-db]
             [chronograph-web.utils.time :as time]
             [chronograph-web.http :as http]
-            [chronograph-web.config :as config]))
+            [chronograph-web.config :as config]
+            [chronograph-web.db :as db]
+            [chronograph-web.api-client :as api]))
 
 (defmethod routing-events/on-route-change-event
   :timers-list
@@ -78,4 +80,52 @@
                                  (:frown config/emojis)
                                  " Please refresh the page!")}}))
 
+(rf/reg-event-db
+  ::show-create-timer-widget
+  (fn [db _]
+    (db/set-in-page-state db [:show-create-timer-widget] true)))
 
+(rf/reg-event-db
+  ::dismiss-create-timer-widget
+  (fn [db _]
+    (db/set-in-page-state db [:show-create-timer-widget] false)))
+
+(rf/reg-event-fx
+  ::create-timer-succeeded
+  (fn [_ _]
+    {:fx [[:dispatch [::dismiss-create-timer-widget]]
+          [:dispatch [::timer-events/fetch-timers (time/current-calendar-date)]]]}))
+
+(defn- flash-error-effect
+  [message]
+  {:flash-error {:content message}})
+
+(rf/reg-event-fx
+  ::flash-error
+  (fn [_ [_ message]]
+    (flash-error-effect message)))
+
+(rf/reg-event-fx
+  ::create-timer-failed
+  (fn [_ _]
+    (flash-error-effect (str "We couldn't start your timer "
+                             (:frown config/emojis)
+                             " Please try again!"))))
+
+(rf/reg-event-fx
+  ::start-timer
+  (fn [_ [_ timer-id]]
+    {:fx [[:http-xhrio (api/start-timer timer-id
+                                        [::timer-events/fetch-timers (time/current-calendar-date)]
+                                        [::flash-error (str "We couldn't start your timer "
+                                                            (:frown config/emojis)
+                                                            " Please try again!")])]]}))
+
+(rf/reg-event-fx
+  ::stop-timer
+  (fn [_ [_ timer-id]]
+    {:fx [[:http-xhrio (api/stop-timer timer-id
+                                       [::timer-events/fetch-timers (time/current-calendar-date)]
+                                       [::flash-error (str "We couldn't stop your timer "
+                                                           (:frown config/emojis)
+                                                           " Please try again!")])]]}))

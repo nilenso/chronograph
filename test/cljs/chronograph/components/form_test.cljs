@@ -50,32 +50,16 @@
                 (dissoc (get-input-attributes :foobar) :onChange))
              "The value of the input should change after calling onChange"))))
 
-    (testing "When additional attributes are passed"
-      (rf-test/run-test-sync
-       (let [{::form/keys [get-input-attributes]} (form/form {:form-key            ::form-key
-                                                              :request-builder (constantly {})})]
-         (is (= {:value       nil
-                 :placeholder "Foobar"
-                 :baz         "quux"
-                 :class       "bar"}
-                (dissoc (get-input-attributes :foobar {:baz       "quux"
-                                                       :class "bar"}) :onChange))
-             "The supplied attributes should be present in the returned attributes"))))
-
-    (testing "When additional attributes and a spec are passed"
+    (testing "When a spec is passed"
       (testing "When the spec fails"
         (rf-test/run-test-sync
          (let [{::form/keys [get-input-attributes]} (form/form {:form-key            ::form-key
                                                                 :request-builder (constantly {})})]
            (is (= {:value       nil
                    :placeholder "Foobar"
-                   :baz         "quux"
-                   :class       "bar form-error"}
+                   :class       "form-error"}
                   (dissoc (get-input-attributes :foobar
-                                                {:baz   "quux"
-                                                 :value "value"
-                                                 :class "bar"}
-                                                int?) :onChange))
+                                                {:spec int?}) :onChange))
                "The form-error class should be set"))))))
 
   (testing "Submit attributes builder"

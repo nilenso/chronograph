@@ -100,22 +100,29 @@
    (when (= @status :submitting)
      {:loading "true"})))
 
+(defn- default-value-fn [v] (-> v
+                                .-currentTarget
+                                .-value))
+
 (defn- input-attributes-builder
   ([form-key params input-key]
-   (input-attributes-builder form-key params input-key nil nil))
-  ([form-key params input-key attributes]
-   (input-attributes-builder form-key params input-key attributes nil))
-  ([form-key params input-key {:keys [class] :as attributes} spec]
+   (input-attributes-builder form-key params input-key nil))
+  ([form-key params input-key {:keys [class spec value-fn] :as _options}]
    (let [value (get @params input-key)]
      (merge {:placeholder (sentence-case input-key)}
-            attributes
-            {:onChange #(rf/dispatch [::update form-key input-key (-> %
-                                                                      .-currentTarget
-                                                                      .-value)])
+            ;; TODO: Test value fn
+            {:onChange #(rf/dispatch [::update form-key input-key ((or value-fn
+                                                                       default-value-fn) %)])
              :value     value}
             (when (and spec
                        (not (s/valid? spec value)))
               {:class (string/trim (str class " form-error"))})))))
+
+(defn- select-attributes-builder
+  ([form-key params input-key]
+   (select-attributes-builder form-key params input-key nil))
+  ([form-key params input-key options]
+   (input-attributes-builder form-key params input-key (assoc options :value-fn identity))))
 
 (defn form
   [{:keys [form-key initial-values request-builder]}]
@@ -124,4 +131,5 @@
     (rf/dispatch [::initialize form-key initial-values])
     {::get-submit-attributes #(submit-attributes status form-key request-builder)
      ::get-input-attributes  (partial input-attributes-builder form-key params)
-     ::submitting?-state (rf/subscribe [::submitting? form-key])}))
+     ::get-select-attributes (partial select-attributes-builder form-key params)
+     ::submitting?-state     (rf/subscribe [::submitting? form-key])}))

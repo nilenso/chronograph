@@ -26,6 +26,8 @@
   (-> m
       (update :recorded-for ->date)
       (update :time-spans (fn [ts] (map #(medley/map-vals ->date-time %) ts)))
+      (update :created-at ->date-time)
+      (update :updated-at ->date-time)
       (update :id uuid)
       (dissoc :task)))
 

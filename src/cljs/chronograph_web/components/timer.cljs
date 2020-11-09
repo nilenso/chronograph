@@ -2,7 +2,10 @@
   (:require [chronograph-web.utils.time :as time]
             [chronograph-web.components.antd :as antd]
             [reagent.core :as r]
-            ["@ant-design/icons" :as icons]))
+            ["@ant-design/icons" :as icons]
+            [chronograph-web.components.form :as form]
+            [chronograph-web.api-client :as api]
+            [re-frame.core :as rf]))
 
 (defn- left-pad [n val s]
   (if (>= (count s) n)
@@ -21,7 +24,7 @@
   (and (not-empty time-spans)
        (not (:stopped-at (last time-spans)))))
 
-(defn timer [{:keys [task] :as timer}]
+(defn timer [{:keys [task] :as timer} on-start on-stop]
   (r/with-let [current-time            (r/atom (js/Date.))
                show-colon              (r/atom true)
                timer-interval-id       (js/setInterval #(reset! current-time (js/Date.)) 1000)
@@ -43,10 +46,43 @@
        [antd/row
         (if (running? timer)
           [antd/button {:type "primary"
-                        :icon icons/PauseCircleFilled}
+                        :icon icons/PauseCircleFilled
+                        :onClick #(rf/dispatch on-stop)}
            "Stop"]
-          [antd/button {:icon icons/PlayCircleFilled}
+          [antd/button {:icon icons/PlayCircleFilled
+                        :onClick #(rf/dispatch on-start)}
            "Start"])]]]]
     (finally (js/clearInterval timer-interval-id)
              (js/clearInterval colon-blink-interval-id))))
 
+(defn create-timer-widget [on-cancel-event create-timer-succeeded-event create-timer-failed-event]
+  (r/with-let [{::form/keys [get-submit-attributes
+                             get-input-attributes
+                             get-select-attributes]} (form/form {:form-key        ::create-timer-form
+                                                                 :request-builder (fn [{:keys [task note]}]
+                                                                                    (api/create-and-start-timer
+                                                                                     task
+                                                                                     note
+                                                                                     (time/current-calendar-date)
+                                                                                     create-timer-succeeded-event
+                                                                                     create-timer-failed-event))})]
+    [antd/row {:class  "timer"
+               :align  "middle"
+               :wrap   false
+               :gutter 16}
+     [antd/col
+      [antd/row
+       [antd/button (assoc (get-submit-attributes) :icon icons/PlayCircleFilled)
+        "Start"]]
+      [antd/row [antd/button
+                 {:onClick #(rf/dispatch on-cancel-event)}
+                 "Cancel"]]]
+     [antd/col
+      [antd/row [antd/select (get-select-attributes :task {:value-fn identity})
+                 (antd/option {:value 1} "Chronograph Standup")
+                 (antd/option {:value 2} "IPM")
+                 (antd/option {:value 3} "Development")]]
+
+      [antd/row [antd/text-area (merge (get-input-attributes :note)
+                                       {:placeholder "Note"
+                                        :rows        2})]]]]))
