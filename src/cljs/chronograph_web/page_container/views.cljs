@@ -83,7 +83,7 @@
 (defn- selected-sider-menu-keys []
   (let [handler (:handler @(rf/subscribe [::subs/current-page]))]
     (case handler
-      :overview ["1"]
+      :timers-list ["1"]
       :organization-show ["2"]
       [])))
 
@@ -93,7 +93,7 @@
    [antd/menu {:mode         "inline"
                :selectedKeys (selected-sider-menu-keys)}
     (antd/menu-item {:key "1" :icon icons/ClockCircleOutlined} [:a
-                                                                {:href (routes/path-for :overview :slug slug)}
+                                                                {:href (routes/path-for :timers-list :slug slug)}
                                                                 "Timers"])
     (antd/menu-item {:key "2" :icon icons/TeamOutlined} [:a
                                                          {:href (routes/path-for :organization-show :slug slug)}

@@ -1,7 +1,7 @@
-(ns chronograph-web.pages.overview.views
+(ns chronograph-web.pages.timers.views
   (:require [re-frame.core :as rf]
-            [chronograph-web.pages.overview.events :as overview-events]
-            [chronograph-web.pages.overview.subscriptions :as overview-subs]
+            [chronograph-web.pages.timers.events :as timers-events]
+            [chronograph-web.pages.timers.subscriptions :as timers-subs]
             [chronograph-web.components.antd :as antd]
             [chronograph.specs]
             [chronograph-web.page-container.views :as page-container]
@@ -18,10 +18,10 @@
                                 [antd/row {:align "middle"}
                                  [antd/col {:flex 3} name]
                                  [antd/col {:flex 2}
-                                  [antd/button {:onClick #(rf/dispatch [::overview-events/accept-invite id])
+                                  [antd/button {:onClick #(rf/dispatch [::timers-events/accept-invite id])
                                                 :type    "link"}
                                    "Accept"]
-                                  [antd/button {:onClick #(rf/dispatch [::overview-events/reject-invite id])
+                                  [antd/button {:onClick #(rf/dispatch [::timers-events/reject-invite id])
                                                 :danger  true
                                                 :type    "link"}
                                    "Decline"]]]])
@@ -35,8 +35,8 @@
                              [timer-com/timer timer]])}])
 
 (defn landing-page [_]
-  (let [invited-organizations @(rf/subscribe [::overview-subs/invites])
-        timers                (->> @(rf/subscribe [::overview-subs/current-organization-timers
+  (let [invited-organizations @(rf/subscribe [::timers-subs/invites])
+        timers                (->> @(rf/subscribe [::timers-subs/current-organization-timers
                                                    (time/current-calendar-date)])
                                    (sort-by :created-at))]
     [page-container/org-scoped-page-container

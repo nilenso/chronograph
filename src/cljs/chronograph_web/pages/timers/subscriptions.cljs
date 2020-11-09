@@ -1,4 +1,4 @@
-(ns chronograph-web.pages.overview.subscriptions
+(ns chronograph-web.pages.timers.subscriptions
   (:require [chronograph-web.db.organization-invites :as org-invites-db]
             [re-frame.core :as rf]
             [chronograph-web.db.timers :as timers-db]

@@ -31,7 +31,7 @@
     {:db (-> db
              (org-db/add-organizations response)
              (sign-in-user user-response))
-     :fx [[:history-token (routes/path-for :overview :slug (:slug (first response)))]]}))
+     :fx [[:history-token (routes/path-for :timers-list :slug (:slug (first response)))]]}))
 
 (rf/reg-event-db
   ::fetch-data-failed

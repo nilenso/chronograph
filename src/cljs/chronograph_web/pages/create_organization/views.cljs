@@ -7,16 +7,16 @@
             [chronograph-web.page-container.views :as page-container]
             [clojure.string :as string]))
 
-(defn- overview-url-prefix []
+(defn- timers-url-prefix []
   (let [slug "default"]
     (-> (str js/location.origin
-             (routes/path-for :overview :slug slug))
+             (routes/path-for :timers-list :slug slug))
         (string/split (re-pattern slug))
         (first))))
 
-(defn- overview-url-suffix []
+(defn- timers-url-suffix []
   (let [slug "default"]
-    (-> (routes/path-for :overview :slug slug)
+    (-> (routes/path-for :timers-list :slug slug)
         (string/split (re-pattern slug))
         (second))))
 
@@ -35,8 +35,8 @@
         [antd/input (get-input-attributes :name {:type :text :autoFocus true} :organizations/name)]
         [antd/input (get-input-attributes :slug
                                           {:placeholder "e.g. my-org-name-42"
-                                           :addonBefore (overview-url-prefix)
-                                           :addonAfter  (overview-url-suffix)}
+                                           :addonBefore (timers-url-prefix)
+                                           :addonAfter  (timers-url-suffix)}
                                           :organizations/slug)]
         [antd/space
          [antd/button (get-submit-attributes) "Save"]]]])))
