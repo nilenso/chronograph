@@ -33,10 +33,11 @@
               :grid       {:gutter 64}
               :renderItem (fn [{:keys [id state] :as timer}]
                             (if (= "creating" state)
-                              [timer-com/create-timer-widget
-                               [::timers-events/dismiss-create-timer-widget]
-                               [::timers-events/create-timer-succeeded]
-                               [::timers-events/create-timer-failed]]
+                              [antd/list-item {:key "creating"}
+                               [timer-com/create-timer-widget
+                                [::timers-events/dismiss-create-timer-widget]
+                                [::timers-events/create-timer-succeeded]
+                                [::timers-events/create-timer-failed]]]
                               [antd/list-item {:key id}
                                [timer-com/timer
                                 timer
