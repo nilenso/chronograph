@@ -11,6 +11,6 @@
                             :token-endpoint       "https://oauth2.googleapis.com/token"}
                            #include "google.secrets.edn"]}
  :auth    {:token-signing-key           "your-signing-key-here"
-           :token-expiry-in-seconds     3600
+           :token-expiry-in-seconds     604800
            :desktop-redirect-url-scheme "chronograph"}
  :port    8000}
