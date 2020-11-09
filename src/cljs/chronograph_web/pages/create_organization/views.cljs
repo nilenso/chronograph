@@ -32,12 +32,14 @@
     (fn []
       [:form {:style {:padding-bottom "8px"}}
        [antd/space {:direction "vertical"}
-        [antd/input (get-input-attributes :name {:type :text :autoFocus true} :organizations/name)]
-        [antd/input (get-input-attributes :slug
-                                          {:placeholder "e.g. my-org-name-42"
-                                           :addonBefore (timers-url-prefix)
-                                           :addonAfter  (timers-url-suffix)}
-                                          :organizations/slug)]
+        [antd/input (merge (get-input-attributes :name
+                                                 {:spec :organizations/name})
+                           {:type :text :autoFocus true})]
+        [antd/input (merge (get-input-attributes :slug
+                                                 {:spec :organizations/slug})
+                           {:placeholder "e.g. my-org-name-42"
+                            :addonBefore (timers-url-prefix)
+                            :addonAfter  (timers-url-suffix)})]
         [antd/space
          [antd/button (get-submit-attributes) "Save"]]]])))
 

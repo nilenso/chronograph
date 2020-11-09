@@ -44,8 +44,7 @@
     (testing "when a timer is created without a note"
       (let [response (handler-timer/create {:body {:task-id (:task-id-1 test-context)
                                                    :recorded-for default-recorded-for}
-                                            :user {:users/id (:user-2-id test-context)}
-                                            :organization (:organization test-context)})]
+                                            :user {:users/id (:user-2-id test-context)}})]
         (is (= 200 (:status response))
             "the request succeeds")
         (is (s/valid? :timers/timer
@@ -62,8 +61,7 @@
             response (handler-timer/create {:body {:task-id (:task-id-1 test-context)
                                                    :note note
                                                    :recorded-for default-recorded-for}
-                                            :user {:users/id (:user-2-id test-context)}
-                                            :organization (:organization test-context)})]
+                                            :user {:users/id (:user-2-id test-context)}})]
         (is (= 200 (:status response))
             "the request succeeds")
         (is (s/valid? :timers/timer
@@ -82,8 +80,7 @@
              (handler-timer/create {:body {:task-id "foo"
                                            :note 42
                                            :recorded-for default-recorded-for}
-                                    :user {:users/id (:user-2-id test-context)}
-                                    :organization (:organization test-context)}))
+                                    :user {:users/id (:user-2-id test-context)}}))
           "the request fails with an HTTP error."))
 
     (testing "when a timer is created with a non-existent task id"
@@ -93,22 +90,20 @@
              (handler-timer/create {:body {:task-id Long/MAX_VALUE
                                            :note "A valid note."
                                            :recorded-for default-recorded-for}
-                                    :user {:users/id (:user-2-id test-context)}
-                                    :organization (:organization test-context)}))
+                                    :user {:users/id (:user-2-id test-context)}}))
           "the request fails with an HTTP error."))
 
     (testing "when a user does not belong to the organization in the request"
-      (is (= {:status 403
-              :headers {}
-              :body {:error "Forbidden."}}
-             (handler-timer/create {:body {:task-id Long/MAX_VALUE
-                                           :note "A valid note."
-                                           :recorded-for default-recorded-for}
-                                    :user {:users/id (:user-2-id test-context)}
-                                    :organization (factories/create-organization
-                                                   (:users/id
-                                                    (factories/create-user)))}))
-          "the request fails with an HTTP error."))))
+      (let [org (factories/create-user-and-organization)
+            {task-id :tasks/id} (factories/create-task org)]
+        (is (= {:status  403
+                :headers {}
+                :body    {:error "Forbidden."}}
+               (handler-timer/create {:body         {:task-id      task-id
+                                                     :note         "A valid note."
+                                                     :recorded-for default-recorded-for}
+                                      :user         {:users/id (:user-2-id test-context)}}))
+            "the request fails with an HTTP error.")))))
 
 (deftest delete-timer-test
   (testing "deleting a timer"

@@ -21,6 +21,8 @@
                                 :user-id      1
                                 :recorded-for "2020-03-14"
                                 :note         ""
+                                :created-at   "2020-11-05T11:08:24.500944Z"
+                                :updated-at   "2020-11-05T11:08:24.500944Z"
                                 :time-spans   [{:started-at "2020-11-05T11:08:24.500944Z"
                                                 :stopped-at "2020-11-05T12:08:24.501902Z"}
                                                {:started-at "2020-11-05T13:08:24.500944Z"
@@ -34,6 +36,8 @@
                                 :user-id      1
                                 :recorded-for "2020-03-14"
                                 :note         "baz"
+                                :created-at   "2020-11-05T12:08:24.500944Z"
+                                :updated-at   "2020-11-05T12:08:24.500944Z"
                                 :time-spans   [{:started-at "2020-11-05T15:08:24.500944Z"
                                                 :stopped-at "2020-11-05T16:08:24.501902Z"}
                                                {:started-at "2020-11-05T17:08:24.500944Z"
@@ -47,6 +51,9 @@
                                 :user-id      1
                                 :recorded-for "2020-03-14"
                                 :note         "baz"
+                                :created-at   "2020-13-05T13:08:24.500944Z"
+                                :updated-at   "2020-13-05T13:08:24.500944Z"
+
                                 :time-spans   [{:started-at "2020-11-05T19:08:24.500944Z"
                                                 :stopped-at "2020-11-05T20:08:24.501902Z"}
                                                {:started-at "2020-11-05T21:08:24.500944Z"
@@ -56,29 +63,15 @@
                                                :description     "quux"
                                                :organization-id 4}}]})
 
-(def expected-timers [{:id           #uuid"ab289769-609d-46ce-a6cf-601bf716fcf6"
-                       :task-id      2
-                       :user-id      1
-                       :recorded-for {:day   14
-                                      :month 2
-                                      :year  2020}
-                       :note         ""
-                       :time-spans   (->> [{:started-at "2020-11-05T11:08:24.500944Z"
-                                            :stopped-at "2020-11-05T12:08:24.501902Z"}
-                                           {:started-at "2020-11-05T13:08:24.500944Z"
-                                            :stopped-at "2020-11-05T14:08:24.501902Z"}]
-                                          (map (partial medley/map-vals time/string->date)))
-                       :task         {:id              2
-                                      :name            "baz"
-                                      :description     "quux"
-                                      :organization-id 3}}
-                      {:id           #uuid"43fea53d-56bb-4e40-9402-e8164613084d"
+(def expected-timers [{:id           #uuid"43fea53d-56bb-4e40-9402-e8164613084d"
                        :task-id      3
                        :user-id      1
                        :recorded-for {:day   14
                                       :month 2
                                       :year  2020}
                        :note         "baz"
+                       :created-at   (time/string->date "2020-11-05T12:08:24.500944Z")
+                       :updated-at   (time/string->date "2020-11-05T12:08:24.500944Z")
                        :time-spans   (->> [{:started-at "2020-11-05T15:08:24.500944Z"
                                             :stopped-at "2020-11-05T16:08:24.501902Z"}
                                            {:started-at "2020-11-05T17:08:24.500944Z"
@@ -86,6 +79,24 @@
                                           (map (partial medley/map-vals time/string->date)))
                        :task         {:id              3
                                       :name            "quuxy"
+                                      :description     "quux"
+                                      :organization-id 3}}
+                      {:id           #uuid"ab289769-609d-46ce-a6cf-601bf716fcf6"
+                       :task-id      2
+                       :user-id      1
+                       :recorded-for {:day   14
+                                      :month 2
+                                      :year  2020}
+                       :note         ""
+                       :created-at   (time/string->date "2020-11-05T11:08:24.500944Z")
+                       :updated-at   (time/string->date "2020-11-05T11:08:24.500944Z")
+                       :time-spans   (->> [{:started-at "2020-11-05T11:08:24.500944Z"
+                                            :stopped-at "2020-11-05T12:08:24.501902Z"}
+                                           {:started-at "2020-11-05T13:08:24.500944Z"
+                                            :stopped-at "2020-11-05T14:08:24.501902Z"}]
+                                          (map (partial medley/map-vals time/string->date)))
+                       :task         {:id              2
+                                      :name            "baz"
                                       :description     "quux"
                                       :organization-id 3}}])
 

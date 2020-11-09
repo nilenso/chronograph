@@ -15,7 +15,7 @@
   [render-fn]
   (fn [& args]
     ;; The render function expects a JS object. Something
-    ;; (maybe antd/Table) magically turns our nice Clojure
+    ;; magically turns our nice Clojure
     ;; into JS. Hence we use js->clj
     (r/as-element (apply render-fn (map #(js->clj % :keywordize-keys true) args)))))
 
@@ -64,13 +64,20 @@
                                                          :icon
                                                          r/create-element)))
 
-;; Others
+;; Input
 
 (def input (antd-wrapper antd/Input))
+(def text-area (antd-wrapper antd/Input.TextArea))
+(def select (antd-wrapper antd/Select))
+;; option must be called like a function, don't use it as hiccup
+(def option (antd-wrapper antd/Select.Option))
+
 (def button (antd-wrapper antd/Button
                           #(medley/update-existing %
                                                    :icon
                                                    r/create-element)))
+
+;; Others
 
 (def list (antd-wrapper antd/List
                         #(medley/update-existing %
