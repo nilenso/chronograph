@@ -1,4 +1,4 @@
-(ns chronograph-web.pages.overview.events
+(ns chronograph-web.pages.timers.events
   (:require [re-frame.core :as rf]
             [chronograph-web.events.routing :as routing-events]
             [chronograph-web.events.organization :as org-events]
@@ -9,12 +9,12 @@
             [chronograph-web.config :as config]))
 
 (defmethod routing-events/on-route-change-event
-  :overview
+  :timers-list
   [_]
-  ::overview-page-navigated)
+  ::timers-page-navigated)
 
 (rf/reg-event-fx
-  ::overview-page-navigated
+  ::timers-page-navigated
   (fn [_ _]
     {:fx [[:dispatch [::fetch-invited-orgs]]
           [:dispatch [::timer-events/fetch-timers (time/current-calendar-date)]]]}))

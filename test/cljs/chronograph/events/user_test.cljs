@@ -49,7 +49,7 @@
             @(rf/subscribe [::subs/organizations]))
          "the organizations should be in the DB")
 
-     (is (= {:handler :overview
+     (is (= {:handler      :timers-list
              :route-params {:slug "test-1"}}
             @(rf/subscribe [::subs/current-page]))
          "the route should be set to the overview of the first org in the returned list")))
