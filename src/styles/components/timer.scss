@@ -6,9 +6,10 @@
   font-weight: 400;
   background-color: rgb(240, 242, 245);
   min-height: 100px;
+  transition: all .3s cubic-bezier(.645,.045,.355,1);
 
   &.timer-running {
-    background-color: v.$green-1;
+    background-color: v.$green-3;
   }
 }
 
