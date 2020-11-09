@@ -45,11 +45,11 @@
        [antd/row [:span (:name task)]]
        [antd/row
         (if (running? timer)
-          [antd/button {:type "primary"
-                        :icon icons/PauseCircleFilled
+          [antd/button {:type    "primary"
+                        :icon    icons/PauseCircleFilled
                         :onClick #(rf/dispatch on-stop)}
            "Stop"]
-          [antd/button {:icon icons/PlayCircleFilled
+          [antd/button {:icon    icons/PlayCircleFilled
                         :onClick #(rf/dispatch on-start)}
            "Start"])]]]]
     (finally (js/clearInterval timer-interval-id)
@@ -66,23 +66,20 @@
                                                                                      (time/current-calendar-date)
                                                                                      create-timer-succeeded-event
                                                                                      create-timer-failed-event))})]
-    [antd/row {:class  "timer"
-               :align  "middle"
-               :wrap   false
-               :gutter 16}
-     [antd/col
-      [antd/row
-       [antd/button (assoc (get-submit-attributes) :icon icons/PlayCircleFilled)
-        "Start"]]
-      [antd/row [antd/button
-                 {:onClick #(rf/dispatch on-cancel-event)}
-                 "Cancel"]]]
-     [antd/col
-      [antd/row [antd/select (get-select-attributes :task {:value-fn identity})
-                 (antd/option {:value 1} "Chronograph Standup")
-                 (antd/option {:value 2} "IPM")
-                 (antd/option {:value 3} "Development")]]
+    [antd/space {:direction "vertical"
+                 :class     "timer"}
+     [antd/select (assoc (get-select-attributes :task {:value-fn identity})
+                         :style {:min-width "200px"})
+      (antd/option {:value 1} "Chronograph Standup")
+      (antd/option {:value 2} "IPM")
+      (antd/option {:value 3} "Development")]
 
-      [antd/row [antd/text-area (merge (get-input-attributes :note)
-                                       {:placeholder "Note"
-                                        :rows        2})]]]]))
+     [antd/text-area (merge (get-input-attributes :note)
+                            {:placeholder "Note"
+                             :rows        2})]
+     [antd/space
+      [antd/button (assoc (get-submit-attributes) :icon icons/PlayCircleFilled)
+       "Start"]
+      [antd/button
+       {:onClick #(rf/dispatch on-cancel-event)}
+       "Cancel"]]]))
