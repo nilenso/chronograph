@@ -6,7 +6,8 @@
   font-weight: 400;
   background-color: rgb(240, 242, 245);
   min-height: 100px;
-  transition: all .3s cubic-bezier(.645,.045,.355,1);
+  box-shadow: 3px 3px 8px -3px #999192;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
 
   &.timer-running {
     background-color: v.$green-3;
@@ -18,6 +19,11 @@
 
   .timer-duration-colon {
     display: inline-block;
-    min-width: 6px;
+  }
+}
+
+.create-timer-widget {
+  .task-select-dropdown {
+    width: 100%;
   }
 }

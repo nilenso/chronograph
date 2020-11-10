@@ -17,7 +17,9 @@
 (defn- format-duration [{:keys [hours minutes]} show-colon?]
   [:<>
    [:span hours]
-   [:span.timer-duration-colon (if show-colon? ":" "  ")]
+   [:span {:class (str "timer-duration-colon "
+                       (when-not show-colon?
+                         "invisible"))} ":"]
    [:span (left-pad 2 "0" (str minutes))]])
 
 (defn- running? [{:keys [time-spans]}]
@@ -71,9 +73,9 @@
                                                                                      create-timer-succeeded-event
                                                                                      create-timer-failed-event))})]
     [antd/space {:direction "vertical"
-                 :class     "timer"}
+                 :class     "timer create-timer-widget"}
      [antd/select (assoc (get-select-attributes :task {:value-fn identity})
-                         :style {:min-width "200px"})
+                         :class "task-select-dropdown")
       (map task-option tasks)]
 
      [antd/text-area (merge (get-input-attributes :note)
