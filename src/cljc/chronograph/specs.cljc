@@ -85,7 +85,7 @@
 
 (s/def :tasks/id pos-int?)
 (s/def :tasks/name non-empty-string?)
-(s/def :tasks/description string?)
+(s/def :tasks/description (s/nilable string?))
 (s/def :tasks/organization-id :organizations/id)
 (s/def :tasks/task
   (s/keys :req [:tasks/id :tasks/name :tasks/organization-id]

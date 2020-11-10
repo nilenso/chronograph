@@ -27,16 +27,17 @@
    ["desktop/redirect" google-auth/desktop-redirect-handler]])
 
 (def task-routes
-  {:post                 (-> task/create
-                             (middleware/wrap-require-authorization #{acl/admin}))
-   :get                  (-> task/index
-                             (middleware/wrap-require-authorization #{acl/admin acl/member}))
-   [:task-id]            {:put (-> task/update
-                                   (middleware/wrap-require-authorization #{acl/admin}))}
-   [:task-id "/archive"] {:put (-> task/archive
-                                   (middleware/wrap-require-authorization #{acl/admin}))}
-   [:task-id "/timers"]  {:get (-> timer/find-by-user-and-task
-                                   middleware/wrap-authenticated)}})
+  [["" {:get                  (-> task/index
+                                  (middleware/wrap-require-authorization #{acl/admin acl/member}))}]
+   ["/" {:post                 (-> task/create
+                                   (middleware/wrap-require-authorization #{acl/admin}))
+
+         [:task-id]            {:put (-> task/update
+                                         (middleware/wrap-require-authorization #{acl/admin}))}
+         [:task-id "/archive"] {:put (-> task/archive
+                                         (middleware/wrap-require-authorization #{acl/admin}))}
+         [:task-id "/timers"]  {:get (-> timer/find-by-user-and-task
+                                         middleware/wrap-authenticated)}}]])
 
 (def timer-routes
   {:post (-> timer/create
@@ -70,7 +71,7 @@
                                                                     middleware/wrap-authenticated)
                                                           :post (-> organization/invite
                                                                     middleware/wrap-authenticated)}}
-                           [:slug "/tasks/"] task-routes})
+                           [:slug "/tasks"] task-routes})
 
 (def routes
   ["/" [["" (fn [_] (-> (response/resource-response "public/index.html")

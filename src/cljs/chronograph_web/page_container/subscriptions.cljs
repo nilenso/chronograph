@@ -1,22 +1,20 @@
 (ns chronograph-web.page-container.subscriptions
   (:require [re-frame.core :as rf]
             [chronograph-web.db.organization :as org-db]
-            [chronograph-web.routes :as routes]))
-
-(defn- current-slug
-  [db]
-  (get-in db [:page :route-params :slug]))
+            [chronograph-web.routes :as routes]
+            [chronograph-web.db.organization-context :as org-ctx-db]))
 
 (rf/reg-sub
   ::current-org
   (fn [db]
-    (org-db/org-by-slug db (current-slug db))))
+    (org-ctx-db/current-organization db)))
 
 (rf/reg-sub
   ::selectable-orgs
   (fn [db]
     (->> (org-db/organizations db)
-         (remove #(= (current-slug db) (:slug %)))
+         (remove #(= (org-ctx-db/current-organization-slug db)
+                     (:slug %)))
          (sort-by :slug))))
 
 (rf/reg-sub

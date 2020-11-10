@@ -55,7 +55,11 @@
     (finally (js/clearInterval timer-interval-id)
              (js/clearInterval colon-blink-interval-id))))
 
-(defn create-timer-widget [on-cancel-event create-timer-succeeded-event create-timer-failed-event]
+(defn- task-option [{:keys [id name]}]
+  (with-meta (antd/option {:value id :key id} name)
+    {:key id}))
+
+(defn create-timer-widget [tasks on-cancel-event create-timer-succeeded-event create-timer-failed-event]
   (r/with-let [{::form/keys [get-submit-attributes
                              get-input-attributes
                              get-select-attributes]} (form/form {:form-key        ::create-timer-form
@@ -70,9 +74,7 @@
                  :class     "timer"}
      [antd/select (assoc (get-select-attributes :task {:value-fn identity})
                          :style {:min-width "200px"})
-      (antd/option {:value 1} "Chronograph Standup")
-      (antd/option {:value 2} "IPM")
-      (antd/option {:value 3} "Development")]
+      (map task-option tasks)]
 
      [antd/text-area (merge (get-input-attributes :note)
                             {:placeholder "Note"

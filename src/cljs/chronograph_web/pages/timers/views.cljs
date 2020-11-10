@@ -29,20 +29,22 @@
                  :dataSource organizations}]]))
 
 (defn timer-list [ds]
-  [antd/list {:dataSource ds
-              :grid       {:gutter 64}
-              :renderItem (fn [{:keys [id state] :as timer}]
-                            (if (= "creating" state)
-                              [antd/list-item {:key "creating"}
-                               [timer-com/create-timer-widget
-                                [::timers-events/dismiss-create-timer-widget]
-                                [::timers-events/create-timer-succeeded]
-                                [::timers-events/create-timer-failed]]]
-                              [antd/list-item {:key id}
-                               [timer-com/timer
-                                timer
-                                [::timers-events/start-timer id]
-                                [::timers-events/stop-timer id]]]))}])
+  (let [tasks @(rf/subscribe [::timers-subs/tasks])]
+    [antd/list {:dataSource ds
+                :grid       {:gutter 64}
+                :renderItem (fn [{:keys [id state] :as timer}]
+                              (if (= "creating" state)
+                                [antd/list-item {:key "creating"}
+                                 [timer-com/create-timer-widget
+                                  tasks
+                                  [::timers-events/dismiss-create-timer-widget]
+                                  [::timers-events/create-timer-succeeded]
+                                  [::timers-events/create-timer-failed]]]
+                                [antd/list-item {:key id}
+                                 [timer-com/timer
+                                  timer
+                                  [::timers-events/start-timer id]
+                                  [::timers-events/stop-timer id]]]))}]))
 
 (defn landing-page [_]
   (let [invited-organizations        @(rf/subscribe [::timers-subs/invites])

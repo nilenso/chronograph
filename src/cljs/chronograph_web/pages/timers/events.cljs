@@ -3,7 +3,9 @@
             [chronograph-web.events.routing :as routing-events]
             [chronograph-web.events.organization :as org-events]
             [chronograph-web.events.timer :as timer-events]
+            [chronograph-web.events.tasks :as task-events]
             [chronograph-web.db.organization-invites :as org-invites-db]
+            [chronograph-web.db.organization-context :as page-db]
             [chronograph-web.utils.time :as time]
             [chronograph-web.http :as http]
             [chronograph-web.config :as config]
@@ -17,8 +19,9 @@
 
 (rf/reg-event-fx
   ::timers-page-navigated
-  (fn [_ _]
+  (fn [{:keys [db]} _]
     {:fx [[:dispatch [::fetch-invited-orgs]]
+          [:dispatch [::task-events/fetch-tasks (page-db/current-organization-slug db)]]
           [:dispatch [::timer-events/fetch-timers (time/current-calendar-date)]]]}))
 
 (rf/reg-event-fx
