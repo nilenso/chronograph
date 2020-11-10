@@ -1,19 +1,16 @@
 (ns chronograph-web.pages.organization.events
   (:require [re-frame.core :as rf]
+            [chronograph-web.api-client :as api]
             [chronograph-web.http :as http]
             [chronograph-web.pages.organization.db :as page-db]
             [chronograph.utils.data :as datautils]
             [chronograph-web.db.organization :as org-db]
+            [chronograph-web.events.tasks :as task-events]
             [chronograph-web.config :as config]
             [chronograph-web.events.routing :as routing-events]))
 
 (def ^:private get-organization-uri
   "/api/organizations/")
-
-(defn- tasks-uri [slug]
-  (str "/api/organizations/"
-       slug
-       "/tasks/"))
 
 (defmethod routing-events/on-route-change-event :organization-show [_] ::organization-page-navigated)
 
@@ -21,7 +18,7 @@
   ::organization-page-navigated
   (fn [{:keys [db]} _]
     {:fx [[:dispatch [::fetch-organization (page-db/slug db)]]
-          [:dispatch [::fetch-tasks (page-db/slug db)]]]}))
+          [:dispatch [::task-events/fetch-tasks (page-db/slug db)]]]}))
 
 (rf/reg-event-fx
   ::fetch-organization
@@ -83,25 +80,6 @@
                                    " Please try again.")}})))
 
 (rf/reg-event-fx
-  ::fetch-tasks
-  (fn [_ [_ slug]]
-    {:http-xhrio (http/get {:uri        (tasks-uri slug)
-                            :on-success [::fetch-tasks-success]
-                            :on-failure [::fetch-tasks-failure]})}))
-
-(rf/reg-event-db
-  ::fetch-tasks-success
-  (fn [db [_ tasks]]
-    (update db :tasks merge (datautils/normalize-by :id tasks))))
-
-(rf/reg-event-fx
-  ::fetch-tasks-failure
-  (fn [_ _]
-    {:flash-error {:content (str "Oh no, something went wrong! "
-                                 (:frown config/emojis)
-                                 " Please refresh the page!")}}))
-
-(rf/reg-event-fx
   ::create-task-failed
   (fn [_ _]
     {:flash-error {:content (str "Failed to create the task "
@@ -111,11 +89,7 @@
 (rf/reg-event-fx
   ::archive-task
   (fn [{:keys [db]} [_ task-id]]
-    (let [slug        (page-db/slug db)
-          archive-url (str (tasks-uri slug) task-id "/archive")]
-      {:http-xhrio (http/put {:uri        archive-url
-                              :on-success [::archive-task-success slug task-id]
-                              :on-failure [::archive-task-failure]})})))
+    {:http-xhrio (api/archive-task (page-db/slug db) task-id)}))
 
 (rf/reg-event-fx
   ::archive-task-success
@@ -124,7 +98,7 @@
                     [:tasks]
                     dissoc
                     id)
-     :fx [[:dispatch [::fetch-tasks slug]]]}))
+     :fx [[:dispatch [::task-events/fetch-tasks slug]]]}))
 
 (rf/reg-event-db
   ::archive-task-failure
@@ -144,7 +118,7 @@
   ::update-task-success
   (fn [{:keys [db]} [_ task-id]]
     {:db (assoc-in db [:tasks task-id :is-updating] false)
-     :fx [[:dispatch [::fetch-tasks (page-db/slug db)]]]}))
+     :fx [[:dispatch [::task-events/fetch-tasks (page-db/slug db)]]]}))
 
 (rf/reg-event-fx
   ::update-task-failure
