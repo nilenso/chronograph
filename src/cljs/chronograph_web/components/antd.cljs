@@ -30,6 +30,12 @@
        (into [:> component (attr-fn attributes)]
              children)))))
 
+;; Typography
+
+(def title (antd-wrapper antd/Typography.Title))
+
+(def text (antd-wrapper antd/Typography.Text))
+
 ;; Layout
 
 (def row (antd-wrapper antd/Row))
@@ -116,8 +122,6 @@
                                #(medley/update-existing %
                                                         :extra
                                                         r/as-element)))
-
-(def title (antd-wrapper antd/Typography.Title))
 
 (defn dropdown
   [& args]
