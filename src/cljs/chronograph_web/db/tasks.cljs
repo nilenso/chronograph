@@ -1,5 +1,6 @@
 (ns chronograph-web.db.tasks
-  (:require [chronograph.utils.data :as datautils]))
+  (:require [chronograph.utils.data :as datautils]
+            [chronograph-web.db.organization-context :as org-ctx-db]))
 
 (defn find-by-id [db task-id]
   (get-in db [:tasks task-id]))
@@ -9,3 +10,11 @@
           :tasks
           merge
           (datautils/normalize-by :id tasks)))
+
+(defn current-organization-tasks
+  [db]
+  (->> (get-in db [:tasks])
+       vals
+       (filter #(= (:id (org-ctx-db/current-organization db))
+                   (:organization-id %)))
+       (sort-by :id)))

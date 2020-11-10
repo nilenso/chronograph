@@ -1,20 +1,11 @@
 (ns chronograph-web.pages.organization.db
   (:require [chronograph-web.db :as db]
-            [chronograph-web.db.organization :as org-db]))
-
-(defn slug
-  [db]
-  (get-in db [:page :route-params :slug]))
-
-(defn current-org
-  [db]
-  (let [org-slug (slug db)]
-    (org-db/org-by-slug db org-slug)))
+            [chronograph-web.db.organization-context :as org-ctx-db]))
 
 (defn user-is-admin?
   [db]
   (= "admin"
-     (:role (current-org db))))
+     (:role (org-ctx-db/current-organization db))))
 
 (defn add-invited-member
   [db {:keys [organization-id] :as member}]
@@ -30,7 +21,7 @@
 
 (defn current-org-id
   [db]
-  (:id (current-org db)))
+  (:id (org-ctx-db/current-organization db)))
 
 (defn add-joined-member
   [db member]
@@ -46,7 +37,7 @@
 
 (defn get-invited-members
   [db]
-  (get-in db [:invited-members (:id (current-org db))]))
+  (get-in db [:invited-members (current-org-id db)]))
 
 (defn get-joined-members
   [db]

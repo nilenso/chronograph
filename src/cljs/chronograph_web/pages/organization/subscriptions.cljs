@@ -1,6 +1,8 @@
 (ns chronograph-web.pages.organization.subscriptions
   (:require [re-frame.core :as rf]
-            [chronograph-web.pages.organization.db :as page-db]))
+            [chronograph-web.pages.organization.db :as page-db]
+            [chronograph-web.db.organization-context :as org-ctx-db]
+            [chronograph-web.db.tasks :as tasks-db]))
 
 (rf/reg-sub
   ::invited-members
@@ -15,19 +17,12 @@
 (rf/reg-sub
   ::tasks
   (fn [db [_ _]]
-    (let [belongs-to-org? (fn [{:keys [organization-id]
-                                :as _task}]
-                            (= (page-db/current-org-id db)
-                               organization-id))]
-      (->> (get-in db [:tasks])
-           vals
-           (filter belongs-to-org?)
-           (sort-by :id)))))
+    (tasks-db/current-organization-tasks db)))
 
 (rf/reg-sub
   ::org-slug
   (fn [db _]
-    (page-db/slug db)))
+    (org-ctx-db/current-organization-slug db)))
 
 (rf/reg-sub
   ::show-update-task-form?

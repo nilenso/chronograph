@@ -4,11 +4,14 @@
             [re-frame.core :as rf]
             [re-frame.db]
             [chronograph-web.pages.organization.events :as org-events]
+            [chronograph-web.events.tasks :as task-events]
             [chronograph-web.pages.organization.subscriptions :as org-subs]
             [chronograph-web.subscriptions :as subs]
             [chronograph.test-utils :as tu]
             [chronograph.fixtures :as fixtures]
-            [chronograph-web.routes :as routes]))
+            [chronograph-web.routes :as routes]
+            [chronograph-web.db.organization :as org-db]
+            [chronograph-web.db.tasks :as db-tasks]))
 
 (use-fixtures :once fixtures/silence-logging fixtures/check-specs)
 
@@ -17,12 +20,12 @@
     (rf-test/run-test-sync
      (tu/initialize-db!)
      (let [fetch-org-event   (tu/stub-event ::org-events/fetch-organization)
-           fetch-tasks-event (tu/stub-event ::org-events/fetch-tasks)]
+           fetch-tasks-event (tu/stub-event ::task-events/fetch-tasks)]
        (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
        (rf/dispatch [::org-events/organization-page-navigated])
        (is (= [::org-events/fetch-organization "test-slug"]
               @fetch-org-event))
-       (is (= [::org-events/fetch-tasks "test-slug"]
+       (is (= [::task-events/fetch-tasks "test-slug"]
               @fetch-tasks-event))))))
 
 (deftest fetch-organization-test
@@ -176,58 +179,6 @@
        (is (some? @error-params)
            "An error message should be flashed.")))))
 
-(deftest fetch-tasks-test
-  (testing "When fetch tasks succeeds"
-    (rf-test/run-test-sync
-     (tu/initialize-db!)
-     (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
-     (rf/dispatch [::org-events/fetch-organization-success
-                   {:id   1
-                    :name "A Test Org"
-                    :slug "test-slug"
-                    :role "member"}])
-     (rf/reg-fx :http-xhrio
-       (fn [_]
-         (rf/dispatch [::org-events/fetch-tasks-success
-                       [{:id              1
-                         :name            "A task",
-                         :description     "A Description"
-                         :organization-id 1
-                         :archived-at     nil}
-                        {:id              2
-                         :name            "Another task",
-                         :description     "Another Description"
-                         :organization-id 1
-                         :archived-at     nil}]])))
-     (rf/dispatch [::org-events/fetch-tasks])
-     (is (= [{:id              1
-              :name            "A task",
-              :description     "A Description"
-              :organization-id 1
-              :archived-at     nil}
-             {:id              2
-              :name            "Another task",
-              :description     "Another Description"
-              :organization-id 1
-              :archived-at     nil}]
-            @(rf/subscribe [::org-subs/tasks]))
-         "The task(s) are fetched and added to the db for the organization.")))
-
-  (testing "When fetch task fails"
-    (rf-test/run-test-sync
-     (tu/initialize-db!)
-     (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
-     (rf/reg-fx :http-xhrio
-       (fn [_]
-         (rf/dispatch [::org-events/fetch-tasks-failure])))
-
-     (let [error-params (tu/stub-effect :flash-error)]
-       (rf/dispatch [::org-events/fetch-tasks])
-       (is (empty? @(rf/subscribe [::org-subs/tasks]))
-           "There are no tasks for the organization in the db.")
-       (is (some? @error-params)
-           "An error message should be flashed.")))))
-
 (deftest create-task-form-test
   (testing "When create task fails"
     (rf-test/run-test-sync
@@ -244,22 +195,20 @@
     (rf-test/run-test-sync
      (tu/initialize-db!)
      (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
-     (rf/dispatch [::org-events/fetch-organization-success
-                   {:id   1
-                    :name "A Test Org"
-                    :slug "test-slug"
-                    :role "admin"}])
-     (rf/dispatch [::org-events/fetch-tasks-success
-                   [{:id              1
-                     :name            "A task",
-                     :description     "A Description"
-                     :organization-id 1
-                     :archived-at     nil}
-                    {:id              2
-                     :name            "Another task",
-                     :description     "Another Description"
-                     :organization-id 1
-                     :archived-at     nil}]])
+     (swap! re-frame.db/app-db org-db/add-org {:id   1
+                                               :name "A Test Org"
+                                               :slug "test-slug"
+                                               :role "admin"})
+     (swap! re-frame.db/app-db db-tasks/merge-tasks [{:id              1
+                                                      :name            "A task",
+                                                      :description     "A Description"
+                                                      :organization-id 1
+                                                      :archived-at     nil}
+                                                     {:id              2
+                                                      :name            "Another task",
+                                                      :description     "Another Description"
+                                                      :organization-id 1
+                                                      :archived-at     nil}])
      (let [updated-tasks [{:id              1
                            :name            "A task",
                            :description     "A Description"
@@ -272,14 +221,16 @@
                            :archived-at     nil}]]
        (rf/reg-fx :http-xhrio
          (fn [& _]
-           (rf/dispatch [::org-events/fetch-tasks-success
+           (rf/dispatch [::task-events/fetch-tasks-success
                          updated-tasks])))
 
        (rf/dispatch [::org-events/update-task-success 2])
 
        (is (= updated-tasks
               @(rf/subscribe [::org-subs/tasks]))
-           "The tasks in the DB should be updated"))))
+           "The tasks in the DB should be updated")
+       (is (not @(rf/subscribe [::org-subs/show-update-task-form? 2]))
+           "The task form should be closed"))))
 
   (testing "When updating a task fails"
     (rf-test/run-test-sync
@@ -310,7 +261,7 @@
                   :description     "Another Description"
                   :organization-id 1
                   :archived-at     nil}]
-       (rf/dispatch [::org-events/fetch-tasks-success [task1 task2]])
+       (swap! re-frame.db/app-db db-tasks/merge-tasks [task1 task2])
 
        (rf/dispatch [::org-events/show-update-task-form 2])
        (is (not @(rf/subscribe [::org-subs/show-update-task-form? 1])))

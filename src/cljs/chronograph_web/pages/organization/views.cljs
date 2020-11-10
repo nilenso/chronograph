@@ -2,6 +2,7 @@
   (:require [re-frame.core :as rf]
             [chronograph-web.components.form :as form]
             [chronograph-web.pages.organization.events :as org-events]
+            [chronograph-web.events.tasks :as task-events]
             [chronograph-web.pages.organization.subscriptions :as org-subs]
             [chronograph-web.components.common :as components]
             [chronograph-web.subscriptions :as subs]
@@ -9,12 +10,11 @@
             [chronograph-web.page-container.views :as page-container]))
 
 (defn- invite-member-form []
-  (let [slug @(rf/subscribe [::org-subs/org-slug])
-        {::form/keys [get-input-attributes get-submit-attributes]}
+  (let [{::form/keys [get-input-attributes get-submit-attributes]}
         (form/form {:form-key        ::add-member
                     :request-builder (fn [{:keys [email]}]
                                        (http/post {:uri        (str "/api/organizations/"
-                                                                    slug
+                                                                    @(rf/subscribe [::org-subs/org-slug])
                                                                     "/members")
                                                    :params     {:email email}
                                                    :on-success [::org-events/invite-member-succeeded]
@@ -37,7 +37,7 @@
                                          (http/post {:uri        (tasks-uri slug)
                                                      :params     {:name        name
                                                                   :description description}
-                                                     :on-success [::org-events/fetch-tasks slug]
+                                                     :on-success [::task-events/fetch-tasks slug]
                                                      :on-failure [::org-events/create-task-failed]})))})]
     (fn []
       [:form
@@ -47,12 +47,12 @@
 
 (defn update-task-form
   [{:keys [id] :as task}]
-  (let [slug @(rf/subscribe [::org-subs/org-slug])
-        {::form/keys [get-input-attributes get-submit-attributes submitting?-state]}
+  (let [{::form/keys [get-input-attributes get-submit-attributes submitting?-state]}
         (form/form {:form-key        [::update-task id]
                     :initial-values  task
                     :request-builder (fn [task]
-                                       (http/put {:uri        (str (tasks-uri slug) id)
+                                       (http/put {:uri        (str (tasks-uri @(rf/subscribe [::org-subs/org-slug]))
+                                                                   id)
                                                   :params     {:updates task}
                                                   :on-success [::org-events/update-task-success id]
                                                   :on-failure [::org-events/update-task-failure id]}))})]

@@ -3,11 +3,11 @@
             [chronograph-web.api-client :as api]
             [chronograph-web.http :as http]
             [chronograph-web.pages.organization.db :as page-db]
-            [chronograph.utils.data :as datautils]
             [chronograph-web.db.organization :as org-db]
             [chronograph-web.events.tasks :as task-events]
             [chronograph-web.config :as config]
-            [chronograph-web.events.routing :as routing-events]))
+            [chronograph-web.events.routing :as routing-events]
+            [chronograph-web.db.organization-context :as org-ctx-db]))
 
 (def ^:private get-organization-uri
   "/api/organizations/")
@@ -17,8 +17,8 @@
 (rf/reg-event-fx
   ::organization-page-navigated
   (fn [{:keys [db]} _]
-    {:fx [[:dispatch [::fetch-organization (page-db/slug db)]]
-          [:dispatch [::task-events/fetch-tasks (page-db/slug db)]]]}))
+    {:fx [[:dispatch [::fetch-organization (org-ctx-db/current-organization-slug db)]]
+          [:dispatch [::task-events/fetch-tasks (org-ctx-db/current-organization-slug db)]]]}))
 
 (rf/reg-event-fx
   ::fetch-organization
@@ -35,7 +35,7 @@
     (let [new-db (org-db/add-org db organization)]
       {:db new-db
        :fx [(when (page-db/user-is-admin? new-db)
-              [:dispatch [::fetch-members (page-db/slug new-db)]])]})))
+              [:dispatch [::fetch-members (org-ctx-db/current-organization-slug new-db)]])]})))
 
 (rf/reg-event-fx
   ::fetch-organization-fail
@@ -89,7 +89,7 @@
 (rf/reg-event-fx
   ::archive-task
   (fn [{:keys [db]} [_ task-id]]
-    {:http-xhrio (api/archive-task (page-db/slug db) task-id)}))
+    {:http-xhrio (api/archive-task (org-ctx-db/current-organization-slug db) task-id)}))
 
 (rf/reg-event-fx
   ::archive-task-success
@@ -117,8 +117,8 @@
 (rf/reg-event-fx
   ::update-task-success
   (fn [{:keys [db]} [_ task-id]]
-    {:db (assoc-in db [:tasks task-id :is-updating] false)
-     :fx [[:dispatch [::task-events/fetch-tasks (page-db/slug db)]]]}))
+    {:db (page-db/set-show-update-task-form db task-id false)
+     :fx [[:dispatch [::task-events/fetch-tasks (org-ctx-db/current-organization-slug db)]]]}))
 
 (rf/reg-event-fx
   ::update-task-failure
