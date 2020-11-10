@@ -40,7 +40,8 @@
                                   [::timers-events/dismiss-create-timer-widget]
                                   [::timers-events/create-timer-succeeded]
                                   [::timers-events/create-timer-failed]]]
-                                [antd/list-item {:key id}
+                                [antd/list-item {:key id
+                                                 :style {:height "100%"}}
                                  [timer-com/timer
                                   timer
                                   [::timers-events/start-timer id]

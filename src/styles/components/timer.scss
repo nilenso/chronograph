@@ -2,10 +2,9 @@
 
 .timer {
   padding: 16px;
-  font-size: 20px;
-  font-weight: 400;
   background-color: rgb(240, 242, 245);
-  min-height: 100px;
+  min-height: 120px;
+  max-width: 400px;
   box-shadow: 3px 3px 8px -3px #999192;
   transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
 
@@ -15,8 +14,6 @@
 }
 
 .timer-duration {
-  font-weight: 700;
-
   .timer-duration-colon {
     display: inline-block;
   }

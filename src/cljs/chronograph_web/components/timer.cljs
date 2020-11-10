@@ -14,19 +14,21 @@
          (concat (repeat (- n (count s)) val))
          (apply str))))
 
-(defn- format-duration [{:keys [hours minutes]} show-colon?]
-  [:<>
-   [:span hours]
-   [:span {:class (str "timer-duration-colon "
-                       (when-not show-colon?
-                         "invisible"))} ":"]
-   [:span (left-pad 2 "0" (str minutes))]])
+(defn- duration-display [{:keys [hours minutes]} show-colon?]
+  [antd/row {:wrap false
+             :class "timer-duration large-text"}
+   [antd/text {:strong "true"} hours]
+   [antd/text {:class  (str "timer-duration-colon "
+                            (when-not show-colon?
+                              "invisible"))
+               :strong "true"} ":"]
+   [antd/text {:strong "true"} (left-pad 2 "0" (str minutes))]])
 
 (defn- running? [{:keys [time-spans]}]
   (and (not-empty time-spans)
        (not (:stopped-at (last time-spans)))))
 
-(defn timer [{:keys [task] :as timer} on-start on-stop]
+(defn timer [{:keys [task note] :as timer} on-start on-stop]
   (r/with-let [current-time            (r/atom (js/Date.))
                show-colon              (r/atom true)
                timer-interval-id       (js/setInterval #(reset! current-time (js/Date.)) 1000)
@@ -38,13 +40,17 @@
                 :wrap   false
                 :gutter 16}
       [antd/col
-       [:span {:class "timer-duration"} [format-duration
-                                         (time/timer-duration timer @current-time)
-                                         (or (not (running? timer))
-                                             @show-colon)]]]
+       [duration-display
+        (time/timer-duration timer @current-time)
+        (or (not (running? timer))
+            @show-colon)]]
 
       [antd/col
-       [antd/row [:span (:name task)]]
+       [antd/row [antd/text {:class "large-text"
+                             :strong "true"} (:name task)]]
+       (when (and note
+                  (not= "" note))
+         [antd/row [antd/text {:type "secondary"} note]])
        [antd/row
         (if (running? timer)
           [antd/button {:type    "primary"
