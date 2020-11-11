@@ -57,3 +57,9 @@
   (http/put {:uri        (str config/api-root "/timers/" timer-id "/stop")
              :on-success on-success
              :on-failure on-failure}))
+
+(defn delete-timer
+  [timer-id on-success on-failure]
+  (http/delete {:uri        (str config/api-root "/timers/" timer-id)
+                :on-success on-success
+                :on-failure on-failure}))

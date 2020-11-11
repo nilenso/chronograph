@@ -19,3 +19,6 @@
 
 (defn put [http-xhrio-map]
   (request (merge {:method :put} http-xhrio-map)))
+
+(defn delete [http-xhrio-map]
+  (request (merge {:method :delete} http-xhrio-map)))

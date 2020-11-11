@@ -137,3 +137,5 @@
 (def avatar (antd-wrapper antd/Avatar))
 
 (def tooltip (antd-wrapper antd/Tooltip))
+
+(def popconfirm (antd-wrapper antd/Popconfirm))

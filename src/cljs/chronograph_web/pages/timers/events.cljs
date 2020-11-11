@@ -132,3 +132,12 @@
                                        [::flash-error (str "We couldn't stop your timer "
                                                            (:frown config/emojis)
                                                            " Please try again!")])]]}))
+
+(rf/reg-event-fx
+  ::delete-timer
+  (fn [_ [_ timer-id]]
+    {:fx [[:http-xhrio (api/delete-timer timer-id
+                                         [::timer-events/fetch-timers (time/current-calendar-date)]
+                                         [::flash-error (str "We couldn't delete your timer "
+                                                             (:frown config/emojis)
+                                                             " Please try again!")])]]}))

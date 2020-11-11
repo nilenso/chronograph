@@ -45,7 +45,8 @@
                                  [timer-com/timer
                                   timer
                                   [::timers-events/start-timer id]
-                                  [::timers-events/stop-timer id]]]))}]))
+                                  [::timers-events/stop-timer id]
+                                  [::timers-events/delete-timer id]]]))}]))
 
 (defn landing-page [_]
   (let [invited-organizations        @(rf/subscribe [::timers-subs/invites])
