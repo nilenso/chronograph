@@ -2,9 +2,7 @@
   (:require [re-frame.core :as rf]
             [chronograph-web.db :as db]
             [day8.re-frame.http-fx]
-            [chronograph-web.db.organization :as org-db]
-            [chronograph-web.api-client :as api]
-            [chronograph-web.routes :as routes]))
+            [chronograph-web.api-client :as api]))
 
 (rf/reg-event-fx
   ::initialize
@@ -20,18 +18,7 @@
 (rf/reg-event-fx
   ::fetch-profile-succeeded
   (fn [{:keys [db]} [_ response]]
-    (if (not-empty (org-db/organizations db))
-      {:db (sign-in-user db response)}
-      {:fx [[:http-xhrio (api/fetch-organizations [::fetch-organizations-succeeded response]
-                                                  [::fetch-data-failed])]]})))
-
-(rf/reg-event-fx
-  ::fetch-organizations-succeeded
-  (fn [{:keys [db]} [_ user-response response]]
-    {:db (-> db
-             (org-db/add-organizations response)
-             (sign-in-user user-response))
-     :fx [[:history-token (routes/path-for :timers-list :slug (:slug (first response)))]]}))
+    {:db (sign-in-user db response)}))
 
 (rf/reg-event-db
   ::fetch-data-failed
