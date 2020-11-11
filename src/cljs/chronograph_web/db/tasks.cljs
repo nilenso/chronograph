@@ -11,10 +11,15 @@
           merge
           (datautils/normalize-by :id tasks)))
 
+(defn- archived?
+  [{:keys [archived-at] :as _task}]
+  archived-at)
+
 (defn current-organization-tasks
   [db]
   (->> (get-in db [:tasks])
        vals
        (filter #(= (:id (org-ctx-db/current-organization db))
                    (:organization-id %)))
+       (filter (complement archived?))
        (sort-by :id)))

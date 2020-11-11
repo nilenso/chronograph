@@ -89,7 +89,12 @@
 (rf/reg-event-fx
   ::archive-task
   (fn [{:keys [db]} [_ task-id]]
-    {:http-xhrio (api/archive-task (org-ctx-db/current-organization-slug db) task-id)}))
+    (let [slug (org-ctx-db/current-organization-slug db)]
+      {:http-xhrio (api/archive-task
+                    slug
+                    task-id
+                    [::archive-task-success slug task-id]
+                    [::archive-task-failure])})))
 
 (rf/reg-event-fx
   ::archive-task-success

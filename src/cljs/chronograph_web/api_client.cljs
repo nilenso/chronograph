@@ -27,15 +27,15 @@
              :on-success on-success
              :on-failure on-failure}))
 
-(defn archive-task [slug task-id]
+(defn archive-task [slug task-id on-success on-failure]
   (http/put {:uri        (str config/api-root
                               "/organizations/"
                               slug
                               "/tasks/"
                               task-id
                               "/archive")
-             :on-success [::archive-task-success slug task-id]
-             :on-failure [::archive-task-failure]}))
+             :on-success on-success
+             :on-failure on-failure}))
 
 (defn create-and-start-timer
   [task-id note recorded-for on-success on-failure]

@@ -67,10 +67,6 @@
                  :on-click #(rf/dispatch [::org-events/hide-update-task-form id])}
         "Cancel"]])))
 
-(defn- archived?
-  [{:keys [archived-at] :as _task}]
-  archived-at)
-
 (defn task-list-element [{:keys [id name description] :as task}]
   [:li {:key id}
    [:div
@@ -88,7 +84,6 @@
   [:div
    [:ul
     (->> tasks
-         (filter (complement archived?))
          (map task-list-element)
          (doall)
          (not-empty))]])
