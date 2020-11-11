@@ -17,10 +17,16 @@
   [_]
   ::timers-page-navigated)
 
+(rf/reg-event-db
+  ::set-current-date
+  (fn [db [_ calendar-date]]
+    (db/set-in-page-state db [:selected-date] calendar-date)))
+
 (rf/reg-event-fx
   ::timers-page-navigated
   (fn [{:keys [db]} _]
     {:fx [[:dispatch [::fetch-invited-orgs]]
+          [:dispatch [::set-current-date (time/current-calendar-date)]]
           [:dispatch [::task-events/fetch-tasks (page-db/current-organization-slug db)]]
           [:dispatch [::timer-events/fetch-timers (time/current-calendar-date)]]]}))
 

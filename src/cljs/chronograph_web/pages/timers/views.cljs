@@ -6,7 +6,6 @@
             [chronograph.specs]
             [chronograph-web.page-container.views :as page-container]
             [chronograph-web.components.timer :as timer-com]
-            [chronograph-web.utils.time :as time]
             ["@ant-design/icons" :as icons]))
 
 (defn- invited-organizations-list
@@ -50,8 +49,7 @@
 (defn landing-page [_]
   (let [invited-organizations        @(rf/subscribe [::timers-subs/invites])
         showing-create-timer-widget? @(rf/subscribe [::timers-subs/showing-create-timer-widget?])
-        timers                       @(rf/subscribe [::timers-subs/current-organization-timers
-                                                     (time/current-calendar-date)])]
+        timers                       @(rf/subscribe [::timers-subs/current-organization-timers])]
     [page-container/org-scoped-page-container
      [antd/page-header {:title "Timers"
                         :extra (when-not showing-create-timer-widget?
