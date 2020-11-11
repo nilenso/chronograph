@@ -12,6 +12,7 @@
             [chronograph-web.utils.time :as time]
             [medley.core :as medley]
             [chronograph-web.routes :as routes]
+            [chronograph-web.db :as db]
             [chronograph-web.db.organization :as org-db]))
 
 (use-fixtures :once fixtures/silence-logging fixtures/check-specs)
@@ -106,14 +107,16 @@
      (tu/initialize-db!)
      (tu/stub-routing)
      (tu/set-token (routes/path-for :timers-list :slug "test-slug"))
-     (swap! re-frame.db/app-db org-db/add-org {:id   3
-                                               :slug "test-slug"
-                                               :name "test"
-                                               :role "member"})
-     (tu/stub-xhrio timers-response true)
-     (rf/dispatch [::timer-events/fetch-timers {:day 14 :month 2 :year 2020}])
-     (is (= expected-timers
-            @(rf/subscribe [::timers-subs/current-organization-timers {:day 14 :month 2 :year 2020}])))))
+     (let [date {:day 14 :month 2 :year 2020}]
+       (swap! re-frame.db/app-db org-db/add-org {:id   3
+                                                 :slug "test-slug"
+                                                 :name "test"
+                                                 :role "member"})
+       (swap! re-frame.db/app-db db/set-in-page-state [:selected-date] date)
+       (tu/stub-xhrio timers-response true)
+       (rf/dispatch [::timer-events/fetch-timers date])
+       (is (= expected-timers
+              @(rf/subscribe [::timers-subs/current-organization-timers]))))))
 
   (testing "When fetching timers fails, there is no change"
     (rf-test/run-test-sync
