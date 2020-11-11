@@ -1,5 +1,6 @@
 (ns chronograph-web.db.spec
-  (:require [cljs.spec.alpha :as s]))
+  (:require [cljs.spec.alpha :as s]
+            [chronograph.specs]))
 
 (defn set-of
   [a-spec]
@@ -38,8 +39,12 @@
                                                         :create-organization/form-params]))
 (s/def ::organization-invites (s/map-of :organizations/id :organizations/organization-un))
 
+(s/def :timers/selected-date :calendar-date/calendar-date)
+(s/def :page-state/timers (s/keys :opt-un [:timers/selected-date]))
+
 (s/def ::page-state (s/nilable (s/keys :opt-un [:page-state/organization-show
-                                                :page-state/create-organization])))
+                                                :page-state/create-organization
+                                                :page-state/timers])))
 
 (s/def ::timers (s/map-of :timers/recorded-for (s/coll-of :timers/timer-un)))
 

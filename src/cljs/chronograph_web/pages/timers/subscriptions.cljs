@@ -13,8 +13,8 @@
 
 (rf/reg-sub
   ::current-organization-timers
-  (fn [db [_ date]]
-    (->> (timers-db/timers-with-tasks db date (:id (org-context-db/current-organization db)))
+  (fn [db [_]]
+    (->> (timers-db/timers-with-tasks db (db/get-in-page-state db [:selected-date]) (:id (org-context-db/current-organization db)))
          (sort-by :created-at)
          reverse)))
 (rf/reg-sub
