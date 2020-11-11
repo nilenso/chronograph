@@ -15,7 +15,7 @@
          (apply str))))
 
 (defn- duration-display [{:keys [hours minutes]} show-colon?]
-  [antd/row {:wrap false
+  [antd/row {:wrap  false
              :class "timer-duration large-text"}
    [antd/text {:strong "true"} hours]
    [antd/text {:class  (str "timer-duration-colon "
@@ -28,11 +28,12 @@
   (and (not-empty time-spans)
        (not (:stopped-at (last time-spans)))))
 
-(defn timer [{:keys [task note] :as timer} on-start on-stop]
+(defn timer [{:keys [task note] :as timer} on-start on-stop on-delete]
   (r/with-let [current-time            (r/atom (js/Date.))
                show-colon              (r/atom true)
                timer-interval-id       (js/setInterval #(reset! current-time (js/Date.)) 1000)
-               colon-blink-interval-id (js/setInterval #(swap! show-colon not) 500)]
+               colon-blink-interval-id (js/setInterval #(swap! show-colon not) 500)
+               show-delete-popconfirm? (r/atom false)]
     [:<>
      [antd/row {:class  (str "timer " (when (running? timer)
                                         "timer-running"))
@@ -46,20 +47,32 @@
             @show-colon)]]
 
       [antd/col
-       [antd/row [antd/text {:class "large-text"
+       [antd/row [antd/text {:class  "large-text"
                              :strong "true"} (:name task)]]
        (when (and note
                   (not= "" note))
          [antd/row [antd/text {:type "secondary"} note]])
        [antd/row
-        (if (running? timer)
-          [antd/button {:type    "primary"
-                        :icon    icons/PauseCircleFilled
-                        :onClick #(rf/dispatch on-stop)}
-           "Stop"]
-          [antd/button {:icon    icons/PlayCircleFilled
-                        :onClick #(rf/dispatch on-start)}
-           "Start"])]]]]
+        [antd/space
+         (if (running? timer)
+           [antd/button {:type    "primary"
+                         :icon    icons/PauseCircleFilled
+                         :onClick #(rf/dispatch on-stop)}
+            "Stop"]
+           [antd/button {:icon    icons/PlayCircleFilled
+                         :onClick #(rf/dispatch on-start)}
+            "Start"])
+         [antd/popconfirm {:title           "Are you sure you want to delete this timer?"
+                           :visible         @show-delete-popconfirm?
+                           :onVisibleChange #(reset! show-delete-popconfirm? %)
+                           :okText          "Yes"
+                           :cancelText      "No"
+                           :placement       "bottom"
+                           :onConfirm       #(rf/dispatch on-delete)}
+          [antd/button {:type    "danger"
+                        :icon    icons/DeleteOutlined
+                        :onClick #(reset! show-delete-popconfirm? true)}
+           "Delete"]]]]]]]
     (finally (js/clearInterval timer-interval-id)
              (js/clearInterval colon-blink-interval-id))))
 

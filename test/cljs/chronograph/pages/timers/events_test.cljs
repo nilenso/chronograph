@@ -129,6 +129,27 @@
          (is (some? @error-params)
              "An error message should be flashed.")))))
 
+  (testing "When deleting a timer"
+    (testing "succeeds, timers should be refetched"
+      (rf-test/run-test-sync
+       ;; TODO: extract test setup stuff
+       (tu/initialize-db!)
+       (with-redefs [time/now (constantly fake-now)]
+         (let [fetch-timers-stub (tu/stub-event ::timer-events/fetch-timers)
+               _                 (tu/stub-xhrio {} true)]
+           (rf/dispatch [::timers-events/delete-timer "foobar"])
+           (is (= [::timer-events/fetch-timers {:day 5 :month 10 :year 2020} {}]
+                  @fetch-timers-stub))))))
+
+    (testing "fails, an error should be flashed"
+      (rf-test/run-test-sync
+       (tu/initialize-db!)
+       (tu/stub-xhrio {} false)
+       (let [error-params (tu/stub-effect :flash-error)]
+         (rf/dispatch [::timers-events/delete-timer "foobar"])
+         (is (some? @error-params)
+             "An error message should be flashed.")))))
+
   (testing "When creating a timer"
     (testing "succeeds"
       (rf-test/run-test-sync
