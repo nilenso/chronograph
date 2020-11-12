@@ -139,3 +139,5 @@
 (def tooltip (antd-wrapper antd/Tooltip))
 
 (def popconfirm (antd-wrapper antd/Popconfirm))
+
+(def date-picker (antd-wrapper antd/DatePicker))
