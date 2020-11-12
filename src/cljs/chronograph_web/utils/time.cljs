@@ -1,5 +1,6 @@
 (ns chronograph-web.utils.time
-  (:require ["date-fns" :as date-fns])
+  (:require ["date-fns" :as date-fns]
+            ["moment" :as moment])
   (:import [goog.date Date]))
 
 (defn goog-date->calendar-date [date]
@@ -11,6 +12,9 @@
   {:day   (.getDate date)  ;; Between 1-31
    :month (.getMonth date) ;; Between 0-11
    :year  (.getFullYear date)})
+
+(defn calendar-date->moment-date [{:keys [year month day]}]
+  (moment. (js/Date. year month day)))
 
 (defn- format-two-digits [n]
   (if (> n 9)
@@ -42,3 +46,7 @@
                      (int))]
     {:minutes (rem minutes 60)
      :hours (quot minutes 60)}))
+
+(defn modify-calendar-date [{:keys [day month year]} n]
+  (js-date->calendar-date
+   (js/Date. (js/Date.UTC year month (+ day n)))))
