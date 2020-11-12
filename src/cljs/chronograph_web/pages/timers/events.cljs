@@ -17,16 +17,35 @@
   [_]
   ::timers-page-navigated)
 
+(rf/reg-event-fx
+  ::calendar-select-date
+  (fn [_ [_ d]]
+    {:fx [[:dispatch [::select-date (time/js-date->calendar-date (.toDate d))]]]}))
+
 (rf/reg-event-db
-  ::set-current-date
+  ::select-date
   (fn [db [_ calendar-date]]
     (db/set-in-page-state db [:selected-date] calendar-date)))
+
+(rf/reg-event-fx
+  ::modify-selected-date
+  (fn [{:keys [db]} [_ number-of-days]]
+    {:db (db/update-in-page-state db
+                                  [:selected-date]
+                                  #(time/modify-calendar-date % number-of-days))
+     :fx [[:dispatch [::fetch-timers]]]}))
+
+(rf/reg-event-fx
+  ::fetch-timers
+  (fn [{:keys [db]} _]
+    {:fx [[:dispatch [::timer-events/fetch-timers
+                      (db/get-in-page-state db [:selected-date])]]]}))
 
 (rf/reg-event-fx
   ::timers-page-navigated
   (fn [{:keys [db]} _]
     {:fx [[:dispatch [::fetch-invited-orgs]]
-          [:dispatch [::set-current-date (time/current-calendar-date)]]
+          [:dispatch [::select-date (time/current-calendar-date)]]
           [:dispatch [::task-events/fetch-tasks (page-db/current-organization-slug db)]]
           [:dispatch [::timer-events/fetch-timers (time/current-calendar-date)]]]}))
 
