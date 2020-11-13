@@ -12,7 +12,8 @@
 (def ^:private get-organization-uri
   "/api/organizations/")
 
-(defmethod routing-events/on-route-change-event :organization-show [_] ::organization-page-navigated)
+(defmethod routing-events/on-route-change-event :organization-show [_]
+  [::organization-page-navigated])
 
 (rf/reg-event-fx
   ::organization-page-navigated

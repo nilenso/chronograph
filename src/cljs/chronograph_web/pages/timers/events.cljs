@@ -13,7 +13,7 @@
 (defmethod routing-events/on-route-change-event
   :timers-list
   [_]
-  ::timers-page-navigated)
+  [::timers-page-navigated])
 
 (rf/reg-event-fx
   ::calendar-select-date

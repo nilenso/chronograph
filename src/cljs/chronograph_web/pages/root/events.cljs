@@ -7,7 +7,7 @@
 (defmethod routing-events/on-route-change-event
   :root
   [_]
-  ::root-page-navigated)
+  [::root-page-navigated])
 
 (rf/reg-event-fx
   ::root-page-navigated

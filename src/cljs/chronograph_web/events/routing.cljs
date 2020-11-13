@@ -4,7 +4,7 @@
 
 (defmulti on-route-change-event :handler :default ::default)
 
-(defmethod on-route-change-event ::default [_] nil)
+(defmethod on-route-change-event ::default [_] [nil])
 
 (rf/reg-event-fx
   ::pushy-dispatch
@@ -13,5 +13,5 @@
              (assoc :page route)
              (db/clear-page-state))
      :fx (if-let [event (on-route-change-event route)]
-           [[:dispatch [event]]]
+           [[:dispatch event]]
            [])}))
