@@ -4,6 +4,7 @@
             [chronograph-web.http :as http]
             [chronograph-web.pages.organization.db :as page-db]
             [chronograph-web.db.organization :as org-db]
+            [chronograph-web.db :as db]
             [chronograph-web.events.tasks :as task-events]
             [chronograph-web.config :as config]
             [chronograph-web.events.routing :as routing-events]
@@ -18,7 +19,8 @@
 (rf/reg-event-fx
   ::organization-page-navigated
   (fn [{:keys [db]} _]
-    {:fx [[:dispatch [::fetch-organization (org-ctx-db/current-organization-slug db)]]
+    {:db (db/set-page-key db :organization-show)
+     :fx [[:dispatch [::fetch-organization (org-ctx-db/current-organization-slug db)]]
           [:dispatch [::task-events/fetch-tasks (org-ctx-db/current-organization-slug db)]]]}))
 
 (rf/reg-event-fx

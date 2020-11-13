@@ -7,6 +7,7 @@
 
 (def routes ["/" {""                 :root
                   "organizations/"   [[[:slug "/timers"] :timers-list]
+                                      [[:slug "/timers/" :year "/" :month "/" :day] :timers-list-with-date]
                                       [[:slug "/admin"] :organization-show]]
                   "new-organization" :new-organization}])
 

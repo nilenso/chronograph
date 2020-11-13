@@ -1,5 +1,6 @@
 (ns chronograph-web.utils.time
-  (:require ["date-fns" :as date-fns]
+  (:require [clojure.string :as str]
+            ["date-fns" :as date-fns]
             ["moment" :as moment])
   (:import [goog.date Date]))
 
@@ -21,8 +22,11 @@
     (str n)
     (str "0" n)))
 
-(defn calendar-date->string [{:keys [day month year]}]
-  (str year "-" (format-two-digits (inc month)) "-" (format-two-digits day)))
+(defn calendar-date->string-parts [{:keys [day month year]}]
+  [(str year) (format-two-digits (inc month)) (format-two-digits day)])
+
+(defn calendar-date->string [date]
+  (str/join "-" (calendar-date->string-parts date)))
 
 (defn string->calendar-date [s]
   (goog-date->calendar-date (Date/fromIsoString s)))
