@@ -29,9 +29,11 @@
                          :welcome-page      welcome-page})
 
 (defn authenticated-page []
-  (if-let [{:keys [handler route-params]} @(rf/subscribe [::subs/current-page])]
-    [(authenticated-view handler) route-params]
-    [:div "Page not found"]))
+  (let [{:keys [route-params] :as page} @(rf/subscribe [::subs/current-page])
+        page-key @(rf/subscribe [::subs/page-key])]
+    (if (and page-key page)
+      [(authenticated-view page-key) route-params]
+      [:div "Page not found"])))
 
 (defn root []
   (case @(rf/subscribe [::subs/signin-state])

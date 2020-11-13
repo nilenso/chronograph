@@ -20,9 +20,12 @@
              conj-to-set
              v))
 
-(defn current-page-name
+(defn set-page-key [db page-key]
+  (assoc-in db [:page-key] page-key))
+
+(defn current-page-key
   [db]
-  (get-in db [:page :handler]))
+  (get-in db [:page-key]))
 
 ;; Page state functions
 ;; Use these functions to get and set state which is specific to
@@ -30,20 +33,20 @@
 
 (defn get-in-page-state
   [db path]
-  (get-in db (concat [:page-state (current-page-name db)] path)))
+  (get-in db (concat [:page-state (current-page-key db)] path)))
 
 (defn set-in-page-state
   [db path value]
-  (assoc-in db (concat [:page-state (current-page-name db)] path) value))
+  (assoc-in db (concat [:page-state (current-page-key db)] path) value))
 
 (defn update-in-page-state
   [db path f & args]
   (apply update-in
          db
-         (concat [:page-state (current-page-name db)] path)
+         (concat [:page-state (current-page-key db)] path)
          f
          args))
 
 (defn clear-page-state
   [db]
-  (update db :page-state dissoc (current-page-name db)))
+  (update db :page-state dissoc (current-page-key db)))

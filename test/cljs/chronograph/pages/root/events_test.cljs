@@ -28,6 +28,8 @@
 
      (rf/dispatch [::root-events/root-page-navigated])
 
+     (is (= :root @(rf/subscribe [::subs/page-key])) "the page-key should be set")
+
      (is (= [{:id   42
               :name "A Test Org"
               :slug "test-1"

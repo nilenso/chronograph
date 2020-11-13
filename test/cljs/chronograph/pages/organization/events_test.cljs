@@ -23,6 +23,7 @@
            fetch-tasks-event (tu/stub-event ::task-events/fetch-tasks)]
        (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
        (rf/dispatch [::org-events/organization-page-navigated])
+       (is (= :organization-show @(rf/subscribe [::subs/page-key])) "the page-key should be set")
        (is (= [::org-events/fetch-organization "test-slug"]
               @fetch-org-event))
        (is (= [::task-events/fetch-tasks "test-slug"]
