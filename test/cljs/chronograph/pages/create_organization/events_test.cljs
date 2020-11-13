@@ -9,6 +9,15 @@
 
 (use-fixtures :once fixtures/silence-logging fixtures/check-specs)
 
+(deftest create-organization-navigated
+  (testing "when the create organization page is navigated to"
+    (rf-test/run-test-sync
+     (tu/initialize-db!)
+     (tu/stub-routing)
+     (rf/dispatch [::create-org-events/new-organization-page-navigated])
+     (is (= :new-organization
+            @(rf/subscribe [::subs/page-key])) "the page-key should be set"))))
+
 (deftest create-organization-form-submit-test
   (testing "when the organization is created successfully"
     (rf-test/run-test-sync

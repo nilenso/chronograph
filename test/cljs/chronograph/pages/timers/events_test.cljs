@@ -6,8 +6,13 @@
             [chronograph.test-utils :as tu]
             [chronograph.specs]
             [re-frame.core :as rf]
+            [re-frame.db :as db]
             [chronograph-web.pages.timers.events :as timers-events]
+            [chronograph-web.pages.timers.subscriptions :as timers-subs]
             [chronograph-web.events.timer :as timer-events]
+            [chronograph-web.events.routing :as routing-events]
+            [chronograph-web.subscriptions :as subs]
+            [chronograph-web.db.organization :as org-db]
             [chronograph-web.effects]
             [chronograph-web.utils.time :as time]))
 
@@ -27,7 +32,8 @@
      (with-redefs [time/now (constantly fake-now)]
        (let [invited-orgs-stub (tu/stub-event ::org-invites-events/fetch-invited-orgs)
              fetch-timers-stub (tu/stub-event ::timer-events/fetch-timers)]
-         (rf/dispatch [::timers-events/timers-page-navigated])
+         (rf/dispatch [::timers-events/timers-page-navigated (time/js-date->calendar-date (time/now))])
+         (is (= :timers-list @(rf/subscribe [::subs/page-key])) "the page-key should be set")
          (is (= [::org-invites-events/fetch-invited-orgs] @invited-orgs-stub))
          (is (= [::timer-events/fetch-timers {:day 5 :month 10 :year 2020}] @fetch-timers-stub)))))))
 
@@ -119,3 +125,73 @@
          (rf/dispatch [::timers-events/create-timer-failed])
          (is (some? @error-params)
              "An error message should be flashed."))))))
+
+(defn add-org [id slug]
+  (swap! db/app-db org-db/add-org {:id  id
+                                   :name "A Test Org"
+                                   :slug slug
+                                   :role "admin"}))
+
+(deftest date-selection-test
+  (testing "when a date is picked from the calendar"
+    (rf-test/run-test-sync
+     (tu/initialize-db!)
+     (tu/stub-routing)
+     (with-redefs [time/now (constantly fake-now)]
+       (let [invited-orgs-stub (tu/stub-events ::org-invites-events/fetch-invited-orgs)
+             fetch-timers-stub (tu/stub-events ::timer-events/fetch-timers)]
+         (add-org 1 "test-slug")
+         (rf/dispatch [::routing-events/pushy-dispatch {:handler :timers-list
+                                                        :route-params {:slug "test-slug"}}])
+         (rf/dispatch [::timers-events/calendar-select-date
+                       (time/calendar-date->moment-date {:day 5 :month 10 :year 2020})])
+
+         (is (= [[::org-invites-events/fetch-invited-orgs]
+                 [::org-invites-events/fetch-invited-orgs]] @invited-orgs-stub)
+             "the organization invites should be re-fetched")
+         (is (= [[::timer-events/fetch-timers {:day 5 :month 10 :year 2020}]
+                 [::timer-events/fetch-timers {:day 5 :month 10 :year 2020}]] @fetch-timers-stub)
+             "the timers should be re-fetched")
+         (is (= @(rf/subscribe [::timers-subs/selected-date]) {:day 5 :month 10 :year 2020})
+             "the selected-date should be updated")))))
+
+  (testing "when the selected date is incremented"
+    (rf-test/run-test-sync
+     (tu/initialize-db!)
+     (tu/stub-routing)
+     (with-redefs [time/now (constantly fake-now)]
+       (let [invited-orgs-stub (tu/stub-events ::org-invites-events/fetch-invited-orgs)
+             fetch-timers-stub (tu/stub-events ::timer-events/fetch-timers)]
+         (add-org 1 "test-slug")
+         (rf/dispatch [::routing-events/pushy-dispatch {:handler :timers-list
+                                                        :route-params {:slug "test-slug"}}])
+         (rf/dispatch [::timers-events/modify-selected-date 1])
+         (is (= [[::org-invites-events/fetch-invited-orgs]
+                 [::org-invites-events/fetch-invited-orgs]] @invited-orgs-stub)
+             "the organization invites should be re-fetched")
+         (is (= [[::timer-events/fetch-timers {:day 5 :month 10 :year 2020}]
+                 [::timer-events/fetch-timers {:day 6 :month 10 :year 2020}]] @fetch-timers-stub)
+             "the timers should be re-fetched")
+         (is (= @(rf/subscribe [::timers-subs/selected-date]) {:day 6 :month 10 :year 2020})
+             "the selected-date should be increased by one day")))))
+
+  (testing "when the selected date is decremented"
+    (rf-test/run-test-sync
+     (tu/initialize-db!)
+     (tu/stub-routing)
+     (with-redefs [time/now (constantly fake-now)]
+       (let [invited-orgs-stub (tu/stub-events ::org-invites-events/fetch-invited-orgs)
+             fetch-timers-stub (tu/stub-events ::timer-events/fetch-timers)]
+         (add-org 1 "test-slug")
+         (rf/dispatch [::routing-events/pushy-dispatch {:handler :timers-list
+                                                        :route-params {:slug "test-slug"}}])
+         (rf/dispatch [::timers-events/modify-selected-date -1])
+         (is (= [[::org-invites-events/fetch-invited-orgs]
+                 [::org-invites-events/fetch-invited-orgs]] @invited-orgs-stub)
+             "the organization invites should be re-fetched")
+         (is (= [[::timer-events/fetch-timers {:day 5 :month 10 :year 2020}]
+                 [::timer-events/fetch-timers {:day 4 :month 10 :year 2020}]] @fetch-timers-stub)
+             "the timers should be re-fetched")
+         (is (= @(rf/subscribe [::timers-subs/selected-date]) {:day 4 :month 10 :year 2020})
+             "the selected-date should be reduced by one day"))))))
+

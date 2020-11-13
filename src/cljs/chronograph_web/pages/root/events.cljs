@@ -1,6 +1,7 @@
 (ns chronograph-web.pages.root.events
   (:require [chronograph-web.events.routing :as routing-events]
             [chronograph-web.events.organization :as org-events]
+            [chronograph-web.db :as db]
             [re-frame.core :as rf]
             [chronograph-web.routes :as routes]))
 
@@ -11,8 +12,9 @@
 
 (rf/reg-event-fx
   ::root-page-navigated
-  (fn [_ _]
-    {:fx [[:dispatch [::org-events/fetch-organizations [::after-organizations-fetched]]]]}))
+  (fn [{:keys [db]} _]
+    {:db (db/set-page-key db :root)
+     :fx [[:dispatch [::org-events/fetch-organizations [::after-organizations-fetched]]]]}))
 
 (rf/reg-event-fx
   ::after-organizations-fetched

@@ -1,24 +1,59 @@
 (ns chronograph-web.pages.timers.events
   (:require [re-frame.core :as rf]
+            [chronograph.specs :as specs]
+            [chronograph-web.routes :as routes]
             [chronograph-web.events.routing :as routing-events]
             [chronograph-web.events.timer :as timer-events]
             [chronograph-web.events.tasks :as task-events]
-            [chronograph-web.db.organization-context :as page-db]
+            [chronograph-web.db.organization-context :as org-ctx-db]
             [chronograph-web.utils.time :as time]
             [chronograph-web.events.organization-invites :as org-invites-events]
             [chronograph-web.config :as config]
             [chronograph-web.db :as db]
-            [chronograph-web.api-client :as api]))
+            [chronograph-web.api-client :as api]
+            [clojure.spec.alpha :as s]
+            [medley.core :as medley]))
+
+(defn- selected-date [{:keys [year month day] :as m}]
+  (let [date (->> (select-keys m [:year :month :day])
+                  (medley/map-vals #(js/parseInt %)))]
+    (when (s/valid? :calendar-date/calendar-date date)
+      (update-in date [:month] dec))))
+
+(defmethod routing-events/on-route-change-event
+  :timers-list-with-date
+  [{:keys [route-params]}]
+  [::timers-page-navigated (selected-date route-params)])
+
+;; We need to do this only for timers-list-with-date since there's currently no way to
+;; return to :timers-list from a :timers-list-with-date route. If there were a way to
+;; transition in that direction, we would have to override the default behaviour there as
+;; well.
+
+(defmethod routing-events/on-pre-route-change-event
+  :timers-list-with-date
+  [_route {:keys [db]}]
+  (if (not= :timers-list (:page-key db))
+    {:db (db/clear-page-state db)}
+    {}))
 
 (defmethod routing-events/on-route-change-event
   :timers-list
-  [_]
-  [::timers-page-navigated])
+  [{:keys [route-params]}]
+  [::timers-page-navigated (time/current-calendar-date)])
 
 (rf/reg-event-fx
   ::calendar-select-date
-  (fn [_ [_ d]]
-    {:fx [[:dispatch [::select-date (time/js-date->calendar-date (.toDate d))]]]}))
+  (fn [{:keys [db]} [_ date]]
+    (let [[year month day] (-> date
+                               (#(.toDate ^js/Date %))
+                               time/js-date->calendar-date
+                               time/calendar-date->string-parts)]
+      {:history-token (routes/path-for :timers-list-with-date
+                                       :year year
+                                       :month month
+                                       :day day
+                                       :slug (org-ctx-db/current-organization-slug db))})))
 
 (rf/reg-event-db
   ::select-date
@@ -28,24 +63,24 @@
 (rf/reg-event-fx
   ::modify-selected-date
   (fn [{:keys [db]} [_ number-of-days]]
-    {:db (db/update-in-page-state db
-                                  [:selected-date]
-                                  #(time/modify-calendar-date % number-of-days))
-     :fx [[:dispatch [::fetch-timers]]]}))
-
-(rf/reg-event-fx
-  ::fetch-timers
-  (fn [{:keys [db]} _]
-    {:fx [[:dispatch [::timer-events/fetch-timers
-                      (db/get-in-page-state db [:selected-date])]]]}))
+    (let [[year month day] (-> db
+                               (db/get-in-page-state [:selected-date])
+                               (time/modify-calendar-date number-of-days)
+                               time/calendar-date->string-parts)]
+      {:history-token (routes/path-for :timers-list-with-date
+                                       :year year
+                                       :month month
+                                       :day day
+                                       :slug (org-ctx-db/current-organization-slug db))})))
 
 (rf/reg-event-fx
   ::timers-page-navigated
-  (fn [{:keys [db]} _]
-    {:fx [[:dispatch [::org-invites-events/fetch-invited-orgs]]
-          [:dispatch [::select-date (time/current-calendar-date)]]
-          [:dispatch [::task-events/fetch-tasks (page-db/current-organization-slug db)]]
-          [:dispatch [::timer-events/fetch-timers (time/current-calendar-date)]]]}))
+  (fn [{:keys [db]} [_ date]]
+    {:db (db/set-page-key db :timers-list)
+     :fx [[:dispatch [::org-invites-events/fetch-invited-orgs]]
+          [:dispatch [::select-date date]]
+          [:dispatch [::task-events/fetch-tasks (org-ctx-db/current-organization-slug db)]]
+          [:dispatch [::timer-events/fetch-timers date]]]}))
 
 (rf/reg-event-db
   ::show-create-timer-widget

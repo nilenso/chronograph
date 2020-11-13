@@ -26,6 +26,16 @@
         {}))
     dispatched-event))
 
+(defn stub-events
+  [event-name]
+  (let [dispatched-event (atom [])]
+    (rf/reg-event-fx
+      event-name
+      (fn [_ event]
+        (swap! dispatched-event conj event)
+        {}))
+    dispatched-event))
+
 (defn stub-xhrio
   [response success?]
   (let [effect (atom nil)]
