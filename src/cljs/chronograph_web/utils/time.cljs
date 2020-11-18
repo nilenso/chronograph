@@ -33,11 +33,12 @@
   (date-fns/parseISO s))
 
 (defn- time-span-minutes [current-time {:keys [started-at stopped-at]}]
-  (date-fns/differenceInMinutes (or stopped-at current-time) started-at))
+  (/ (date-fns/differenceInSeconds (or stopped-at current-time) started-at) 60))
 
 (defn timer-duration [{:keys [time-spans]} current-time]
   (let [minutes (->> time-spans
                      (map (partial time-span-minutes current-time))
-                     (reduce +))]
+                     (reduce +)
+                     (int))]
     {:minutes (rem minutes 60)
      :hours (quot minutes 60)}))
