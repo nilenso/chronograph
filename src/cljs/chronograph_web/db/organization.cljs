@@ -5,6 +5,14 @@
   [db slug]
   (get-in db [:organizations slug]))
 
+(defn by-id
+  [db id]
+  (->> db
+       :organizations
+       vals
+       (filter #(= id (:id %)))
+       first))
+
 (defn org-id
   [db slug]
   (:id (org-by-slug db slug)))
@@ -13,12 +21,13 @@
   [db {:keys [slug] :as organization}]
   (assoc-in db [:organizations slug] organization))
 
-(defn add-organizations
+(defn set-organizations
   [db orgs]
-  (update db :organizations merge (db/normalize-by :slug orgs)))
+  (assoc db :organizations (db/normalize-by :slug orgs)))
 
 (defn organizations
   [db]
-  (-> db
-      :organizations
-      vals))
+  (->> db
+       :organizations
+       vals
+       (sort-by :slug)))

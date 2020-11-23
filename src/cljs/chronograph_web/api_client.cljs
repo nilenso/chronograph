@@ -63,3 +63,21 @@
   (http/delete {:uri        (str config/api-root "/timers/" timer-id)
                 :on-success on-success
                 :on-failure on-failure}))
+
+(defn reject-invite
+  [org-slug on-success on-failure]
+  (http/post {:uri        (str "/api/invitations/" org-slug "/reject")
+              :on-success on-success
+              :on-failure on-failure}))
+
+(defn accept-invite
+  [org-slug on-success on-failure]
+  (http/post {:uri        (str "/api/invitations/" org-slug "/accept")
+              :on-success on-success
+              :on-failure on-failure}))
+
+(defn fetch-invited-orgs
+  [on-success on-failure]
+  (http/get {:uri        "/api/invitations"
+             :on-success on-success
+             :on-failure on-failure}))

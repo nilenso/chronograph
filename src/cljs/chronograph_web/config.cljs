@@ -6,4 +6,5 @@
 
 (def emojis {;; Adding a trailing space at the end here, because the emoji
              ;; swallows it up in some browsers.
-             :frown "\uD83D\uDE41 "})
+             :frown        "\uD83D\uDE41 "
+             :party-popper "\uD83C\uDF89"})

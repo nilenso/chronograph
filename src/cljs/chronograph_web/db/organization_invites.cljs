@@ -1,6 +1,5 @@
 (ns chronograph-web.db.organization-invites
-  (:require [chronograph-web.db :as db]
-            [chronograph-web.db.organization :as org-db]))
+  (:require [chronograph-web.db :as db]))
 
 (defn invited-org-by-id
   [db id]
@@ -14,17 +13,22 @@
   [db]
   (vals (:organization-invites db)))
 
+(defn invite-by-slug
+  [db slug]
+  (->> db
+       invites
+       (filter #(= slug (:slug %)))
+       first))
+
 (defn remove-invite
   [db id]
-  (update db :organization-invites (fn [invite]
-                                     (dissoc invite id))))
+  (update db :organization-invites (fn [invite-map]
+                                     (dissoc invite-map id))))
+
+(defn remove-invite-by-slug
+  [db slug]
+  (remove-invite db (:id (invite-by-slug db slug))))
 
 (defn add-invited-orgs
   [db invited-orgs]
   (update db :organization-invites merge (db/normalize-by :id invited-orgs)))
-
-(defn move-accepted-org-to-organizations
-  [db accepted-org-id]
-  (-> db
-      (org-db/add-org (get-in db [:organization-invites accepted-org-id]))
-      (remove-invite accepted-org-id)))

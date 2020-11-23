@@ -47,7 +47,7 @@
           owner (domain-user/find-or-create-google-user! tx
                                                          uuid
                                                          (str "Some User " uuid)
-                                                         "some-email@nilenso.org"
+                                                         (str uuid "@nilenso.org")
                                                          "http://my.photo.org/foo.jpg")
           org (organization/create! tx
                                     #:organizations{:name (str "A test organization " uuid uuid)
