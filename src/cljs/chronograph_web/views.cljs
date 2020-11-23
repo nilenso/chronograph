@@ -5,7 +5,8 @@
             [chronograph-web.pages.organization.views :refer [organization-page]]
             [chronograph-web.pages.root.views :refer [root-page]]
             [chronograph-web.components.common :as components]
-            [chronograph-web.pages.create-organization.views :refer [create-organization-page]]))
+            [chronograph-web.pages.create-organization.views :refer [create-organization-page]]
+            [chronograph-web.pages.welcome.views :refer [welcome-page]]))
 
 (defn login-route []
   (let [location    (-> js/window .-location .-search)
@@ -24,7 +25,8 @@
 (def authenticated-view {:root              root-page
                          :timers-list       landing-page
                          :organization-show organization-page
-                         :new-organization  create-organization-page})
+                         :new-organization  create-organization-page
+                         :welcome-page      welcome-page})
 
 (defn authenticated-page []
   (if-let [{:keys [handler route-params]} @(rf/subscribe [::subs/current-page])]

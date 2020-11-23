@@ -6,6 +6,7 @@
             [chronograph-web.events.routing :as routing-events]))
 
 (def routes ["/" {""                 :root
+                  "welcome"          :welcome-page
                   "organizations/"   [[[:slug "/timers"] :timers-list]
                                       [[:slug "/admin"] :organization-show]]
                   "new-organization" :new-organization}])

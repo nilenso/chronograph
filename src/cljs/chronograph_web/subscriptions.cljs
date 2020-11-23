@@ -19,7 +19,7 @@
 (rf/reg-sub
   ::organizations
   (fn [db [_ _]]
-    (sort-by :slug (vals (get-in db [:organizations])))))
+    (vals (get-in db [:organizations]))))
 
 (rf/reg-sub
   ::organization
