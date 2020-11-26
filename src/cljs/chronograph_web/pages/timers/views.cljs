@@ -34,12 +34,14 @@
   [:<>
    [antd/button
     {:icon    icons/ArrowLeftOutlined
+     :title   "Previous day"
      :onClick #(rf/dispatch [::timers-events/modify-selected-date -1])}]
-   [antd/button
-    {:icon    icons/ArrowRightOutlined
-     :onClick #(rf/dispatch [::timers-events/modify-selected-date 1])}]
    [antd/date-picker {:value    @(rf/subscribe [::timers-subs/selected-date])
                       :onChange #(rf/dispatch [::timers-events/calendar-select-date %])}]
+   [antd/button
+    {:icon    icons/ArrowRightOutlined
+     :title   "Next day"
+     :onClick #(rf/dispatch [::timers-events/modify-selected-date 1])}]
    (when-not showing-create-timer-widget?
      [antd/button
       {:type    "primary"
