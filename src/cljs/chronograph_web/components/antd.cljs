@@ -2,6 +2,7 @@
   "Wrapper components for the antd library"
   (:refer-clojure :exclude [list])
   (:require ["antd" :as antd]
+            [chronograph-web.utils.time :as time]
             [medley.core :as medley]
             [reagent.core :as r]))
 
@@ -140,4 +141,14 @@
 
 (def popconfirm (antd-wrapper antd/Popconfirm))
 
-(def date-picker (antd-wrapper antd/DatePicker))
+(def date-picker (antd-wrapper antd/DatePicker
+                               #(-> %
+                                    (medley/update-existing
+                                     :value
+                                     time/calendar-date->moment-date)
+                                    (medley/update-existing
+                                     :onChange
+                                     (fn [on-change] (comp on-change
+                                                           time/js-date->calendar-date
+                                                           (fn [date]
+                                                             (.toDate ^js/Date date))))))))

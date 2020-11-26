@@ -143,8 +143,7 @@
          (add-org 1 "test-slug")
          (rf/dispatch [::routing-events/pushy-dispatch {:handler :timers-list
                                                         :route-params {:slug "test-slug"}}])
-         (rf/dispatch [::timers-events/calendar-select-date
-                       (time/calendar-date->moment-date {:day 5 :month 10 :year 2020})])
+         (rf/dispatch [::timers-events/calendar-select-date {:day 5 :month 10 :year 2020}])
 
          (is (= [[::org-invites-events/fetch-invited-orgs]
                  [::org-invites-events/fetch-invited-orgs]] @invited-orgs-stub)

@@ -8,7 +8,6 @@
             [chronograph-web.page-container.views :as page-container]
             [chronograph-web.events.organization-invites :as org-invites-events]
             [chronograph-web.components.timer :as timer-com]
-            [chronograph-web.utils.time :as time]
             ["@ant-design/icons" :as icons]))
 
 (defn timer-list [ds]
@@ -39,7 +38,7 @@
    [antd/button
     {:icon    icons/ArrowRightOutlined
      :onClick #(rf/dispatch [::timers-events/modify-selected-date 1])}]
-   [antd/date-picker {:value (time/calendar-date->moment-date @(rf/subscribe [::timers-subs/selected-date]))
+   [antd/date-picker {:value    @(rf/subscribe [::timers-subs/selected-date])
                       :onChange #(rf/dispatch [::timers-events/calendar-select-date %])}]
    (when-not showing-create-timer-widget?
      [antd/button
