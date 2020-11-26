@@ -87,9 +87,10 @@
 ;; Others
 
 (def list (antd-wrapper antd/List
-                        #(medley/update-existing %
-                                                 :renderItem
-                                                 transform-render-fn)))
+                        #(-> %
+                             (medley/update-existing :renderItem transform-render-fn)
+                             (medley/update-existing :header r/as-element)
+                             (medley/update-existing :footer r/as-element))))
 
 (def list-item (antd-wrapper antd/List.Item
                              #(medley/update-existing %
