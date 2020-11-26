@@ -45,10 +45,7 @@
 (rf/reg-event-fx
   ::calendar-select-date
   (fn [{:keys [db]} [_ date]]
-    (let [[year month day] (-> date
-                               (#(.toDate ^js/Date %))
-                               time/js-date->calendar-date
-                               time/calendar-date->string-parts)]
+    (let [[year month day] (time/calendar-date->string-parts date)]
       {:history-token (routes/path-for :timers-list-with-date
                                        :year year
                                        :month month
