@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [chronograph-web.subscriptions :as subs]
             [chronograph-web.pages.timers.views :refer [landing-page]]
-            [chronograph-web.pages.organization.views :refer [organization-page]]
+            [chronograph-web.pages.admin.views :refer [organization-page]]
             [chronograph-web.pages.root.views :refer [root-page]]
             [chronograph-web.components.common :as components]
             [chronograph-web.pages.create-organization.views :refer [create-organization-page]]
@@ -22,11 +22,11 @@
    [:h2 "Please sign in to continue"]
    [signin-button]])
 
-(def authenticated-view {:root              root-page
-                         :timers-list       landing-page
-                         :organization-show organization-page
-                         :new-organization  create-organization-page
-                         :welcome-page      welcome-page})
+(def authenticated-view {:root             root-page
+                         :timers-list      landing-page
+                         :admin-page       organization-page
+                         :new-organization create-organization-page
+                         :welcome-page     welcome-page})
 
 (defn authenticated-page []
   (let [{:keys [route-params] :as page} @(rf/subscribe [::subs/current-page])

@@ -16,7 +16,7 @@
   (testing "When fetch tasks succeeds"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
+     (tu/set-token (routes/path-for :admin-page :slug "test-slug"))
      (swap! re-frame.db/app-db org-db/add-org {:id   1
                                                :name "A Test Org"
                                                :slug "test-slug"
@@ -49,7 +49,7 @@
   (testing "When fetch task fails"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
+     (tu/set-token (routes/path-for :admin-page :slug "test-slug"))
      (rf/reg-fx :http-xhrio
        (fn [_]
          (rf/dispatch [::tasks-events/fetch-tasks-failure])))

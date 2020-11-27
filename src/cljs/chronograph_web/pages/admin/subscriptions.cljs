@@ -1,6 +1,6 @@
-(ns chronograph-web.pages.organization.subscriptions
+(ns chronograph-web.pages.admin.subscriptions
   (:require [re-frame.core :as rf]
-            [chronograph-web.pages.organization.db :as page-db]
+            [chronograph-web.pages.admin.db :as page-db]
             [chronograph-web.db.organization-context :as org-ctx-db]
             [chronograph-web.db.tasks :as tasks-db]))
 

@@ -4,7 +4,7 @@
             [chronograph.specs]
             [chronograph-web.events.user :as user-events]
             [chronograph-web.events.routing]
-            [chronograph-web.pages.organization.events]
+            [chronograph-web.pages.admin.events]
             [chronograph-web.routes :as routes]
             [chronograph-web.views :as views]
             [chronograph-web.effects]

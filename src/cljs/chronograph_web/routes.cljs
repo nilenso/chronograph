@@ -9,7 +9,7 @@
                   "welcome"          :welcome-page
                   "organizations/"   [[[:slug "/timers"] :timers-list]
                                       [[:slug "/timers/" :year "/" :month "/" :day] :timers-list-with-date]
-                                      [[:slug "/admin"] :organization-show]]
+                                      [[:slug "/admin"] :admin-page]]
                   "new-organization" :new-organization}])
 
 (defn set-page! [match]

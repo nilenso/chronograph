@@ -1,11 +1,11 @@
-(ns chronograph.pages.organization.events-test
+(ns chronograph.pages.admin.events-test
   (:require [cljs.test :refer-macros [deftest is testing run-tests use-fixtures]]
             [day8.re-frame.test :as rf-test]
             [re-frame.core :as rf]
             [re-frame.db]
-            [chronograph-web.pages.organization.events :as org-events]
+            [chronograph-web.pages.admin.events :as org-events]
             [chronograph-web.events.tasks :as task-events]
-            [chronograph-web.pages.organization.subscriptions :as org-subs]
+            [chronograph-web.pages.admin.subscriptions :as org-subs]
             [chronograph-web.subscriptions :as subs]
             [chronograph.test-utils :as tu]
             [chronograph.fixtures :as fixtures]
@@ -21,9 +21,9 @@
      (tu/initialize-db!)
      (let [fetch-org-event   (tu/stub-event ::org-events/fetch-organization)
            fetch-tasks-event (tu/stub-event ::task-events/fetch-tasks)]
-       (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
+       (tu/set-token (routes/path-for :admin-page :slug "test-slug"))
        (rf/dispatch [::org-events/organization-page-navigated])
-       (is (= :organization-show @(rf/subscribe [::subs/page-key])) "the page-key should be set")
+       (is (= :admin-page @(rf/subscribe [::subs/page-key])) "the page-key should be set")
        (is (= [::org-events/fetch-organization "test-slug"]
               @fetch-org-event))
        (is (= [::task-events/fetch-tasks "test-slug"]
@@ -46,7 +46,7 @@
            (fn [_]
              (rf/dispatch [::org-events/fetch-organization-success
                            organization])))
-         (tu/set-token (routes/path-for :organization-show :slug slug))
+         (tu/set-token (routes/path-for :admin-page :slug slug))
          (rf/dispatch [::org-events/fetch-organization slug])
          (is (= {:id         42
                  :name       "A Test Org"
@@ -73,7 +73,7 @@
            (fn [_]
              (rf/dispatch [::org-events/fetch-organization-success
                            organization])))
-         (tu/set-token (routes/path-for :organization-show :slug slug))
+         (tu/set-token (routes/path-for :admin-page :slug slug))
          (rf/dispatch [::org-events/fetch-organization slug])
          (is (= {:id   42
                  :name "A Test Org"
@@ -93,7 +93,7 @@
        (rf/reg-fx :http-xhrio
          (fn [_]
            (rf/dispatch [::org-events/fetch-organization-fail])))
-       (tu/set-token (routes/path-for :organization-show :slug slug))
+       (tu/set-token (routes/path-for :admin-page :slug slug))
        (rf/dispatch [::org-events/fetch-organization slug])
        (is (some? @error-params)
            "An error message should be flashed.")))))
@@ -109,7 +109,7 @@
                          :role       "member"
                          :created-at "2020-09-14T14:16:06.402873Z"
                          :updated-at "2020-09-14T14:16:06.402873Z"}]
-       (tu/set-token (routes/path-for :organization-show :slug slug))
+       (tu/set-token (routes/path-for :admin-page :slug slug))
        (rf/dispatch [::org-events/fetch-organization-success
                      organization])
        (rf/reg-fx :http-xhrio
@@ -148,7 +148,7 @@
   (testing "When the invite member form succeeds"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
+     (tu/set-token (routes/path-for :admin-page :slug "test-slug"))
      (rf/dispatch [::org-events/fetch-organization-success
                    {:id   1
                     :name "A Test Org"
@@ -195,7 +195,7 @@
   (testing "When updating a task succeeds"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
+     (tu/set-token (routes/path-for :admin-page :slug "test-slug"))
      (swap! re-frame.db/app-db org-db/add-org {:id   1
                                                :name "A Test Org"
                                                :slug "test-slug"
@@ -236,7 +236,7 @@
   (testing "When updating a task fails"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
+     (tu/set-token (routes/path-for :admin-page :slug "test-slug"))
      (let [error-params (tu/stub-effect :flash-error)]
        (rf/dispatch [::org-events/update-task-failure 2])
        (is (some? @error-params)
@@ -246,7 +246,7 @@
   (testing "When the update form is shown or hidden for a task, the flag should be set accordingly"
     (rf-test/run-test-sync
      (tu/initialize-db!)
-     (tu/set-token (routes/path-for :organization-show :slug "test-slug"))
+     (tu/set-token (routes/path-for :admin-page :slug "test-slug"))
      (rf/dispatch [::org-events/fetch-organization-success
                    {:id   1
                     :name "A Test Org"

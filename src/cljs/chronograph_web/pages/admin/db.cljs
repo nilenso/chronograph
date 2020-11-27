@@ -1,4 +1,4 @@
-(ns chronograph-web.pages.organization.db
+(ns chronograph-web.pages.admin.db
   (:require [chronograph-web.db :as db]
             [chronograph-web.db.organization-context :as org-ctx-db]))
 

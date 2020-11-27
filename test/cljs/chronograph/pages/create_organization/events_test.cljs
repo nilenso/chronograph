@@ -31,7 +31,7 @@
        (rf/dispatch [::create-org-events/create-organization-succeeded
                      organization])
        (is (= {:route-params {:slug slug}
-               :handler      :organization-show}
+               :handler      :admin-page}
               @(rf/subscribe [::subs/current-page]))
            "the user should be routed to the organization-show page")
        (is (= @(rf/subscribe [::subs/organization slug])

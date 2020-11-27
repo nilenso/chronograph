@@ -1,8 +1,8 @@
-(ns chronograph-web.pages.organization.events
+(ns chronograph-web.pages.admin.events
   (:require [re-frame.core :as rf]
             [chronograph-web.api-client :as api]
             [chronograph-web.http :as http]
-            [chronograph-web.pages.organization.db :as page-db]
+            [chronograph-web.pages.admin.db :as page-db]
             [chronograph-web.db.organization :as org-db]
             [chronograph-web.db :as db]
             [chronograph-web.events.tasks :as task-events]
@@ -13,13 +13,13 @@
 (def ^:private get-organization-uri
   "/api/organizations/")
 
-(defmethod routing-events/on-route-change-event :organization-show [_]
+(defmethod routing-events/on-route-change-event :admin-page [_]
   [::organization-page-navigated])
 
 (rf/reg-event-fx
   ::organization-page-navigated
   (fn [{:keys [db]} _]
-    {:db (db/set-page-key db :organization-show)
+    {:db (db/set-page-key db :admin-page)
      :fx [[:dispatch [::fetch-organization (org-ctx-db/current-organization-slug db)]]
           [:dispatch [::task-events/fetch-tasks (org-ctx-db/current-organization-slug db)]]]}))
 
