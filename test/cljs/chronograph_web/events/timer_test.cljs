@@ -1,8 +1,7 @@
-(ns chronograph.events.timer-test
-  (:require [cljs.test :refer-macros [deftest is testing run-tests use-fixtures]]
-            [chronograph.fixtures :as fixtures]
-            [day8.re-frame.test :as rf-test]
-            [chronograph.test-utils :as tu]
+(ns chronograph-web.events.timer-test
+  (:require [cljs.test :refer-macros [deftest is run-tests use-fixtures]]
+            [chronograph-web.fixtures :as fixtures]
+            [chronograph-web.test-utils :as tu]
             [re-frame.db]
             [re-frame.core :as rf]
             [clojure.test.check.generators]
@@ -102,27 +101,22 @@
                                       :organization-id 3}}])
 
 (deftest fetch-timers-test
-  (testing "When timers are successfully fetched, the db is updated"
-    (rf-test/run-test-sync
-     (tu/initialize-db!)
-     (tu/stub-routing)
-     (tu/set-token (routes/path-for :timers-list :slug "test-slug"))
-     (let [date {:day 14 :month 2 :year 2020}]
-       (swap! re-frame.db/app-db org-db/add-org {:id   3
-                                                 :slug "test-slug"
-                                                 :name "test"
-                                                 :role "member"})
-       (swap! re-frame.db/app-db db/set-in-page-state [:selected-date] date)
-       (tu/stub-xhrio timers-response true)
-       (rf/dispatch [::timer-events/fetch-timers date])
-       (is (= expected-timers
-              @(rf/subscribe [::timers-subs/current-organization-timers]))))))
+  (tu/rf-test "When timers are successfully fetched, the db is updated"
+    (tu/set-token (routes/path-for :timers-list :slug "test-slug"))
+    (let [date {:day 14 :month 2 :year 2020}]
+      (swap! re-frame.db/app-db org-db/add-org {:id   3
+                                                :slug "test-slug"
+                                                :name "test"
+                                                :role "member"})
+      (swap! re-frame.db/app-db db/set-in-page-state [:selected-date] date)
+      (tu/stub-xhrio timers-response true)
+      (rf/dispatch [::timer-events/fetch-timers date])
+      (is (= expected-timers
+             @(rf/subscribe [::timers-subs/current-organization-timers])))))
 
-  (testing "When fetching timers fails, there is no change"
-    (rf-test/run-test-sync
-     (tu/initialize-db!)
-     (tu/stub-xhrio {} false)
-     (let [error-params (tu/stub-effect :flash-error)]
-       (rf/dispatch [::timer-events/fetch-timers "2020-03-14"])
-       (is (some? @error-params)
-           "An error message should be flashed.")))))
+  (tu/rf-test "When fetching timers fails, there is no change"
+    (tu/stub-xhrio {} false)
+    (let [error-params (tu/stub-effect :flash-error)]
+      (rf/dispatch [::timer-events/fetch-timers "2020-03-14"])
+      (is (some? @error-params)
+          "An error message should be flashed."))))

@@ -1,7 +1,7 @@
-(ns chronograph.fixtures
+(ns chronograph-web.fixtures
   (:require [re-frame.core :as rf]
             [chronograph-web.interceptors :as interceptors]
-            [chronograph.test-utils :as tu]
+            [chronograph-web.test-utils :as tu]
             [re-frame.loggers :as rf-loggers]))
 
 (defn check-specs [f]
