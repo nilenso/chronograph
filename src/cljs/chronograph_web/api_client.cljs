@@ -37,6 +37,23 @@
              :on-success on-success
              :on-failure on-failure}))
 
+(defn- tasks-uri [slug]
+  (str "/api/organizations/" slug "/tasks/"))
+
+(defn create-task [org-slug name description on-success on-failure]
+  (http/post {:uri        (tasks-uri org-slug)
+              :params     {:name        name
+                           :description description}
+              :on-success on-success
+              :on-failure on-failure}))
+
+(defn update-task [org-slug task-id updates on-success on-failure]
+  (http/put {:uri        (str (tasks-uri org-slug)
+                              task-id)
+             :params     {:updates updates}
+             :on-success on-success
+             :on-failure on-failure}))
+
 (defn create-and-start-timer
   [task-id note recorded-for on-success on-failure]
   (http/post {:uri        (str config/api-root "/timers")

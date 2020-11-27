@@ -9,7 +9,8 @@
             [chronograph-web.subscriptions :as subs]
             [chronograph-web.http :as http]
             [chronograph-web.page-container.views :as page-container]
-            [chronograph-web.components.antd :as antd]))
+            [chronograph-web.components.antd :as antd]
+            [chronograph-web.api-client :as api]))
 
 (defn- invite-member-form []
   (let [{::form/keys [get-input-attributes get-submit-attributes]}
@@ -26,20 +27,17 @@
        [antd/input (get-input-attributes :email)]
        [antd/button (get-submit-attributes) "Invite"]])))
 
-(defn- tasks-uri [slug]
-  (str "/api/organizations/" slug "/tasks/"))
-
 (defn create-task-form [alignment]
   (let [{::form/keys [get-input-attributes
                       get-submit-attributes]}
         (form/form {:form-key        ::create-task
                     :request-builder (fn [{:keys [name description]}]
                                        (let [slug @(rf/subscribe [::admin-subs/org-slug])]
-                                         (http/post {:uri        (tasks-uri slug)
-                                                     :params     {:name        name
-                                                                  :description description}
-                                                     :on-success [::task-events/fetch-tasks slug]
-                                                     :on-failure [::admin-events/create-task-failed]})))})]
+                                         (api/create-task slug
+                                                          name
+                                                          description
+                                                          [::task-events/fetch-tasks slug]
+                                                          [::admin-events/create-task-failed])))})]
     (fn []
       [antd/space (cond-> {:direction "vertical"
                            :align     alignment}
@@ -54,11 +52,11 @@
         (form/form {:form-key        [::update-task id]
                     :initial-values  task
                     :request-builder (fn [task]
-                                       (http/put {:uri        (str (tasks-uri @(rf/subscribe [::admin-subs/org-slug]))
-                                                                   id)
-                                                  :params     {:updates task}
-                                                  :on-success [::admin-events/update-task-success id]
-                                                  :on-failure [::admin-events/update-task-failure id]}))})]
+                                       (api/update-task @(rf/subscribe [::admin-subs/org-slug])
+                                                        id
+                                                        task
+                                                        [::admin-events/update-task-success id]
+                                                        [::admin-events/update-task-failure id]))})]
     (fn [_task]
       [antd/space {:direction "vertical"}
        [antd/input (get-input-attributes :name {:spec :tasks/name})]
