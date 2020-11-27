@@ -26,6 +26,5 @@
          [invites/invited-organizations-list
           invited-orgs
           #(rf/dispatch [::org-invites-events/accept-invite %
-                         [::welcome-events/after-invite-accepted %]])
-          #(rf/dispatch [::org-invites-events/reject-invite %])
-          [::org-invites-events/reject-invite]]])]]))
+                         {:on-success [::welcome-events/after-invite-accepted %]}])
+          #(rf/dispatch [::org-invites-events/reject-invite %])]])]]))
