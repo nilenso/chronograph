@@ -3,20 +3,22 @@
             [chronograph-web.db.organization-invites :as org-invites-db]
             [chronograph-web.events.organization :as org-events]
             [chronograph-web.api-client :as api]
-            [chronograph-web.config :as config]))
-
-(defn- add-callback-event
-  [fx event response]
-  (cond-> fx
-    event (conj [:dispatch (conj event response)])))
+            [chronograph-web.config :as config]
+            [chronograph-web.utils.fetch-events :as fetch-events]))
 
 (rf/reg-event-fx
   ::reject-invite
-  (fn [{:keys [db]} [_ invited-org-slug on-success on-failure]]
-    {:http-xhrio (api/reject-invite invited-org-slug
-                                    [::reject-invite-succeeded invited-org-slug on-success]
-                                    (or on-failure
-                                        [::reject-invite-failed]))}))
+  (fetch-events/http-request-creator
+   (fn [_ [_ invited-org-slug]]
+     {:http-xhrio (api/reject-invite invited-org-slug
+                                     [::reject-invite-succeeded invited-org-slug]
+                                     [::reject-invite-failed])})))
+
+(rf/reg-event-fx
+  ::reject-invite-succeeded
+  (fetch-events/http-success-handler
+   (fn [{:keys [db]} [_ slug]]
+     {:db (org-invites-db/remove-invite-by-slug db slug)})))
 
 (rf/reg-event-fx
   ::reject-invite-failed
@@ -26,26 +28,19 @@
                                  " Please try again.")}}))
 
 (rf/reg-event-fx
-  ::reject-invite-succeeded
-  (fn [{:keys [db]} [_ slug on-success response]]
-    {:db (org-invites-db/remove-invite-by-slug db slug)
-     :fx (-> []
-             (add-callback-event on-success response))}))
-
-(rf/reg-event-fx
   ::accept-invite
-  (fn [{:keys [db]} [_ invited-org-slug on-success on-failure]]
-    {:http-xhrio (api/accept-invite invited-org-slug
-                                    [::accept-invite-succeeded invited-org-slug on-success]
-                                    (or on-failure
-                                        [::accept-invite-failed]))}))
+  (fetch-events/http-request-creator
+   (fn [_ [_ invited-org-slug]]
+     {:http-xhrio (api/accept-invite invited-org-slug
+                                     [::accept-invite-succeeded invited-org-slug]
+                                     [::accept-invite-failed])})))
 
 (rf/reg-event-fx
   ::accept-invite-succeeded
-  (fn [{:keys [db]} [_ slug on-success response]]
-    {:db (org-invites-db/remove-invite-by-slug db slug)
-     :fx (-> [[:dispatch [::org-events/fetch-organizations]]]
-             (add-callback-event on-success response))}))
+  (fetch-events/http-success-handler
+   (fn [{:keys [db]} [_ slug]]
+     {:db (org-invites-db/remove-invite-by-slug db slug)
+      :fx [[:dispatch [::org-events/fetch-organizations]]]})))
 
 (rf/reg-event-fx
   ::accept-invite-failed

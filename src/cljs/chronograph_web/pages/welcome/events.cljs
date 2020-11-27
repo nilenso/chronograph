@@ -22,7 +22,7 @@
       {:db (db/set-page-key db :welcome-page)
        :fx [(go-to-timers-list-page (first orgs))]}
       {:db (db/set-page-key db :welcome-page)
-       :fx [[:dispatch [::org-events/fetch-organizations [::after-fetch-organizations]]]
+       :fx [[:dispatch [::org-events/fetch-organizations {:on-success [::after-fetch-organizations]}]]
             [:dispatch [::org-invites-events/fetch-invited-orgs]]]})))
 
 (rf/reg-event-fx

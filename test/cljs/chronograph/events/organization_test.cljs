@@ -19,7 +19,7 @@
            post-success-event (tu/stub-event ::foobar)]
        (tu/initialize-db!)
        (tu/stub-xhrio orgs true)
-       (rf/dispatch [::org-events/fetch-organizations [::foobar]])
+       (rf/dispatch [::org-events/fetch-organizations {:on-success [::foobar]}])
        (is (= orgs
               (org-db/organizations @re-frame.db/app-db)))
        (is (= [::foobar orgs]

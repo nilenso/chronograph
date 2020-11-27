@@ -14,7 +14,7 @@
   ::root-page-navigated
   (fn [{:keys [db]} _]
     {:db (db/set-page-key db :root)
-     :fx [[:dispatch [::org-events/fetch-organizations [::after-organizations-fetched]]]]}))
+     :fx [[:dispatch [::org-events/fetch-organizations {:on-success [::after-organizations-fetched]}]]]}))
 
 (rf/reg-event-fx
   ::after-organizations-fetched

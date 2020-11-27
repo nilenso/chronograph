@@ -32,7 +32,7 @@
                                                             3 {:id 3 :slug "slug3" :name "org3"}})
      (tu/stub-xhrio {} true)
      (let [post-success-event (tu/stub-event ::foobar)]
-       (rf/dispatch [::org-invites-events/reject-invite "slug2" [::foobar]])
+       (rf/dispatch [::org-invites-events/reject-invite "slug2" {:on-success [::foobar]}])
        (is (= [{:id 1 :slug "slug1" :name "org1"}
                {:id 3 :slug "slug3" :name "org3"}]
               (org-invites-db/invites @re-frame.db/app-db)))
@@ -51,7 +51,7 @@
      (tu/stub-xhrio {} true)
      (let [dispatched-event   (tu/stub-event ::org-events/fetch-organizations)
            post-success-event (tu/stub-event ::foobar)]
-       (rf/dispatch [::org-invites-events/accept-invite "slug2" [::foobar]])
+       (rf/dispatch [::org-invites-events/accept-invite "slug2" {:on-success [::foobar]}])
        (is (= [{:id 1 :slug "slug1" :name "org1"}
                {:id 3 :slug "slug3" :name "org3"}]
               (org-invites-db/invites @re-frame.db/app-db))
