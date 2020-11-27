@@ -105,7 +105,7 @@
 (defn organization-page [{:keys [slug]}]
   (let [{:keys [name]} @(rf/subscribe [::subs/organization slug])]
     (if-not name
-      [components/loading-spinner]
+      [components/full-page-spinner]
       [page-container/org-scoped-page-container
        [antd/page-header
 

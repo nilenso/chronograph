@@ -31,13 +31,14 @@
 (defn authenticated-page []
   (let [{:keys [route-params] :as page} @(rf/subscribe [::subs/current-page])
         page-key @(rf/subscribe [::subs/page-key])]
-    (if (and page-key page)
-      [(authenticated-view page-key) route-params]
-      [:div "Page not found"])))
+    (cond
+      (and page-key page) [(authenticated-view page-key) route-params]
+      page [components/full-page-spinner]
+      :else [:div "Page not found"])))
 
 (defn root []
   (case @(rf/subscribe [::subs/signin-state])
     :signed-in [authenticated-page]
     :signed-out [signin-page]
-    :fetching-data [components/loading-spinner]
-    [components/loading-spinner]))
+    :fetching-data [components/full-page-spinner]
+    [components/full-page-spinner]))
