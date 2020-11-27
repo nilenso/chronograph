@@ -29,7 +29,7 @@
 (defn- tasks-uri [slug]
   (str "/api/organizations/" slug "/tasks/"))
 
-(defn create-task-form []
+(defn create-task-form [alignment]
   (let [{::form/keys [get-input-attributes
                       get-submit-attributes]}
         (form/form {:form-key        ::create-task
@@ -41,7 +41,9 @@
                                                      :on-success [::task-events/fetch-tasks slug]
                                                      :on-failure [::org-events/create-task-failed]})))})]
     (fn []
-      [antd/space {:direction "vertical"}
+      [antd/space (cond-> {:direction "vertical"
+                           :align     alignment}
+                    (= alignment "center") (assoc :style {:width "100%"}))
        [antd/input (get-input-attributes :name {:spec :tasks/name})]
        [antd/input (get-input-attributes :description {:spec :tasks/description})]
        [antd/button (get-submit-attributes) "Save"]])))
@@ -91,16 +93,48 @@
 
 (defn tasks-list []
   (r/with-let [admin? (rf/subscribe [::org-subs/user-is-admin?])]
-    [antd/list {:dataSource @(rf/subscribe [::org-subs/tasks])
-                :renderItem (fn [task]
-                              (antd/list-item {:actions [[archive-button task]
-                                                         [update-button task]]}
-                                              [task-list-element task]))
-                :header     [antd/title {:level 4
-                                         :style {:margin-bottom "0px"}}
-                             "Tasks"]
-                :footer     (when @admin?
-                              [create-task-form])}]))
+    (if-let [tasks (seq @(rf/subscribe [::org-subs/tasks]))]
+      [antd/list {:dataSource tasks
+                  :renderItem (fn [task]
+                                (antd/list-item {:actions [[archive-button task]
+                                                           [update-button task]]}
+                                                [task-list-element task]))
+                  :header     [antd/title {:level 4
+                                           :style {:margin-bottom "0px"}}
+                               "Tasks"]
+                  :footer     (when @admin?
+                                [create-task-form "left"])}]
+      [:<>
+       [antd/title {:level 4
+                    :style {:margin-bottom "0px"
+                            :padding       "12px 0px"}}
+        "Tasks"]
+       [antd/divider {:style {:margin-top "0px"}}]
+       [antd/row {:justify "center"}
+        [antd/col
+         (if @admin?
+           [:<>
+            [:p "You have no tasks! Create a task to get started."]
+            [create-task-form "center"]]
+           [:p "You have no tasks! Ask your administrator to create some."])]]])))
+
+(defn members-list []
+  [antd/list {:dataSource (concat (for [member @(rf/subscribe [::org-subs/joined-members])]
+                                    (if (= (:id member)
+                                           (:id @(rf/subscribe [::subs/user-info])))
+                                      (str (:name member) " (you)")
+                                      (:name member)))
+                                  (for [member @(rf/subscribe [::org-subs/invited-members])]
+                                    (str (:email member) " (invited)")))
+              :renderItem (fn [text]
+                            (antd/list-item text))
+              :header     [antd/space {:align "center"}
+                           [antd/title {:level 4
+                                        :style {:margin-bottom "0px"}}
+                            "Members"]
+                           (when @(rf/subscribe [::org-subs/user-is-admin?])
+                             [invite-member-form])]
+              :split      false}])
 
 (defn organization-page [{:keys [slug]}]
   (let [{:keys [name]} @(rf/subscribe [::subs/organization slug])]
@@ -108,18 +142,6 @@
       [components/full-page-spinner]
       [page-container/org-scoped-page-container
        [antd/page-header
-
         (when @(rf/subscribe [::org-subs/user-is-admin?])
-          [antd/list {:dataSource (concat (for [member @(rf/subscribe [::org-subs/joined-members])]
-                                            (:name member))
-                                          (for [member @(rf/subscribe [::org-subs/invited-members])]
-                                            (str (:email member) " (invited)")))
-                      :renderItem (fn [text]
-                                    (antd/list-item text))
-                      :header     [antd/space {:align "center"}
-                                   [antd/title {:level 4
-                                                :style {:margin-bottom "0px"}}
-                                    "Members"]
-                                   (when @(rf/subscribe [::org-subs/user-is-admin?])
-                                     [invite-member-form])]}])
+          [members-list])
         [tasks-list]]])))
