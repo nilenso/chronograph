@@ -153,3 +153,5 @@
                                                            time/js-date->calendar-date
                                                            (fn [date]
                                                              (.toDate ^js/Date date))))))))
+
+(def spin (antd-wrapper antd/Spin))

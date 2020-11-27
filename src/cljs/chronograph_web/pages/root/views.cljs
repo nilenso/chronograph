@@ -5,4 +5,4 @@
 ;; This is a placeholder view.
 ;; The user should be rerouted to an overview page.
 (defn root-page [_]
-  [components/loading-spinner])
+  [components/full-page-spinner])

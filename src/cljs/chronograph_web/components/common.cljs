@@ -1,13 +1,9 @@
-(ns chronograph-web.components.common)
+(ns chronograph-web.components.common
+  (:require [chronograph-web.components.antd :as antd]))
 
-(defn loading-spinner []
-  [:h2 "Loading..."])
-
-(defn text-input [input-name {:keys [on-change value] :as attrs}]
-  [:div
-   [:input
-    (merge {:type :text
-            :name (name input-name)
-            :value (or value "")}
-           (assoc attrs :on-change (fn [e]
-                                     (on-change (-> e .-currentTarget .-value)))))]])
+(defn full-page-spinner []
+  [antd/layout
+   [antd/layout-content
+    [antd/row {:justify "center"
+               :style   {:margin-top "200px"}}
+     [antd/spin {:size "large"}]]]])
