@@ -84,7 +84,7 @@
   (let [handler @(rf/subscribe [::subs/page-key])]
     (case handler
       :timers-list ["1"]
-      :organization-show ["2"]
+      :admin-page ["2"]
       [])))
 
 (defn- page-sider [{:keys [slug] :as current-org}]
@@ -96,7 +96,7 @@
                                                                 {:href (routes/path-for :timers-list :slug slug)}
                                                                 "Timers"])
     (antd/menu-item {:key "2" :icon icons/TeamOutlined} [:a
-                                                         {:href (routes/path-for :organization-show :slug slug)}
+                                                         {:href (routes/path-for :admin-page :slug slug)}
                                                          "Admin"])]])
 
 (defn org-scoped-page-container

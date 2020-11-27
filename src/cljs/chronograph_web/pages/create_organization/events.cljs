@@ -19,7 +19,7 @@
 (rf/reg-event-fx
   ::create-organization-succeeded
   (fn [{:keys [db]} [_ {:keys [slug] :as response}]]
-    {:history-token (routes/path-for :organization-show :slug slug)
+    {:history-token (routes/path-for :admin-page :slug slug)
      :db            (org-db/add-org db response)}))
 
 (rf/reg-event-fx
