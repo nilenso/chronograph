@@ -4,7 +4,8 @@
             [re-frame.core :as rf]
             [chronograph-web.routes :as routes]
             [chronograph-web.db.organization :as org-db]
-            [chronograph-web.events.organization :as org-events]))
+            [chronograph-web.events.organization :as org-events]
+            [chronograph-web.db :as db]))
 
 (defmethod routing-events/on-route-change-event
   :welcome-page
@@ -18,8 +19,10 @@
   ::welcome-page-navigated
   (fn [{:keys [db]} _]
     (if-let [orgs (seq (org-db/organizations db))]
-      {:fx [(go-to-timers-list-page (first orgs))]}
-      {:fx [[:dispatch [::org-events/fetch-organizations [::after-fetch-organizations]]]
+      {:db (db/set-page-key db :welcome-page)
+       :fx [(go-to-timers-list-page (first orgs))]}
+      {:db (db/set-page-key db :welcome-page)
+       :fx [[:dispatch [::org-events/fetch-organizations [::after-fetch-organizations]]]
             [:dispatch [::org-invites-events/fetch-invited-orgs]]]})))
 
 (rf/reg-event-fx
