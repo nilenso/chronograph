@@ -112,9 +112,9 @@
         [antd/col
          (if @admin?
            [:<>
-            [:p "You have no tasks! Create a task to get started."]
+            [:p [antd/text {:type "secondary"} "You have no tasks! Create a task to get started."]]
             [create-task-form "center"]]
-           [:p "You have no tasks! Ask your administrator to create some."])]]])))
+           [:p [antd/text {:type "secondary"} "You have no tasks! Ask your administrator to create some."]])]]])))
 
 (defn members-list []
   [antd/list {:dataSource (concat (for [member @(rf/subscribe [::admin-subs/joined-members])]
