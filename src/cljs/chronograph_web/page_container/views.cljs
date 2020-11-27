@@ -102,7 +102,7 @@
 (defn org-scoped-page-container
   "Used when the page is specific to an organization."
   [& _]
-  (rf/dispatch [::org-events/fetch-organizations])
+  (rf/dispatch [::org-events/fetch-organizations {:on-success [::pc-events/after-organizations-fetched]}])
   (fn [& children]
     (let [user-info   @(rf/subscribe [::subs/user-info])
           current-org @(rf/subscribe [::pc-subs/current-org])]
