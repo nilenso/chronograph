@@ -9,7 +9,7 @@
 (defmethod routing-events/on-route-change-event
   :welcome-page
   [_]
-  ::welcome-page-navigated)
+  [::welcome-page-navigated])
 
 (defn- go-to-timers-list-page [org]
   [:history-token (routes/path-for :timers-list :slug (:slug org))])
