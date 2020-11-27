@@ -81,7 +81,7 @@
         [:> icons/DownOutlined]]])))
 
 (defn- selected-sider-menu-keys []
-  (let [handler (:handler @(rf/subscribe [::subs/current-page]))]
+  (let [handler @(rf/subscribe [::subs/page-key])]
     (case handler
       :timers-list ["1"]
       :organization-show ["2"]
