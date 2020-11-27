@@ -45,4 +45,5 @@
                                   [org.clojure/test.check "0.9.0"]
                                   [vvvvalvalval/scope-capture "0.3.2"]]}}
   :cljfmt {:paths   ["src" "test"]
-           :indents {#"rf/reg-.*" [[:inner 0]]}})
+           :indents {#"rf/reg-.*" [[:inner 0]]
+                     tu/rf-test   [[:inner 0]]}})

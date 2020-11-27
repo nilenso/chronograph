@@ -1,4 +1,4 @@
-(ns chronograph.test-utils
+(ns chronograph-web.test-utils
   (:require [re-frame.core :as rf]
             [re-frame.db]
             [chronograph-web.events.routing :as routing-events]
@@ -6,7 +6,12 @@
             [chronograph-web.db :as db]
             [cljs.spec.alpha :as s]
             [chronograph-web.interceptors :as interceptors]
-            [chronograph-web.db.spec :as db-spec]))
+            [chronograph-web.db.spec :as db-spec]
+
+   ;; Required for the macro
+            [cljs.test]
+            [day8.re-frame.test])
+  (:require-macros [chronograph-web.test-utils]))
 
 (defn set-token [token]
   (rf/dispatch [::routing-events/pushy-dispatch (routes/match-route token)]))

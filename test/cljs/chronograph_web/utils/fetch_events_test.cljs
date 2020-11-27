@@ -1,4 +1,4 @@
-(ns chronograph.utils.fetch-events-test
+(ns chronograph-web.utils.fetch-events-test
   (:require [cljs.test :refer-macros [deftest is testing run-tests]]
             [chronograph-web.utils.fetch-events :as fetch-events]))
 
