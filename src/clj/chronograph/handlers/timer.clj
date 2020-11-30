@@ -1,4 +1,5 @@
 (ns chronograph.handlers.timer
+  (:refer-clojure :exclude [update])
   (:require [chronograph.domain.timer :as timer]
             [next.jdbc :as jdbc]
             [chronograph.db.core :as db]
@@ -45,32 +46,46 @@
       (if (not (s/valid? :timers/id timer-id))
         (response/bad-request
          {:error "Invalid Timer ID."})
-        (if-let [time-span (timer/delete! tx user-id timer-id)]
-          (-> time-span
+        (if-let [deleted-timer (timer/delete! tx user-id timer-id)]
+          (-> deleted-timer
               response/response)
           (response/bad-request
            {:error "Timer does not exist."}))))))
 
-(defn update-note
-  "Authorized users may update note for a timer they own, for the give task id."
-  [{{:keys [timer-id]} :params
-    {:keys [note]} :body
-    {user-id :users/id} :user
-    :as _request}]
-  (let [timer-id (coerce/str-to-uuid timer-id)]
+(defn- coerce-update-body
+  [body]
+  (select-keys body [:task-id :note :duration-in-secs]))
+
+(s/def :handlers.timer/duration-in-secs (some-fn pos-int?
+                                                 zero?))
+(s/def :handlers.timer/update-request-body (s/keys :opt-un [:timers/task-id
+                                                            :timers/note
+                                                            :handlers.timer/duration-in-secs]))
+
+(defn- validate-update-params
+  [tx user-id timer-id {:keys [task-id] :as update-params}]
+  (cond
+    (not (s/valid? :timers/id timer-id)) "Invalid timer ID."
+    (not (s/valid? :handlers.timer/update-request-body update-params)) "Invalid request body."
+    :else (if-let [timer (timer/find-by-user-and-id tx user-id timer-id)]
+            (if (and task-id
+                     (not (contains? (task/task-ids-of-organization tx (:timers/task-id timer))
+                                     task-id)))
+              "Task not found."
+              nil)
+            "Timer not found.")))
+
+(defn update
+  [{{:keys [timer-id]}  :params
+    body                :body
+    {user-id :users/id} :user}]
+  (let [timer-id      (coerce/str-to-uuid timer-id)
+        update-params (coerce-update-body body)]
     (jdbc/with-transaction [tx db/datasource]
-      (cond
-        (not (and (s/valid? :timers/id timer-id)
-                  (s/valid? :timers/note note)))
-        (response/bad-request
-         {:error "Invalid Timer ID or Note."})
-
-        (empty? (timer/find-by-user-and-id tx user-id timer-id))
-        (response/bad-request
-         {:error "Timer does not exist."})
-
-        :else (-> (timer/update-note! tx user-id timer-id note)
-                  response/response)))))
+      (if-let [error-message (validate-update-params tx user-id timer-id update-params)]
+        (response/bad-request {:error error-message})
+        (-> (timer/update! tx timer-id update-params)
+            response/response)))))
 
 (defn start
   "Authorized users may start any timer they own."

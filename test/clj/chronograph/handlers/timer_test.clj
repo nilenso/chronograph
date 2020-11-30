@@ -6,8 +6,11 @@
             [chronograph.db.core :as db]
             [clojure.spec.alpha :as s]
             [chronograph.domain.timer :as timer]
-            [chronograph.fixtures :as fixtures])
-  (:import [java.time LocalDate]))
+            [chronograph.fixtures :as fixtures]
+            [chronograph.utils.time :as time]
+            [chronograph.test-utils :as tu])
+  (:import [java.time LocalDate Instant]
+           (java.util UUID)))
 
 (defn- setup-org-users-tasks!
   []
@@ -133,39 +136,54 @@
                                     :user {:users/id (:user-2-id test-context)}}))
           "fails with HTTP error when the timer id is invalid"))))
 
-(deftest update-timer-note-test
-  (testing "updating a timer's note"
-    (let [test-context (setup-org-users-tasks!)
-          {timer-id :timers/id} (factories/create-timer
-                                 (:organization-id test-context)
-                                 (:user-2-id test-context)
-                                 (:task-id-1 test-context))
-          response (handler-timer/update-note {:params {:timer-id (str timer-id)}
-                                               :body {:note "An updated note."}
-                                               :user {:users/id (:user-2-id test-context)}})]
-      (is (= 200
-             (:status response))
-          "the request succeeds")
-      (is (s/valid? :timers/timer
-                    (:body response))
-          "the body is a valid timer object")
-      (is (= "An updated note."
-             (:timers/note (:body response)))
-          "the timer data contains the updated note")
-      (is (= {:status 400
-              :headers {}
-              :body {:error "Timer does not exist."}}
-             (handler-timer/update-note {:params {:timer-id (str (java.util.UUID/randomUUID))}
-                                         :body {:note "An updated note."}
-                                         :user {:users/id (:user-2-id test-context)}}))
-          "fails with HTTP error when the timer does not exist")
-      (is (= {:status 400
-              :headers {}
-              :body {:error "Invalid Timer ID or Note."}}
-             (handler-timer/update-note {:params {:timer-id "42"}
-                                         :body {:note nil}
-                                         :user {:users/id (:user-2-id test-context)}}))
-          "fails with HTTP error when the timer id and/or note are invalid"))))
+(deftest update-test
+  (testing "Updating with valid parameters"
+    (tu/with-fixtures [fixtures/clear-db]
+      (with-redefs [time/now (constantly (Instant/parse "2020-11-30T11:30:00Z"))]
+        (let [test-context (setup-org-users-tasks!)
+              {timer-id :timers/id} (factories/create-timer
+                                     (:organization-id test-context)
+                                     (:user-2-id test-context)
+                                     (:task-id-1 test-context))
+              {:keys [status body]} (handler-timer/update {:params {:timer-id (str timer-id)}
+                                                           :body   {:duration-in-secs 1800
+                                                                    :note             "Updated note"
+                                                                    :task-id          (:task-id-1 test-context)}
+                                                           :user   {:users/id (:user-2-id test-context)}})]
+          (is (= 200 status))
+          (is (s/valid? :timers/timer body))))))
+
+  (testing "Updating with a task ID from a different organization"
+    (tu/with-fixtures [fixtures/clear-db]
+      (with-redefs [time/now (constantly (Instant/parse "2020-11-30T11:30:00Z"))]
+        (let [test-context (setup-org-users-tasks!)
+              {timer-id :timers/id} (factories/create-timer
+                                     (:organization-id test-context)
+                                     (:user-2-id test-context)
+                                     (:task-id-1 test-context))
+              organization (factories/create-organization (:user-2-id test-context))
+              {task-id-3 :tasks/id} (factories/create-task organization)
+              response (handler-timer/update {:params {:timer-id (str timer-id)}
+                                              :body   {:duration-in-secs 1800
+                                                       :note             "Updated note"
+                                                       :task-id          task-id-3}
+                                              :user   {:users/id (:user-2-id test-context)}})]
+          (is (= {:status 400
+                  :body {:error "Task not found."}}
+                 (select-keys response [:status :body])))))))
+
+  (testing "Updating a non-existent timer"
+    (tu/with-fixtures [fixtures/clear-db]
+      (with-redefs [time/now (constantly (Instant/parse "2020-11-30T11:30:00Z"))]
+        (let [test-context (setup-org-users-tasks!)
+              response     (handler-timer/update {:params {:timer-id (str (UUID/randomUUID))}
+                                                  :body   {:duration-in-secs 1800
+                                                           :note             "Updated note"
+                                                           :task-id          (:task-id-1 test-context)}
+                                                  :user   {:users/id (:user-2-id test-context)}})]
+          (is (= {:status 400
+                  :body {:error "Timer not found."}}
+                 (select-keys response [:status :body]))))))))
 
 (deftest start-timer-test
   (testing "starting a timer"

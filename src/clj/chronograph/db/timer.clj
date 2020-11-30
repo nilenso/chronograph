@@ -39,6 +39,16 @@
                          db/sql-opts)
       coerce-time-spans-in-timer))
 
+(defn update!
+  [tx timer-id update-fields]
+  (-> (db/update! :timers tx {:id timer-id} update-fields)
+      coerce-time-spans-in-timer))
+
+(defn find-by-id
+  [tx timer-id]
+  (some-> (db/find-by :timers tx {:id timer-id})
+          coerce-time-spans-in-timer))
+
 (defn find-by-user-and-id
   [tx user-id timer-id]
   (-> (jdbc/execute-one! tx
@@ -71,19 +81,6 @@
                   user-id
                   recorded-for])
        (map extract-task)))
-
-(defn update-note!
-  [tx user-id timer-id note]
-  (let [now (time/now)]
-    (-> (sql/update! tx
-                     :timers
-                     {:note       note
-                      :updated-at now}
-                     {:id      timer-id
-                      :user-id user-id}
-                     (assoc db/sql-opts
-                            :return-keys true))
-        coerce-time-spans-in-timer)))
 
 (defn add-time-span
   [tx timer-id time-span]

@@ -144,7 +144,7 @@
             (is (= archived-at updated-at))
             (is (pos? (compare updated-at created-at)))))))))
 
-(deftest for-organization
+(deftest for-organization-test
   (let [{user-id :users/id} (factories/create-user)
         organization (factories/create-organization user-id)
         other-organization (factories/create-organization user-id)
@@ -165,3 +165,14 @@
         (let [tasks (task/for-organization tx organization)]
           (is (not (contains? (set (map :tasks/id tasks)) (:tasks/id other-task1))))
           (is (not (contains? (set (map :tasks/id tasks)) (:tasks/id other-task2)))))))))
+
+(deftest task-ids-of-organization-test
+  (let [{user-id :users/id} (factories/create-user)
+        organization       (factories/create-organization user-id)
+        task1              (factories/create-task organization)
+        task2              (factories/create-task organization)
+        task3              (factories/create-task organization)
+        other-organization (factories/create-organization user-id)
+        _                  (factories/create-task other-organization)]
+    (is (= (set (map :tasks/id [task1 task2 task3]))
+           (task/task-ids-of-organization db/datasource (:tasks/id task1))))))

@@ -9,7 +9,7 @@
             [clojure.spec.alpha :as s]
             [chronograph.utils.time :as time]
             [next.jdbc :as jdbc])
-  (:import [java.time LocalDate]))
+  (:import [java.time LocalDate Instant]))
 
 (defn- setup-org-users-tasks!
   []
@@ -212,58 +212,56 @@
                                (:timers/id timer-by-user-2)))
           "user-1 cannot delete user-2's timer."))))
 
-
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Update Timer's Note Tests
+;; Update Timer Tests
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(deftest update-timer-note-test
-  (testing "updating a Timer's note"
-    (with-redefs [time/now (constantly (time/now))]
-      (let [{:keys [user-id organization-id task-id-1]} (setup-org-users-tasks!)
-            {timer-id :timers/id :as timer} (factories/create-timer organization-id
-                                                                    #:timers{:user-id user-id
-                                                                             :task-id task-id-1
-                                                                             :note "A sample note."})
-            revised-note (str "Revised note " (rand))]
-        (is (= (assoc timer
-                      :timers/note
-                      revised-note)
-               (timer/update-note! db/datasource
-                                   user-id
-                                   timer-id
-                                   revised-note))
-            "returns a Timer containing the updated note.")
-        (is (nil? (timer/update-note! db/datasource
-                                      user-id
-                                      (java.util.UUID/randomUUID)
-                                      revised-note))
-            "does nothing if the timer does not exist.")))))
+(deftest update!-test
+  (testing "Updating a stopped timer"
+    (tu/with-fixtures [fixtures/clear-db]
+      (with-redefs [time/now (constantly (Instant/parse "2020-11-30T11:30:00Z"))]
+        (let [{:keys [user-id organization-id task-id-1 task-id-2]} (setup-org-users-tasks!)
+              {:timers/keys [id]} (factories/create-timer organization-id
+                                                          #:timers{:user-id user-id
+                                                                   :task-id task-id-1
+                                                                   :note    "A note by user-1."})
+              updated-timer   (jdbc/with-transaction [tx db/datasource]
+                                (timer/update! tx id {:duration-in-secs 1800
+                                                      :note             "Updated note"
+                                                      :task-id          task-id-2}))
+              retrieved-timer (timer/find-by-user-and-id db/datasource user-id id)]
+          (is (= updated-timer retrieved-timer)
+              "The updated timer should be returned")
+          (is (= #:timers{:task-id    task-id-2
+                          :note       "Updated note"
+                          :time-spans [{:started-at (Instant/parse "2020-11-30T11:00:00Z")
+                                        :stopped-at (Instant/parse "2020-11-30T11:30:00Z")}]}
+                 (select-keys retrieved-timer [:timers/task-id :timers/note :timers/time-spans]))
+              "The fields should be updated")))))
 
-(deftest update-note-isolation-by-user-test
-  (testing "Users trying to update each others' timer notes."
-    (let [{:keys [admin-id user-id organization-id task-id-1]} (setup-org-users-tasks!)
-          task-id         task-id-1
-          timer-by-user-1 (factories/create-timer organization-id
-                                                  #:timers{:user-id admin-id
-                                                           :task-id task-id
-                                                           :note    "A note by user-1."})
-          timer-by-user-2 (factories/create-timer organization-id
-                                                  #:timers{:user-id user-id
-                                                           :task-id task-id
-                                                           :note    "A note by user-2."})]
-      (is (nil? (timer/update-note! db/datasource
-                                    user-id
-                                    (:timers/id timer-by-user-1)
-                                    "A sneaky note by user-2."))
-          "user-2 cannot overwrite user-1's note.")
-      (is (nil? (timer/update-note! db/datasource
-                                    admin-id
-                                    (:timers/id timer-by-user-2)
-                                    "A sneaky note by user-1."))
-          "user-1 cannot overwrite user-2's note."))))
-
+  (testing "Updating a started timer"
+    (tu/with-fixtures [fixtures/clear-db]
+      (with-redefs [time/now (constantly (Instant/parse "2020-11-30T11:30:00Z"))]
+        (let [{:keys [user-id organization-id task-id-1 task-id-2]} (setup-org-users-tasks!)
+              {:timers/keys [id]} (factories/create-timer organization-id
+                                                          #:timers{:user-id user-id
+                                                                   :task-id task-id-1
+                                                                   :note    "A note by user-1."})
+              _               (timer/start! db/datasource user-id id)
+              updated-timer   (jdbc/with-transaction [tx db/datasource]
+                                (timer/update! tx id {:duration-in-secs 1800
+                                                      :note             "Updated note"
+                                                      :task-id          task-id-2}))
+              retrieved-timer (timer/find-by-user-and-id db/datasource user-id id)]
+          (is (= updated-timer retrieved-timer)
+              "The updated timer should be returned")
+          (is (= #:timers{:task-id    task-id-2
+                          :note       "Updated note"
+                          :time-spans [{:started-at (Instant/parse "2020-11-30T11:00:00Z")
+                                        :stopped-at nil}]}
+                 (select-keys retrieved-timer [:timers/task-id :timers/note :timers/time-spans]))
+              "The fields should be updated"))))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Start Timer Tests
