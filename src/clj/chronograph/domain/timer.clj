@@ -27,19 +27,32 @@
                     user-id
                     timer-id))
 
-(defn update-note!
-  "Update the note in the given user's timer.
-
-  Return the timer object if successful, or nil when the timer does not exist."
-  [tx user-id timer-id note]
-  (db-timer/update-note! tx user-id timer-id note))
-
 (defn running?
   "Given a user id and timer id, return truthy if the timer has a running span
   associated with it. Return nil if there are no running spans."
   [{:timers/keys [time-spans] :as _timer}]
   (and (not-empty time-spans)
        (not (:stopped-at (last time-spans)))))
+
+(defn- time-spans-from-duration
+  "Computes the time spans of the timer as per given duration.
+  Very naive right now. This could be made smarter to reduce data loss."
+  [timer duration-in-secs]
+  (let [now (time/now)]
+    (if (running? timer)
+      [{:started-at (.minusSeconds now duration-in-secs)
+        :stopped-at nil}]
+      [{:started-at (.minusSeconds now duration-in-secs)
+        :stopped-at now}])))
+
+(defn update!
+  [tx timer-id {:keys [duration-in-secs] :as update-params}]
+  (let [timer (db-timer/find-by-id tx timer-id)]
+    (db-timer/update! tx timer-id (if duration-in-secs
+                                    (-> update-params
+                                        (assoc :time-spans (time-spans-from-duration timer duration-in-secs))
+                                        (dissoc :duration-in-secs))
+                                    update-params))))
 
 (defn belongs-to-user?
   "Given a user id and timer id, return truthy if the timer belongs to the

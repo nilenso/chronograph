@@ -40,17 +40,17 @@
                                          middleware/wrap-authenticated)}}]])
 
 (def timer-routes
-  {:post (-> timer/create
-             middleware/wrap-authenticated)
-   :get (-> timer/find-by-day
-            middleware/wrap-authenticated)
-   ["/" :timer-id] {:delete (-> timer/delete
-                                middleware/wrap-authenticated)}
-   ["/" :timer-id "/start"] {:put (-> timer/start
-                                      middleware/wrap-authenticated)}
-   ["/" :timer-id "/stop"] {:put (-> timer/stop
-                                     middleware/wrap-authenticated)}
-   ["/" :timer-id "/update-note"] {:put (-> timer/update-note
+  {:post                          (-> timer/create
+                                      middleware/wrap-authenticated)
+   :get                           (-> timer/find-by-day
+                                      middleware/wrap-authenticated)
+   ["/" :timer-id]                {:delete (-> timer/delete
+                                               middleware/wrap-authenticated)
+                                   :put    (-> timer/update
+                                               middleware/wrap-authenticated)}
+   ["/" :timer-id "/start"]       {:put (-> timer/start
+                                            middleware/wrap-authenticated)}
+   ["/" :timer-id "/stop"]        {:put (-> timer/stop
                                             middleware/wrap-authenticated)}})
 
 (def invited-org-routes

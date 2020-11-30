@@ -38,3 +38,16 @@
 
 (defn for-organization [tx organization]
   (db-task/organization-tasks tx (:organizations/id organization)))
+
+(defn archived? [{:tasks/keys [archived-at]}]
+  (some? archived-at))
+
+(defn task-ids-of-organization
+  "All task IDs belonging to the same organization
+  as the given task ID. Excludes archived tasks."
+  [tx task-id]
+  (when-let [org-id (:tasks/organization-id (find-by-id tx task-id))]
+    (->> (for-organization tx #:organizations{:id org-id})
+         (remove archived?)
+         (map :tasks/id)
+         set)))

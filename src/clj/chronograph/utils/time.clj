@@ -1,5 +1,5 @@
 (ns chronograph.utils.time
   (:import (java.time Instant)))
 
-(defn now []
+(defn now ^Instant []
   (Instant/now))
