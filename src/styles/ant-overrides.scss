@@ -1,3 +1,5 @@
+@use './_variables' as v;
+
 .ant-dropdown {
   .menu {
     box-shadow: 3px 3px 8px -2px #999192 !important;
@@ -6,4 +8,30 @@
 
 .ant-layout-content {
   background: white;
+}
+
+.ant-input.form-error {
+  border-color: v.$red-5;
+
+  &:hover {
+    border-color: v.$red-5;
+  }
+
+  &:focus, &.ant-input-focused {
+    border-color: v.$red-5;
+    box-shadow: 0 0 0 2px rgba(255, 66, 24, 0.2);
+  }
+}
+
+.ant-select.form-error:not(.ant-select-disabled) .ant-select-selector {
+  border-color: v.$red-5;
+}
+
+.ant-select.form-error:not(.ant-select-disabled):hover .ant-select-selector {
+  border-color: v.$red-5;
+}
+
+.ant-select-focused.form-error:not(.ant-select-disabled).ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  border-color: v.$red-5;
+  box-shadow: 0 0 0 2px rgba(255, 66, 24, 0.2);
 }

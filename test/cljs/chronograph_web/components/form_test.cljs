@@ -26,15 +26,24 @@
   (testing "it returns underscored keywords in sentence case"
     (is (= "Sentence case" (form/sentence-case :sentence_case)))))
 
+(deftest set-values-test
+  (tu/rf-test "It should set the form's values"
+    (let [{::form/keys [get-input-attributes]} (form/form {:form-key        ::form-key
+                                                           :initial-values  {:foobar "baz"}
+                                                           :request-builder (constantly {})})]
+      (rf/dispatch [::form/set-values ::form-key {:foobar "quux"}])
+      (is (= "quux"
+             (:value (get-input-attributes :foobar)))
+          "The value of the input should be changed"))))
+
 (deftest form-attributes-test
   (testing "Input attributes builder"
     (tu/rf-test "When initial values are passed"
       (let [{::form/keys [get-input-attributes]} (form/form {:form-key        ::form-key
                                                              :initial-values  {:foobar "baz"}
                                                              :request-builder (constantly {})})]
-        (is (= {:value       "baz"
-                :placeholder "Foobar"}
-               (dissoc (get-input-attributes :foobar) :onChange))
+        (is (= "baz"
+               (:value (get-input-attributes :foobar)))
             "The value of the input should be set to its initial value")))
 
     (tu/rf-test "When only an input key is passed"
@@ -44,22 +53,31 @@
         (onChange (event-with-value "new-value"))
         (is (= {:value       "new-value"
                 :placeholder "Foobar"}
-               (dissoc (get-input-attributes :foobar) :onChange))
+               (select-keys (get-input-attributes :foobar) [:value :placeholder]))
             "The value of the input should change after calling onChange")))
 
     (testing "When a spec is passed"
       (tu/rf-test "When the spec fails"
         (let [{::form/keys [get-input-attributes]} (form/form {:form-key        ::form-key
+                                                               :specs           {:foobar int?}
                                                                :request-builder (constantly {})})]
           (is (= {:value       nil
                   :placeholder "Foobar"
                   :class       "form-error"}
-                 (dissoc (get-input-attributes :foobar
-                                               {:spec int?}) :onChange))
+                 (select-keys (get-input-attributes :foobar
+                                                    {:spec int?})
+                              [:value :placeholder :class]))
               "The form-error class should be set")))))
 
   (testing "Submit attributes builder"
-    (tu/rf-test "Button should be disabled while submitting"
+    (tu/rf-test "Button should be disabled if there is a spec error"
+      (let [{::form/keys [get-submit-attributes]} (form/form {:form-key        ::form-key
+                                                              :specs           {:foobar int?}
+                                                              :initial-values  {:foobar "not-an-int"}
+                                                              :request-builder (constantly {})})]
+        (is (:disabled (get-submit-attributes)))))
+
+    (tu/rf-test "Button should be set to loading while submitting"
       (let [{::form/keys [get-submit-attributes]} (form/form {:form-key        ::form-key
                                                               :request-builder (constantly {})})
             {:keys [onClick]} (get-submit-attributes)]
