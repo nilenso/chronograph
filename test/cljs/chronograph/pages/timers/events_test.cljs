@@ -6,6 +6,7 @@
             [chronograph.test-utils :as tu]
             [chronograph.specs]
             [re-frame.core :as rf]
+            [re-frame.db]
             [chronograph-web.pages.timers.events :as timers-events]
             [chronograph-web.pages.timers.subscriptions :as timers-subs]
             [chronograph-web.events.timer :as timer-events]
