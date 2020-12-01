@@ -10,7 +10,10 @@
             [chronograph-web.config :as config]
             [chronograph-web.db :as db]
             [chronograph-web.api-client :as api]
-            [medley.core :as medley]))
+            [chronograph-web.components.form :as form]
+            [medley.core :as medley]
+            [chronograph-web.db.timers :as db-timers]
+            [chronograph.utils.string :as ustring]))
 
 (defn- date-from-route-params [{:keys [year month day] :as m}]
   (let [date (->> (select-keys m [:year :month :day])
@@ -137,3 +140,38 @@
                                          [::flash-error (str "We couldn't delete your timer "
                                                              (:frown config/emojis)
                                                              " Please try again!")])]]}))
+
+(rf/reg-event-fx
+  ::edit-timer-succeeded
+  (fn [{:keys [db]} [_ timer-id]]
+    {:fx [[:dispatch [::timer-events/fetch-timers (selected-date db)]]
+          [:dispatch [::dismiss-edit-timer-modal timer-id]]]}))
+
+(rf/reg-event-fx
+  ::edit-timer-failed
+  (fn [_ _]
+    (flash-error-effect (str "We couldn't edit your timer "
+                             (:frown config/emojis)
+                             " Please try again!"))))
+
+(defn- duration-string [timer]
+  (let [{:keys [hours minutes]} (time/timer-duration timer (time/now))]
+    (str hours ":" (ustring/left-pad 2 "0" (str minutes)))))
+
+(rf/reg-event-fx
+  ::show-edit-timer-modal
+  (fn [{:keys [db]} [_ timer-id]]
+    (let [timer (db-timers/timer-by-id db timer-id)]
+      {:db (db/set-in-page-state db [:show-edit-timer-modal timer-id] true)
+       ;; This is necessary because the modal content is not re-mounted
+       ;; when closed and reopened.
+       :fx [[:dispatch [::form/set-values
+                        [::edit-timer-form timer-id]
+                        (-> timer
+                            (select-keys [:task-id :note])
+                            (assoc :duration-in-hour-mins (duration-string timer)))]]]})))
+
+(rf/reg-event-db
+  ::dismiss-edit-timer-modal
+  (fn [db [_ timer-id]]
+    (db/set-in-page-state db [:show-edit-timer-modal timer-id] false)))

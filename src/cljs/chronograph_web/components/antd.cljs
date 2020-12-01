@@ -155,3 +155,6 @@
                                                              (.toDate ^js/Date date))))))))
 
 (def spin (antd-wrapper antd/Spin))
+
+(def modal (antd-wrapper antd/Modal
+                         #(medley/update-existing % :footer r/as-element)))

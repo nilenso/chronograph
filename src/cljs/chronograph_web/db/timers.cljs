@@ -13,3 +13,11 @@
   (->> (timers-by-date db date)
        (map #(assoc % :task (tasks-db/find-by-id db (:task-id %))))
        (filter #(= organization-id (get-in % [:task :organization-id])))))
+
+(defn timer-by-id [db timer-id]
+  (->> db
+       :timers
+       vals
+       (apply concat)
+       (filter #(= timer-id (:id %)))
+       first))

@@ -32,3 +32,8 @@
   ::tasks
   (fn [db _]
     (tasks-db/current-organization-tasks db)))
+
+(rf/reg-sub
+  ::showing-edit-timer-modal?
+  (fn [db [_ timer-id]]
+    (db/get-in-page-state db [:show-edit-timer-modal timer-id])))

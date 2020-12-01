@@ -37,11 +37,9 @@
 
 ;; Events
 
-(rf/reg-event-db ::initialize
-  (fn [db [_ form-key initial-values]]
-    (-> db
-        (set-status form-key :initialized)
-        (set-params form-key initial-values))))
+(rf/reg-event-db ::set-values
+  (fn [db [_ form-key values]]
+    (set-params db form-key values)))
 
 (rf/reg-event-db ::update
   (fn [db [_ form-key input-key value]]
@@ -88,15 +86,27 @@
       (string/replace #"[-_]" " ")
       string/capitalize))
 
+(defn- fails-spec? [spec value]
+  (and spec
+       (not (s/valid? spec value))))
+
+(defn- has-error? [form-key specs]
+  (let [params @(rf/subscribe [::form form-key :params])]
+    (->> (for [[input-key spec] specs]
+           (fails-spec? spec (get params input-key)))
+         (some identity))))
+
 (defn- submit-attributes
-  [status form-key request-builder]
+  [status specs form-key request-builder]
   (merge
-   {:type     "primary"
+   {:type    "primary"
     :onClick (fn [e]
                (.preventDefault e)
                (rf/dispatch [::submit-button-clicked
                              form-key
                              request-builder]))}
+   (when (has-error? form-key specs)
+     {:disabled true})
    (when (= @status :submitting)
      {:loading "true"})))
 
@@ -105,31 +115,31 @@
                                 .-value))
 
 (defn- input-attributes-builder
-  ([form-key params input-key]
-   (input-attributes-builder form-key params input-key nil))
-  ([form-key params input-key {:keys [class spec value-fn] :as _options}]
-   (let [value (get @params input-key)]
-     (merge {:placeholder (sentence-case input-key)}
-            ;; TODO: Test value fn
-            {:onChange #(rf/dispatch [::update form-key input-key ((or value-fn
-                                                                       default-value-fn) %)])
-             :value     value}
-            (when (and spec
-                       (not (s/valid? spec value)))
-              {:class (string/trim (str class " form-error"))})))))
+  ([form-key params specs input-key]
+   (input-attributes-builder form-key params specs input-key nil))
+  ([form-key params specs input-key {:keys [class value-fn] :as _options}]
+   (let [value (get @params input-key)
+         spec  (get specs input-key)]
+     {:placeholder (sentence-case input-key)
+      ;; TODO: Test value fn
+      :onChange    #(rf/dispatch [::update form-key input-key ((or value-fn
+                                                                   default-value-fn) %)])
+      :value       value
+      :class       (string/trim (str class (when (fails-spec? spec value)
+                                             " form-error")))})))
 
 (defn- select-attributes-builder
-  ([form-key params input-key]
-   (select-attributes-builder form-key params input-key nil))
-  ([form-key params input-key options]
-   (input-attributes-builder form-key params input-key (assoc options :value-fn identity))))
+  ([form-key params specs input-key]
+   (select-attributes-builder form-key params specs input-key nil))
+  ([form-key params specs input-key options]
+   (input-attributes-builder form-key params specs input-key (assoc options :value-fn identity))))
 
 (defn form
-  [{:keys [form-key initial-values request-builder]}]
+  [{:keys [form-key initial-values request-builder specs]}]
   (let [params (rf/subscribe [::form form-key :params])
         status (rf/subscribe [::form form-key :status])]
-    (rf/dispatch [::initialize form-key initial-values])
-    {::get-submit-attributes #(submit-attributes status form-key request-builder)
-     ::get-input-attributes  (partial input-attributes-builder form-key params)
-     ::get-select-attributes (partial select-attributes-builder form-key params)
+    (rf/dispatch [::set-values form-key initial-values])
+    {::get-submit-attributes #(submit-attributes status specs form-key request-builder)
+     ::get-input-attributes  (partial input-attributes-builder form-key params specs)
+     ::get-select-attributes (partial select-attributes-builder form-key params specs)
      ::submitting?-state     (rf/subscribe [::submitting? form-key])}))

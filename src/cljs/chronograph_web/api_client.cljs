@@ -98,3 +98,10 @@
   (http/get {:uri        "/api/invitations"
              :on-success on-success
              :on-failure on-failure}))
+
+(defn edit-timer
+  [timer-id edit-data on-success on-failure]
+  (http/put {:uri        (str "/api/timers/" timer-id)
+             :params     edit-data
+             :on-success on-success
+             :on-failure on-failure}))
