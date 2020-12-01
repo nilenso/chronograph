@@ -1,6 +1,5 @@
 (ns chronograph-web.pages.timers.events
   (:require [re-frame.core :as rf]
-            [chronograph.specs :as specs]
             [chronograph-web.routes :as routes]
             [chronograph-web.events.routing :as routing-events]
             [chronograph-web.events.timer :as timer-events]
@@ -11,19 +10,17 @@
             [chronograph-web.config :as config]
             [chronograph-web.db :as db]
             [chronograph-web.api-client :as api]
-            [clojure.spec.alpha :as s]
             [medley.core :as medley]))
 
-(defn- selected-date [{:keys [year month day] :as m}]
+(defn- date-from-route-params [{:keys [year month day] :as m}]
   (let [date (->> (select-keys m [:year :month :day])
                   (medley/map-vals #(js/parseInt %)))]
-    (when (s/valid? :calendar-date/calendar-date date)
-      (update-in date [:month] dec))))
+    (update date :month dec)))
 
 (defmethod routing-events/on-route-change-event
   :timers-list-with-date
   [{:keys [route-params]}]
-  [::timers-page-navigated (selected-date route-params)])
+  [::timers-page-navigated (date-from-route-params route-params)])
 
 ;; We need to do this only for timers-list-with-date since there's currently no way to
 ;; return to :timers-list from a :timers-list-with-date route. If there were a way to
