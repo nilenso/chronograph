@@ -109,9 +109,9 @@
 
 (defn add-org [id slug]
   (swap! re-frame.db/app-db org-db/add-org {:id   id
-                                   :name "A Test Org"
-                                   :slug slug
-                                   :role "admin"}))
+                                            :name "A Test Org"
+                                            :slug slug
+                                            :role "admin"}))
 
 (deftest date-selection-test
   (tu/rf-test "when a date is picked from the calendar"
