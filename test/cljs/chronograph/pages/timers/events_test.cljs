@@ -6,7 +6,6 @@
             [chronograph.test-utils :as tu]
             [chronograph.specs]
             [re-frame.core :as rf]
-            [re-frame.db :as db]
             [chronograph-web.pages.timers.events :as timers-events]
             [chronograph-web.pages.timers.subscriptions :as timers-subs]
             [chronograph-web.events.timer :as timer-events]
@@ -14,7 +13,8 @@
             [chronograph-web.subscriptions :as subs]
             [chronograph-web.db.organization :as org-db]
             [chronograph-web.effects]
-            [chronograph-web.utils.time :as time]))
+            [chronograph-web.utils.time :as time]
+            [chronograph-web.db :as db]))
 
 (use-fixtures :once fixtures/silence-logging fixtures/check-specs)
 
@@ -46,6 +46,7 @@
        (with-redefs [time/now (constantly fake-now)]
          (let [fetch-timers-stub (tu/stub-event ::timer-events/fetch-timers)
                _                 (tu/stub-xhrio {} true)]
+           (swap! re-frame.db/app-db db/set-in-page-state [:selected-date] {:day 5 :month 10 :year 2020})
            (rf/dispatch [::timers-events/start-timer "foobar"])
            (is (= [::timer-events/fetch-timers {:day 5 :month 10 :year 2020} {}]
                   @fetch-timers-stub))))))
@@ -67,6 +68,7 @@
        (with-redefs [time/now (constantly fake-now)]
          (let [fetch-timers-stub (tu/stub-event ::timer-events/fetch-timers)
                _                 (tu/stub-xhrio {} true)]
+           (swap! re-frame.db/app-db db/set-in-page-state [:selected-date] {:day 5 :month 10 :year 2020})
            (rf/dispatch [::timers-events/stop-timer "foobar"])
            (is (= [::timer-events/fetch-timers {:day 5 :month 10 :year 2020} {}]
                   @fetch-timers-stub))))))
@@ -88,6 +90,7 @@
        (with-redefs [time/now (constantly fake-now)]
          (let [fetch-timers-stub (tu/stub-event ::timer-events/fetch-timers)
                _                 (tu/stub-xhrio {} true)]
+           (swap! re-frame.db/app-db db/set-in-page-state [:selected-date] {:day 5 :month 10 :year 2020})
            (rf/dispatch [::timers-events/delete-timer "foobar"])
            (is (= [::timer-events/fetch-timers {:day 5 :month 10 :year 2020} {}]
                   @fetch-timers-stub))))))
@@ -109,6 +112,7 @@
        (with-redefs [time/now (constantly fake-now)]
          (let [fetch-timers-stub (tu/stub-event ::timer-events/fetch-timers)
                dismiss-stub      (tu/stub-event ::timers-events/dismiss-create-timer-widget)]
+           (swap! re-frame.db/app-db db/set-in-page-state [:selected-date] {:day 5 :month 10 :year 2020})
            (rf/dispatch [::timers-events/create-timer-succeeded])
            (is (= [::timer-events/fetch-timers {:day 5 :month 10 :year 2020}]
                   @fetch-timers-stub)
@@ -127,10 +131,10 @@
              "An error message should be flashed."))))))
 
 (defn add-org [id slug]
-  (swap! db/app-db org-db/add-org {:id  id
-                                   :name "A Test Org"
-                                   :slug slug
-                                   :role "admin"}))
+  (swap! re-frame.db/app-db org-db/add-org {:id   id
+                                            :name "A Test Org"
+                                            :slug slug
+                                            :role "admin"}))
 
 (deftest date-selection-test
   (testing "when a date is picked from the calendar"

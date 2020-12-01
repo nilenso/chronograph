@@ -86,11 +86,14 @@
   (fn [db _]
     (db/set-in-page-state db [:show-create-timer-widget] false)))
 
+(defn- selected-date [db]
+  (db/get-in-page-state db [:selected-date]))
+
 (rf/reg-event-fx
   ::create-timer-succeeded
-  (fn [_ _]
+  (fn [{:keys [db]} _]
     {:fx [[:dispatch [::dismiss-create-timer-widget]]
-          [:dispatch [::timer-events/fetch-timers (time/current-calendar-date)]]]}))
+          [:dispatch [::timer-events/fetch-timers (selected-date db)]]]}))
 
 (defn- flash-error-effect
   [message]
@@ -110,27 +113,27 @@
 
 (rf/reg-event-fx
   ::start-timer
-  (fn [_ [_ timer-id]]
+  (fn [{:keys [db]} [_ timer-id]]
     {:fx [[:http-xhrio (api/start-timer timer-id
-                                        [::timer-events/fetch-timers (time/current-calendar-date)]
+                                        [::timer-events/fetch-timers (selected-date db)]
                                         [::flash-error (str "We couldn't start your timer "
                                                             (:frown config/emojis)
                                                             " Please try again!")])]]}))
 
 (rf/reg-event-fx
   ::stop-timer
-  (fn [_ [_ timer-id]]
+  (fn [{:keys [db]} [_ timer-id]]
     {:fx [[:http-xhrio (api/stop-timer timer-id
-                                       [::timer-events/fetch-timers (time/current-calendar-date)]
+                                       [::timer-events/fetch-timers (selected-date db)]
                                        [::flash-error (str "We couldn't stop your timer "
                                                            (:frown config/emojis)
                                                            " Please try again!")])]]}))
 
 (rf/reg-event-fx
   ::delete-timer
-  (fn [_ [_ timer-id]]
+  (fn [{:keys [db]} [_ timer-id]]
     {:fx [[:http-xhrio (api/delete-timer timer-id
-                                         [::timer-events/fetch-timers (time/current-calendar-date)]
+                                         [::timer-events/fetch-timers (selected-date db)]
                                          [::flash-error (str "We couldn't delete your timer "
                                                              (:frown config/emojis)
                                                              " Please try again!")])]]}))
