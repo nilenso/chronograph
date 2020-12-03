@@ -2,7 +2,8 @@
   (:require [chronograph.db.timer :as db-timer]
             [chronograph.domain.task :as task]
             [chronograph.domain.acl :as acl]
-            [chronograph.utils.time :as time]))
+            [chronograph.utils.time :as time]
+            [chronograph.domain.timer.time-span :as time-span]))
 
 (defn create!
   "Create a timer for a task IFF the user and the task, both belong to
@@ -34,23 +35,12 @@
   (and (not-empty time-spans)
        (not (:stopped-at (last time-spans)))))
 
-(defn- time-spans-from-duration
-  "Computes the time spans of the timer as per given duration.
-  Very naive right now. This could be made smarter to reduce data loss."
-  [timer duration-in-secs]
-  (let [now (time/now)]
-    (if (running? timer)
-      [{:started-at (.minusSeconds now duration-in-secs)
-        :stopped-at nil}]
-      [{:started-at (.minusSeconds now duration-in-secs)
-        :stopped-at now}])))
-
 (defn update!
   [tx timer-id {:keys [duration-in-secs] :as update-params}]
-  (let [timer (db-timer/find-by-id tx timer-id)]
+  (when-let [{:timers/keys [time-spans]} (db-timer/find-by-id tx timer-id)]
     (db-timer/update! tx timer-id (if duration-in-secs
                                     (-> update-params
-                                        (assoc :time-spans (time-spans-from-duration timer duration-in-secs))
+                                        (assoc :time-spans (time-span/adjust-time-spans-to-duration time-spans duration-in-secs))
                                         (dissoc :duration-in-secs))
                                     update-params))))
 
